@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Zidi</title>
+    <style>
+        /* Reset styles for email clients */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f5f5f5;
+        }
+        
+        /* Main container */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        /* Header styling */
+        .header {
+            background-color: #000000;
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .logo {
+            width: 100px;
+            height: auto;
+        }
+        
+        /* Hero section */
+        .hero {
+            background-color: #EFBF00; /* Brand color */
+            color: #000000;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .hero p {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+        
+        /* Content styling */
+        .content {
+            padding: 30px;
+            background-color: #ffffff;
+        }
+        
+        .content h2 {
+            color: #EFBF00; /* Brand color */
+            font-size: 22px;
+            margin-top: 0;
+        }
+        
+        /* Credentials box */
+        .credentials-box {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .credentials-box h3 {
+            margin-top: 0;
+            color: #333333;
+            font-size: 18px;
+        }
+        
+        .credential-item {
+            margin-bottom: 15px;
+        }
+        
+        .credential-label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .credential-value {
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        /* Features section */
+        .features {
+            margin: 30px 0;
+        }
+        
+        .feature {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .feature-icon {
+            background-color: #EFBF00;
+            color: #000000;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .feature-content {
+            flex-grow: 1;
+        }
+        
+        .feature-content h4 {
+            margin: 0 0 5px 0;
+        }
+        
+        .feature-content p {
+            margin: 0;
+            color: #666666;
+        }
+        
+        /* Button styling */
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #EFBF00;
+            color: #000000;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        /* Next steps */
+        .next-steps {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        /* Security note */
+        .security-note {
+            font-size: 14px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-left: 4px solid #ff6b6b;
+            margin: 25px 0;
+        }
+        
+        /* Footer styling */
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+        }
+        
+        .social-links {
+            margin: 15px 0;
+        }
+        
+        .social-icon {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #EFBF00;
+            border-radius: 50%;
+            margin: 0 5px;
+            text-align: center;
+            line-height: 30px;
+        }
+        
+        /* Responsive styles */
+        @media screen and (max-width: 480px) {
+            .hero {
+                padding: 30px 20px;
+            }
+            
+            .hero h1 {
+                font-size: 24px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header with logo -->
+        <div class="header">
+            <img src="https://via.placeholder.com/100x40/000000/EFBF00?text=Zidi" alt="Zidi Logo" class="logo">
+        </div>
+        
+        <!-- Hero section -->
+        <div class="hero">
+            <h1>Welcome to Zidi!</h1>
+            <p>Your account has been created successfully</p>
+        </div>
+        
+        <!-- Main content -->
+        <div class="content">
+            <h2>Hello {{.Name}},</h2>
+            <p>Welcome to Zidi! We're excited to have you onboard. Your account has been successfully created, and you can now start automating your marketing campaigns.</p>
+            
+            <!-- Credentials box -->
+            <div class="credentials-box">
+                <h3>Your Login Details</h3>
+                
+                <div class="credential-item">
+                    <span class="credential-label">Login URL:</span>
+                    <div class="credential-value"><a>https://client.zidihq.com</a></div>
+                </div>
+                
+                <div class="credential-item">
+                    <span class="credential-label">Email:</span>
+                    <div class="credential-value">{{.Email}}</div>
+                </div>
+                
+                <div class="credential-item">
+                    <span class="credential-label">Temporary Password:</span>
+                    <div class="credential-value">{{.Password}}</div>
+                </div>
+            </div>
+            
+            <div class="security-note">
+                <strong>Security Note:</strong> For your security, we recommend changing your password immediately after your first login. This temporary password will expire in 48 hours.
+            </div>
+            
+            <a href="https://client.zidihq.com" class="button" style="display: block; max-width: 200px; margin: 30px auto;">Login to Your Account</a>
+            
+            <!-- Features section -->
+            <div class="features">
+                <h3>What You Can Do with Zidi:</h3>
+                
+                <div class="feature">
+                    <div class="feature-icon">✓</div>
+                    <div class="feature-content">
+                        <h4>Create Automated Campaigns</h4>
+                        <p>Design and launch promotional campaigns with just a few clicks</p>
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">✓</div>
+                    <div class="feature-content">
+                        <h4>Track Consumer Engagement</h4>
+                        <p>Monitor real-time analytics on how consumers interact with your promotions</p>
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">✓</div>
+                    <div class="feature-content">
+                        <h4>Generate Coupon Codes</h4>
+                        <p>Create and distribute unique coupon codes for your customers</p>
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">✓</div>
+                    <div class="feature-content">
+                        <h4>Measure Campaign Performance</h4>
+                        <p>Analyze the success of your campaigns with comprehensive reporting</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Next steps -->
+            <div class="next-steps">
+                <h3>Your Next Steps:</h3>
+                <ol>
+                    <li>Log in using the credentials above</li>
+                    <li>Change your temporary password</li>
+                    <li>Complete your organization profile</li>
+                    <li>Create your first campaign</li>
+                </ol>
+                
+                <p>If you need any assistance getting started, our support team is here to help. Simply reply to this email or contact us at <a href="mailto:support@zidi.com">support@zidi.com</a>.</p>
+            </div>
+            
+            <p>We're thrilled to have you as part of the Zidi family and look forward to helping you create successful promotional campaigns!</p>
+            
+            <p>Best regards,<br>The Zidi Team</p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2025 Zidi. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#" class="social-icon">f</a>
+                <a href="#" class="social-icon">t</a>
+                <a href="#" class="social-icon">in</a>
+            </div>
+            <p>If you have any questions, please contact <a href="mailto:info@zidi.com">support@zidi.com</a></p>
+            <p>[Company Address, City, State, ZIP]</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+.env
+.DS_Store
+.idea
+test.go
+manualairtimesend.go
+private.key
+public.key
+whatsapp_test

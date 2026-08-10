@@ -1,0 +1,2096 @@
+openapi: 3.0.0
+info:
+  title: ZidiBackend API
+  version: 1.0.0
+  description: API for managing organizations and users in ZidiBackend
+
+paths:
+  /organizations:
+    post:
+      summary: Create an organization
+      operationId: CreateOrganization
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Organization"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    get:
+      summary: Get all organizations
+      operationId: GetOrganizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of organizations to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+            default: 10
+        - name: offset
+          in: query
+          description: Number of organizations to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+            default: 0
+      responses:
+        "200":
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /organizations/{organization_id}:
+    get:
+      summary: Get an organization by ID
+      operationId: GetOrganizationById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update an organization
+      operationId: UpdateOrganization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Organization"
+      responses:
+        "200":
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete an organization
+      operationId: DeleteOrganization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Organization deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/{organization_id}/users:
+    get:
+      summary: Get all users in an organization
+      operationId: GetUsersByOrganization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of users to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of users to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: List of users in the organization
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/search:
+    get:
+      summary: Get an organization by name
+      operationId: GetOrganizationByName
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of organizations to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of organizations to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users:
+    post:
+      summary: Create a user
+      operationId: CreateUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequestBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+    get:
+      summary: Get all users
+      operationId: GetUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of users to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of users to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/email:
+    get:
+      summary: Get a user by email
+      operationId: GetUserByEmail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/{user_id}:
+    get:
+      summary: Get a user by ID
+      operationId: GetUserById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update a user
+      operationId: UpdateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete a user
+      operationId: DeleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: User deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/{user_id}/password:
+    put:
+      summary: Update user password
+      operationId: UpdateUserPassword
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old_password
+                - new_password
+              properties:
+                old_password:
+                  type: string
+                  format: password
+                  description: The current password of the user.
+                new_password:
+                  type: string
+                  format: password
+                  description: The new password to set.
+      responses:
+        "200":
+          description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Password updated successfully.
+        "400":
+          description: Bad request (e.g., missing fields, weak password).
+        "401":
+          description: Unauthorized - Incorrect old password.
+        "404":
+          description: User not found.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/login:
+    post:
+      summary: User login
+      operationId: LoginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT access token
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          description: Unauthorized - Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    post:
+      summary: User logout
+      operationId: LogoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully logged out
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/superuser/login:
+    post:
+      summary: Superuser login
+      operationId: SuperuserLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful superuser login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT access token
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          description: Unauthorized - Invalid credentials or insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /campaigns:
+    post:
+      summary: Create a new campaign
+      operationId: createCampaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Campaign"
+      responses:
+        "201":
+          description: Campaign created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Invalid input
+
+    get:
+      summary: Get all campaigns
+      operationId: getAllCampaigns
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of campaigns to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of campaigns to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: A list of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+
+  /customers:
+    post:
+      summary: Create a new customer
+      operationId: createCustomer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Customer"
+      responses:
+        "201":
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          description: Invalid input
+
+    get:
+      summary: Get all customers
+      operationId: getAllCustomers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of campaigns to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of campaigns to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: A list of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+
+  /customers/organization:
+    get:
+      summary: Get all customers for a specific organization
+      operationId: getCustomersByOrganization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of customers to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of customers to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: List of customers for the specified organization
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+        "400":
+          description: Missing or invalid organizationId
+        "404":
+          description: No customers found for this organization
+  /customers/campaign:
+    get:
+      summary: Get all customers for a specific campaign
+      operationId: getCustomersByCampaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: campaignId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of customers to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of customers to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: List of customers for the specified campaign
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+        "400":
+          description: Missing or invalid campaignID
+        "404":
+          description: No customers found for this campaign
+  /customers/{id}:
+    get:
+      summary: Get a customer by ID
+      operationId: getCustomerById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          description: Customer not found
+
+    put:
+      summary: Update a customer by ID
+      operationId: updateCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Customer"
+      responses:
+        "200":
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          description: Customer not found
+
+    delete:
+      summary: Delete a customer by ID
+      operationId: deleteCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Customer deleted successfully
+        "404":
+          description: Customer not found
+
+  /campaigns/organization:
+    get:
+      summary: Get all campaigns for a specific organization
+      operationId: getCampaignsByOrganization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of campaigns to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of campaigns to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+        - name: organizationId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of campaigns for the specified organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Total number of campaigns for the specified organization
+                    example: 50
+                  campaigns:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Campaign"
+        "404":
+          description: No campaigns found for this organization
+
+  /campaigns/{id}:
+    get:
+      summary: Get a campaign by ID
+      operationId: getCampaignById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Campaign found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Campaign not found
+
+    put:
+      summary: Update a campaign by ID
+      operationId: updateCampaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Campaign"
+      responses:
+        "200":
+          description: Campaign updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Campaign not found
+
+    delete:
+      summary: Delete a campaign by ID
+      operationId: deleteCampaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Campaign deleted successfully
+        "404":
+          description: Campaign not found
+
+  /campaigns/{campaignId}/questions:
+    get:
+      summary: Get all questions for a campaign
+      tags:
+        - Questions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of questions to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of questions to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: A list of questions for the campaign
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+    post:
+      summary: Create a new question for a campaign
+      tags:
+        - Questions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Question"
+      responses:
+        "201":
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+
+  /campaigns/{id}/coupons:
+    get:
+      summary: Get all coupons for a specific campaign
+      operationId: getCouponsByCampaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        "200":
+          description: List of coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+        "404":
+          description: Campaign not found
+
+  /campaigns/{id}/generate-tokens:
+    post:
+      summary: Generate tokens for a campaign
+      operationId: generateTokens
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Tokens generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaignId:
+                    type: string
+                    format: uuid
+                  tokens:
+                    type: array
+                    items:
+                      type: string
+        "404":
+          description: Campaign not found
+        "400":
+          description: Campaign is not active
+        "500":
+          description: Internal server error
+
+  /questions/{questionId}:
+    delete:
+      summary: Delete a question
+      tags:
+        - Questions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Question deleted successfully
+  /flutterwave/webhook:
+    post:
+      summary: Handle Flutterwave payment notifications
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  description: Type of event (e.g., charge.completed, transfer.successful)
+                data:
+                  type: object
+                  description: Payload containing transaction details
+                  properties:
+                    id:
+                      type: integer
+                      description: Unique transaction ID
+                    status:
+                      type: string
+                      description: Transaction status (e.g., successful, failed)
+                    tx_ref:
+                      type: string
+                      description: Transaction reference
+                    amount:
+                      type: integer
+                      description: Amount involved in the transaction
+      responses:
+        "200":
+          description: Webhook received successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Webhook received"
+        "400":
+          description: Invalid request payload
+        "401":
+          description: Unauthorized request (invalid signature)
+        "500":
+          description: Internal server error
+  /payments:
+    post:
+      summary: Create a new payment
+      operationId: createPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        "201":
+          description: Payment successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "400":
+          description: Invalid request data
+        "500":
+          description: Internal server error
+
+    get:
+      summary: Get all payments
+      operationId: getAllPayments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 10
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        "200":
+          description: A list of payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  payments:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: Total number of payments in the database.
+                      payments:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Payment"
+        "500":
+          description: Internal server error
+
+  /payments/{id}:
+    get:
+      summary: Get a payment by ID
+      operationId: getPaymentById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Payment found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "404":
+          description: Payment not found
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a payment by ID
+      operationId: updatePaymentById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        "200":
+          description: Payment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "400":
+          description: Invalid request data
+        "404":
+          description: Payment not found
+        "500":
+          description: Internal server error
+
+  /payments/organization/{organization_id}:
+    get:
+      summary: Get payments by organization ID
+      operationId: getPaymentsByOrganization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 10
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        "200":
+          description: List of payments for an organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  payments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Payment"
+        "500":
+          description: Internal server error
+  /questions/{questionId}/responses:
+    get:
+      summary: Get all responses for a question
+      tags:
+        - Responses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of responses to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of responses to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        "200":
+          description: A list of responses for the question
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Response"
+    post:
+      summary: Create a response for a question
+      tags:
+        - Responses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Response"
+      responses:
+        "201":
+          description: Response created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+  /transactions:
+    get:
+      summary: Get all transactions
+      operationId: listTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: organizationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by organization UUID
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+
+    post:
+      summary: Create a new transaction
+      operationId: createTransaction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionInput"
+      responses:
+        "201":
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /transactions/{transactionId}:
+    get:
+      summary: Get a transaction by ID
+      operationId: getTransaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+    patch:
+      summary: Update transaction status
+      operationId: updateTransactionStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionStatusUpdate"
+      responses:
+        "200":
+          description: Transaction status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+  /balances:
+    get:
+      summary: Get all balances
+      operationId: getAllBalances
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: List of balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Balance"
+        "401":
+          description: Unauthorized
+
+    post:
+      summary: Create a new balance
+      operationId: createBalance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBalanceRequest"
+      responses:
+        "201":
+          description: Balance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /balances/{campaignId}:
+    get:
+      summary: Get balance by campaign
+      operationId: getBalanceByCampaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Balance not found
+
+    patch:
+      summary: Update balance by campaign
+      operationId: updateBalance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBalanceRequest"
+      responses:
+        "200":
+          description: Balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Balance not found
+        "500":
+          description: Internal server error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT # Optional, but helps with documentation
+  schemas:
+    Organization:
+      type: object
+      required:
+        - id
+        - email
+        - contact_person_name
+        - contact_person_phone
+        - address
+        - industry
+        - company_size
+        - company_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        contact_person_name:
+          type: string
+        contact_person_phone:
+          type: string
+        address:
+          type: string
+        industry:
+          type: string
+        company_size:
+          type: integer
+        company_name:
+          type: string
+    Campaign:
+      type: object
+      required:
+        - id
+        - campaignName
+        - couponId
+        - characterType
+        - couponLength
+        - couponNumber
+        - welcomeMessage
+        - questionNumber
+        - amount
+        - price
+        - status
+        - organizationId
+        - communicationChannels
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        campaignName:
+          type: string
+          example: "Summer Promo"
+        couponId:
+          type: string
+          example: "Alphanumeric"
+        characterType:
+          type: string
+          example: "Alphanumeric"
+        couponLength:
+          type: integer
+          example: 10
+        couponNumber:
+          type: integer
+          example: 100
+        welcomeMessage:
+          type: string
+          example: "Welcome to our summer campaign!"
+        questionNumber:
+          type: integer
+          example: 5
+        amount:
+          type: number
+          format: float
+          example: 100.50
+        price:
+          type: number
+          format: float
+          example: 100.50
+        status:
+          type: string
+          example: "active"
+        organizationId:
+          type: string
+          format: uuid
+          example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+        communicationChannels:
+          type: string
+          example: "whatsapp,telegram"
+          description: "Comma-separated list of communication channels: whatsapp, telegram, or both"
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-03-04T12:34:56Z"
+    User:
+      type: object
+      required:
+        - id
+        - firstname
+        - lastname
+        - email
+        - address
+        - password
+        - role
+        - organization_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+        organization_id:
+          type: string
+          format: uuid
+    Payment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - campaign_id
+        - amount
+        - transaction_ref
+        - transaction_id
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "5c2a4d94-27f8-4fbd-8f74-8dd8c7c8e49c"
+        organization_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        campaign_id:
+          type: string
+          format: uuid
+          example: "2d6f2952-9a5b-4663-91e1-67d573a3f940"
+        amount:
+          type: number
+          format: float
+          example: 100.50
+        transaction_ref:
+          type: string
+          example: "TXN123456789"
+        transaction_id:
+          type: string
+          example: "543456789654789654"
+        status:
+          type: string
+          enum: [pending, completed, failed]
+          example: "pending"
+    Transaction:
+      type: object
+      required:
+        - id
+        - organizationId
+        - campaignId
+        - customerId
+        - amount
+        - status
+        - phoneNumber
+        - network
+        - txReference
+        - type
+        - commisson
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: ["pending", "success", "failed"]
+        type:
+          type: string
+          enum: ["airtime"]
+        commisson:
+          type: number
+          format: float
+        phoneNumber:
+          type: string
+        txReference:
+          type: string
+        network:
+          type: string
+
+    TransactionInput:
+      type: object
+      required:
+        - organizationId
+        - campaignId
+        - customerId
+        - amount
+        - phoneNumber
+        - network
+        - txReference
+        - type
+        - status
+        - commisson
+      properties:
+        organizationId:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        type:
+          type: string
+          enum: ["airtime"]
+        status:
+          type: string
+          enum: ["pending", "success", "failed"]
+        commisson:
+          type: number
+          format: float
+        phoneNumber:
+          type: string
+        txReference:
+          type: string
+        network:
+          type: string
+
+    TransactionStatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["pending", "successful", "failed"]
+
+    Balance:
+      type: object
+      required:
+        - id
+        - campaignId
+        - startingBalance
+        - amount
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        startingBalance:
+          type: number
+          format: float
+        amount:
+          type: number
+          format: float
+        campaignName:
+          type: string
+          description: "Name of the campaign linked to this balance"
+
+    CreateBalanceRequest:
+      type: object
+      required:
+        - campaignId
+        - startingBalance
+        - amount
+      properties:
+        campaignId:
+          type: string
+          format: uuid
+        startingBalance:
+          type: number
+          format: float
+        amount:
+          type: number
+          format: float
+
+    UpdateBalanceRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: float
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    CreateUserRequestBody:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phoneNumber
+        - address
+        - role
+        - organization_id
+        - password
+        - confirmPassword
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        password:
+          type: string
+          format: password
+        address:
+          type: string
+        confirmPassword:
+          type: string
+          format: password
+        role:
+          type: string
+        organization_id:
+          type: string
+          format: uuid
+    Customer:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - phone
+        - email
+        - feedback
+        - network
+        - amount
+        - status
+        - organizationId
+        - campaignId
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        phone:
+          type: string
+          example: "+1234567890"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        feedback:
+          type: string
+          example: "Great service!"
+        network:
+          type: string
+          example: "MTN"
+        amount:
+          type: number
+          format: float
+          example: 100.50
+        status:
+          type: string
+          example: "active"
+        organizationId:
+          type: string
+          format: uuid
+          example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+        campaignId:
+          type: string
+          format: uuid
+          example: "mka98yd6-hh72-kj86-b3bb-92cd5b998a21"
+    Question:
+      type: object
+      required:
+        - id
+        - campaignId
+        - text
+        - type
+        - responseCount
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        text:
+          type: string
+        type:
+          type: string
+          enum: [text, multiple_choice, rating]
+        options:
+          type: array
+          items:
+            type: string
+          nullable: true
+        responseCount:
+          type: integer
+    Response:
+      type: object
+      required:
+        - id
+        - questionId
+        - customerId
+        - answer
+      properties:
+        id:
+          type: string
+          format: uuid
+        questionId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        answer:
+          type: string
+    Coupon:
+      type: object
+      required:
+        - id
+        - campaignId
+        - code
+        - redeemed
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        campaignId:
+          type: string
+          format: uuid
+          example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+        code:
+          type: string
+          example: "A1B2C3D4"
+        redeemed:
+          type: boolean
+          example: false
+        redeemedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-03-04T12:34:56Z"
+
+    #    CreateCustomerBody:
+    #      type: object
+    #      required:
+    #        - firstName
+    #        - lastName
+    #        - phone
+    #        - email
+    #        - network
+    #        - campaignId
+    #        - organizationId
+    #      properties:
+    #        firstName:
+    #          type: string
+    #        lastName:
+    #          type: string
+    #        phone:
+    #          type: string
+    #        email:
+    #          type: string
+    #          format: email
+    #        feedback:
+    #          type: string
+    #        network:
+    #          type: string
+    #        organizationId:
+    #          type: string
+    #          format: uuid
+    #        campaignId:
+    #          type: string
+    #          format: uuid
+    #    UpdateCustomerRequest:
+    #      type: object
+    #      properties:
+    #        firstName:
+    #          type: string
+    #        lastName:
+    #          type: string
+    #        phone:
+    #          type: string
+    #        email:
+    #          type: string
+    #          format: email
+    #        feedback:
+    #          type: string
+    #        network:
+    #          type: string
+    #        amount:
+    #          type: number
+    #          format: float
+    #        status:
+    #          type: string
+
+    Error:
+      type: object
+      required:
+        - message
+        - error_code
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequestError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+security:
+  - BearerAuth: []

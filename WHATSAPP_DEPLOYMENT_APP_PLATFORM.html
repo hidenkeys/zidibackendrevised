@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot Deployment</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 2em;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 1em;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<h1> Deploying Your WhatsApp Bot on DigitalOcean App Platform</h1>
+
+This guide will walk you through the entire process of deploying your Go-based WhatsApp bot, from creating a Facebook App to deploying on DigitalOcean's App Platform.
+
+<h2> Part 1: Setting Up Your Facebook App and WhatsApp Business API</h2>
+
+<h3> Step 1: Create a Facebook Business Account</h3>
+
+<ol>
+<li> Go to <a href="https://business.facebook.com/overview">business.facebook.com/overview</a>.</li>
+</ol>
+<li>  Click <b>Create account</b>.</li>
+<li>  Enter a name for your business, your name, and your work email address, and then click <b>Next</b>.</li>
+<li>  Enter your business details and click <b>Submit</b>.</li>
+
+<h3> Step 2: Create a Facebook Developer App</h3>
+
+<ol>
+<li>  Go to the <a href="https://developers.facebook.com/">Facebook for Developers</a> website and click on <b>My Apps</b>.</li>
+</ol>
+<li>  Click <b>Create App</b>.</li>
+<li>  Select <b>Business</b> as the app type and click <b>Next</b>.</li>
+<li>  Give your app a name, and select your Business Account from the dropdown menu.</li>
+<li>  Click <b>Create App</b>. You might be asked to re-enter your Facebook password.</li>
+
+<h3> Step 3: Set Up the WhatsApp Business API</h3>
+
+<ol>
+<li>  From your app's dashboard, scroll down and find the <b>WhatsApp</b> product. Click <b>Set up</b>.</li>
+</ol>
+<li>  You will be asked to select your Business Account. Select the one you created in Step 1 and click <b>Continue</b>.</li>
+<li>  You will now be taken to the WhatsApp Business Platform. Here, you will see a temporary test phone number that you can use to send and receive messages. You will also see a <b>Phone number ID</b> and a <b>WhatsApp Business Account ID</b>. You will need these later.</li>
+<li>  You will also see a temporary <b>Access Token</b>. This token is valid for 23 hours. You will need this token to send messages.</li>
+
+<h3> Step 4: Add a "To" Phone Number</h3>
+
+<ol>
+<li>  In the "To" field, select the country code and enter your phone number.</li>
+</ol>
+<li>  Click <b>Send Code</b>. You will receive a verification code on your phone.</li>
+<li>  Enter the verification code to verify your phone number.</li>
+
+<h2> Part 2: Deploying Your Bot on DigitalOcean App Platform</h2>
+
+<h3> Step 1: Prepare Your Application for Deployment</h3>
+
+<ol>
+<li>  <b>Ensure your application listens on the correct port:</b> DigitalOcean App Platform will set the <code>PORT</code> environment variable to tell your application which port to listen on. Your application should use this environment variable if it's available, and fall back to a default port (e.g., 8080) if it's not.
+
+    In your <code>main.go</code> file, you can modify the <code>app.Listen</code> call to do this:
+
+    <pre><code>    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    log.Fatal(app.Listen(":" + port))
+</code></pre>
+
+</li>
+</ol>
+<li>  <b>Make sure all dependencies are in your <code>go.mod</code> file:</b> Run <code>go mod tidy</code> to ensure your <code>go.mod</code> and <code>go.sum</code> files are up to date.
+
+</li>
+
+<h3> Step 2: Create a New App on DigitalOcean App Platform</h3>
+
+<ol>
+<li>  Go to your DigitalOcean dashboard and click on <b>Apps</b> in the left-hand menu.</li>
+</ol>
+<li>  Click <b>Create App</b>.</li>
+<li>  Choose your Git repository provider (e.g., GitHub) and select your application's repository.</li>
+<li>  Choose the branch you want to deploy (e.g., <code>main</code>) and click <b>Next</b>.</li>
+<li>  App Platform will automatically detect that you have a Go application. It will suggest a build command (<code>go build</code>) and a run command (<code>./<your_app_name></code>). These should be correct.</li>
+<li>  Click <b>Next</b>.</li>
+
+<h3> Step 3: Configure Your App's Environment Variables</h3>
+
+<ol>
+<li>  In the "Environment Variables" section, click <b>Edit</b>.</li>
+</ol>
+<li>  Add the following environment variables:
+    <ul>
+<li> <code>WHATSAPP_PHONE_NUMBER_ID</code>: Your WhatsApp Business phone number ID.</li>
+</ul>
+    <ul>
+<li> <code>WHATSAPP_ACCESS_TOKEN</code>: Your WhatsApp Business access token.</li>
+</ul>
+    <ul>
+<li> <code>WHATSAPP_WEBHOOK_VERIFY_TOKEN</code>: Your webhook verification token.</li>
+</ul>
+    <ul>
+<li> Add any other environment variables your application needs.</li>
+</ul>
+</li>
+<li>  Click <b>Save</b>.</li>
+
+<h3> Step 4: Deploy Your App</h3>
+
+<ol>
+<li>  Choose a plan for your app. The "Basic" plan should be sufficient for testing.</li>
+</ol>
+<li>  Click <b>Create Resources</b>.</li>
+<li>  DigitalOcean will now build and deploy your application. You can monitor the progress in the "Deployments" tab.</li>
+
+<h3> Step 5: Get Your App's Public URL</h3>
+
+Once your app is deployed, you'll see its public URL at the top of the app's dashboard. It will look something like this: <code>https://<your-app-name>-<random-string>.ondigitalocean.app</code>.
+
+<h2> Part 3: Configuring Your WhatsApp Webhook and Testing Your Bot</h2>
+
+<h3> Step 1: Configure Your WhatsApp Webhook</h3>
+
+<ol>
+<li>  In your Facebook Developer App, go to the "WhatsApp" -> "Configuration" section.</li>
+</ol>
+<li>  Click on "Edit" in the "Webhook" section.</li>
+<li>  Set the "Callback URL" to your DigitalOcean App Platform URL, followed by the webhook path (e.g., <code>https://<your-app-name>-<random-string>.ondigitalocean.app/api/v1/whatsapp/webhook</code>).</li>
+<li>  Set the "Verify Token" to the value you've set for the <code>WHATSAPP_WEBHOOK_VERIFY_TOKEN</code> environment variable.</li>
+<li>  Click <b>Verify and Save</b>.</li>
+
+<h3> Step 2: Test Your Bot</h3>
+
+<ol>
+<li>  Send a message to your test number from your personal WhatsApp account.</li>
+</ol>
+<li>  The message should be in the format <code>start <campaign_id></code>, where <code><campaign_id></code> is a valid campaign ID from your database.
+
+If everything is set up correctly, your application should receive the webhook event, and the WhatsApp bot should respond with the first message in the conversation flow.
+
+</body>
+</html>

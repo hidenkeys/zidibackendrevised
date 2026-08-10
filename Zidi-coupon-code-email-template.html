@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Zidi Campaign Coupon Code</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+    }
+    .header {
+      background: #000;
+      padding: 20px;
+      text-align: left;
+    }
+    .logo {
+      width: 100px;
+      height: auto;
+    }
+    .hero {
+      background: #efbf00;
+      color: #000;
+      text-align: center;
+      padding: 40px 30px;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    .content {
+      padding: 30px;
+    }
+    .content h2 {
+      color: #efbf00;
+      font-size: 22px;
+      margin-top: 0;
+    }
+    .coupon-box {
+      margin: 30px 0;
+      padding: 25px;
+      border: 2px dashed #efbf00;
+      text-align: center;
+      font-family: monospace;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 5px;
+      background-color: #f9f9f9;
+      border-radius: 6px;
+      user-select: all;
+    }
+    .instructions {
+      font-size: 16px;
+      color: #555;
+      margin-top: 20px;
+    }
+    .button {
+      display: block;
+      width: max-content;
+      margin: 30px auto 0 auto;
+      padding: 12px 30px;
+      background: #efbf00;
+      color: #000;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 16px;
+      text-align: center;
+    }
+    .footer {
+      background: #f5f5f5;
+      padding: 20px 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+    @media screen and (max-width: 480px) {
+      .hero h1 {
+        font-size: 24px;
+      }
+      .content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="email-container">
+  <!-- Header with logo -->
+  <div class="header">
+    <img src="https://via.placeholder.com/100x40/000000/EFBF00?text=Zidi" alt="Zidi Logo" class="logo" />
+  </div>
+  <!-- Hero section -->
+  <div class="hero">
+    <h1>Your Exclusive Zidi Coupon Code</h1>
+    <p>Thank you for participating in our campaign.</p>
+  </div>
+  <!-- Main content -->
+  <div class="content">
+    <h2>Hello {{.Name}},</h2>
+    <p>Your unique coupon code is shown below. This code is for your use only and cannot be shared or reused.</p>
+    <!-- Coupon code box -->
+    <div class="coupon-box">{{.CouponCode}}</div>
+    <p class="instructions">
+      Please copy this code and use it during checkout to redeem your offer.
+    </p>
+    <a href="https://client.zidihq.com" class="button" target="_blank" rel="noopener">Access Your Zidi Account</a>
+    <p style="margin-top: 40px;">
+      If you need assistance, contact us at
+      <a href="mailto:info@zidihq.com">info@zidihq.com</a>.
+    </p>
+    <p>Best regards,<br>The Zidi Team</p>
+  </div>
+  <!-- Footer -->
+  <div class="footer">
+    <p>© 2025 Zidi. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>

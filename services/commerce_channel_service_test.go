@@ -350,6 +350,65 @@ func TestCommerceWhatsAppPaymentEmailMissingLinkReturnsRetryMessage(t *testing.T
 	}
 }
 
+func TestCommerceWhatsAppOrderPromptRestartsStaleQuantitySession(t *testing.T) {
+	organizationID, customerID, storeID, variantID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	contextValue, _ := json.Marshal(commerceConversationContext{
+		StoreID: &storeID, VariantID: &variantID,
+		OptionKind: "product", OptionIDs: []uuid.UUID{variantID},
+	})
+	service := NewCommerceChannelService(&commerceChannelRepoStub{}, &commerceFoundationRepoStub{}, &commerceCatalogueRepoStub{}, &commerceChannelCustomerStub{}, &commerceChannelOrderStub{}, &commerceChannelPaymentStub{}, &commerceChannelFulfilmentStub{})
+	conversation := &models.CommerceConversation{
+		ID: uuid.New(), OrganizationID: organizationID, CustomerID: customerID,
+		State: models.CommerceConversationStateQuantity, CurrentIntent: optionalChannelString(models.CommerceConversationIntentOrder),
+		Context: contextValue,
+	}
+
+	state, intent, updatedContext, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID},
+		&models.CommerceCustomer{ID: customerID, OrganizationID: organizationID},
+		conversation,
+		CommerceChannelInbound{Text: "Hi Zidi, I would like to place an order from Bing Chun Nigeria."},
+	)
+	if err != nil {
+		t.Fatalf("restart prompt failed: %v", err)
+	}
+	if state != models.CommerceConversationStateLocation || intent != models.CommerceConversationIntentOrder || len(replies) != 1 {
+		t.Fatalf("prompt did not restart order flow: state=%s intent=%s replies=%d", state, intent, len(replies))
+	}
+	if updatedContext.StoreID != nil || updatedContext.VariantID != nil || !strings.Contains(replies[0].Body, "Starting a fresh order") {
+		t.Fatalf("stale context was not cleared: context=%+v reply=%q", updatedContext, replies[0].Body)
+	}
+}
+
+func TestCommerceWhatsAppCancelClearsPrePaymentSession(t *testing.T) {
+	organizationID, customerID, storeID, variantID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	contextValue, _ := json.Marshal(commerceConversationContext{StoreID: &storeID, VariantID: &variantID})
+	service := NewCommerceChannelService(&commerceChannelRepoStub{}, &commerceFoundationRepoStub{}, &commerceCatalogueRepoStub{}, &commerceChannelCustomerStub{}, &commerceChannelOrderStub{}, &commerceChannelPaymentStub{}, &commerceChannelFulfilmentStub{})
+	conversation := &models.CommerceConversation{
+		ID: uuid.New(), OrganizationID: organizationID, CustomerID: customerID,
+		State: models.CommerceConversationStateQuantity, CurrentIntent: optionalChannelString(models.CommerceConversationIntentOrder),
+		Context: contextValue,
+	}
+
+	state, intent, updatedContext, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		&models.CommerceCustomer{ID: customerID, OrganizationID: organizationID},
+		conversation,
+		CommerceChannelInbound{Text: "cancel"},
+	)
+	if err != nil {
+		t.Fatalf("cancel failed: %v", err)
+	}
+	if state != models.CommerceConversationStateIntent || intent != "" || len(replies) != 2 {
+		t.Fatalf("cancel did not return to main menu: state=%s intent=%s replies=%d", state, intent, len(replies))
+	}
+	if updatedContext.StoreID != nil || updatedContext.VariantID != nil || !strings.Contains(replies[0].Body, "ended the current pre-payment session") {
+		t.Fatalf("cancel did not clear context: context=%+v firstReply=%q", updatedContext, replies[0].Body)
+	}
+}
+
 func TestCommerceWhatsAppTrackingRejectsUnknownOrder(t *testing.T) {
 	service := &CommerceChannelService{orders: &commerceChannelOrderStub{err: repository.ErrCommerceNotFound}}
 	configuration := &models.CommerceChannelConfiguration{OrganizationID: uuid.New()}

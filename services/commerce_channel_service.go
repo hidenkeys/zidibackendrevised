@@ -359,8 +359,17 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "We have recorded that your order has not arrived. The store will follow up with the rider."}}, nil
 	}
 
+	if isCommerceRestartOrderCommand(command) {
+		return models.CommerceConversationStateLocation, models.CommerceConversationIntentOrder, commerceConversationContext{}, []repository.CommerceChannelReply{{
+			Body:    "Starting a fresh order. Share your WhatsApp location to use the nearest open store, or choose List stores.",
+			Options: []repository.CommerceChannelReplyOption{{ID: "stores:list", Title: "List stores"}},
+		}}, nil
+	}
 	if isCommerceMenuCommand(command) {
-		return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{s.intentReply(configuration)}, nil
+		return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{
+			{Body: "No problem. I have ended the current pre-payment session."},
+			s.intentReply(configuration),
+		}, nil
 	}
 	if state == "" || state == models.CommerceConversationStateWelcome {
 		return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{s.intentReply(configuration)}, nil
@@ -943,10 +952,24 @@ func parseCommerceDeliveryConfirmation(value string) (string, uuid.UUID, bool) {
 
 func isCommerceMenuCommand(value string) bool {
 	switch strings.TrimSpace(strings.ToLower(value)) {
-	case "menu", "main menu", "cancel", "start over":
+	case "menu", "main menu", "cancel", "stop", "end", "quit", "start over", "restart":
 		return true
 	default:
 		return false
+	}
+}
+
+func isCommerceRestartOrderCommand(value string) bool {
+	normalized := strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(value))), " ")
+	if normalized == "" {
+		return false
+	}
+	switch normalized {
+	case "hi", "hello", "hey", "start", "order", "shop", "intent:order":
+		return true
+	default:
+		return strings.Contains(normalized, "would like to place an order") ||
+			strings.Contains(normalized, "place an order from")
 	}
 }
 

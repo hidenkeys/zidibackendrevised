@@ -22,13 +22,13 @@
       "preparation_minutes": 20,
       "status": "active",
       "hours": [
-        { "day_of_week": 0, "open_minute": 630, "close_minute": 1200, "is_closed": false },
-        { "day_of_week": 1, "open_minute": 630, "close_minute": 1200, "is_closed": false },
-        { "day_of_week": 2, "open_minute": 630, "close_minute": 1200, "is_closed": false },
-        { "day_of_week": 3, "open_minute": 630, "close_minute": 1200, "is_closed": false },
-        { "day_of_week": 4, "open_minute": 630, "close_minute": 1200, "is_closed": false },
-        { "day_of_week": 5, "open_minute": 630, "close_minute": 1200, "is_closed": false },
-        { "day_of_week": 6, "open_minute": 630, "close_minute": 1200, "is_closed": false }
+        { "day_of_week": 0, "open_minute": 0, "close_minute": 1440, "is_closed": false },
+        { "day_of_week": 1, "open_minute": 0, "close_minute": 1440, "is_closed": false },
+        { "day_of_week": 2, "open_minute": 0, "close_minute": 1440, "is_closed": false },
+        { "day_of_week": 3, "open_minute": 0, "close_minute": 1440, "is_closed": false },
+        { "day_of_week": 4, "open_minute": 0, "close_minute": 1440, "is_closed": false },
+        { "day_of_week": 5, "open_minute": 0, "close_minute": 1440, "is_closed": false },
+        { "day_of_week": 6, "open_minute": 0, "close_minute": 1440, "is_closed": false }
       ],
       "fulfilment_modes": [
         { "mode": "customer_pickup", "enabled": true },

@@ -150,9 +150,15 @@ func upsertStore(tx *gorm.DB, organizationID uuid.UUID, config StoreConfig) (mod
 
 	for _, hour := range config.Hours {
 		var existing models.CommerceStoreHour
-		err := tx.Unscoped().Where("organization_id = ? AND store_id = ? AND day_of_week = ?", organizationID, item.ID, hour.DayOfWeek).First(&existing).Error
+		hourLookup := tx.Where("organization_id = ? AND store_id = ? AND day_of_week = ?", organizationID, item.ID, hour.DayOfWeek)
+		err := hourLookup.First(&existing).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			existing = models.CommerceStoreHour{ID: uuid.New(), OrganizationID: organizationID, StoreID: item.ID}
+			err = hourLookup.Unscoped().First(&existing).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				existing = models.CommerceStoreHour{ID: uuid.New(), OrganizationID: organizationID, StoreID: item.ID}
+			} else if err != nil {
+				return item, fmt.Errorf("find deleted store hours %s: %w", config.Code, err)
+			}
 		} else if err != nil {
 			return item, fmt.Errorf("find store hours %s: %w", config.Code, err)
 		}
@@ -169,9 +175,15 @@ func upsertStore(tx *gorm.DB, organizationID uuid.UUID, config StoreConfig) (mod
 	}
 	for _, mode := range config.FulfilmentModes {
 		var existing models.CommerceStoreFulfilmentMode
-		err := tx.Unscoped().Where("organization_id = ? AND store_id = ? AND mode = ?", organizationID, item.ID, mode.Mode).First(&existing).Error
+		modeLookup := tx.Where("organization_id = ? AND store_id = ? AND mode = ?", organizationID, item.ID, mode.Mode)
+		err := modeLookup.First(&existing).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			existing = models.CommerceStoreFulfilmentMode{ID: uuid.New(), OrganizationID: organizationID, StoreID: item.ID}
+			err = modeLookup.Unscoped().First(&existing).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				existing = models.CommerceStoreFulfilmentMode{ID: uuid.New(), OrganizationID: organizationID, StoreID: item.ID}
+			} else if err != nil {
+				return item, fmt.Errorf("find deleted store fulfilment %s: %w", config.Code, err)
+			}
 		} else if err != nil {
 			return item, fmt.Errorf("find store fulfilment %s: %w", config.Code, err)
 		}

@@ -5275,6 +5275,9 @@ components:
           type: string
           minLength: 8
           maxLength: 200
+        renew_expired:
+          type: boolean
+          default: false
 
     TransitionCommerceOrderRequest:
       type: object

@@ -37,6 +37,8 @@ type CommercePaymentPreparationInput struct {
 	IdempotencyKey    string
 	PayerEmail        string
 	Now               time.Time
+	PaymentExpiresAt  time.Time
+	RenewExpired      bool
 }
 
 type CommercePaymentPreparation struct {
@@ -132,7 +134,11 @@ func (r *CommercePaymentRepoPG) PreparePayment(ctx context.Context, input Commer
 			return existingErr
 		}
 
-		if (order.Status == models.CommerceOrderStatusPendingPayment || order.Status == models.CommerceOrderStatusPaymentFailed) && !order.PaymentExpiresAt.After(input.Now) {
+		paymentExpiresAt := input.PaymentExpiresAt.UTC()
+		if paymentExpiresAt.IsZero() {
+			paymentExpiresAt = order.PaymentExpiresAt
+		}
+		if (order.Status == models.CommerceOrderStatusPendingPayment || order.Status == models.CommerceOrderStatusPaymentFailed) && !order.PaymentExpiresAt.After(input.Now) && !input.RenewExpired {
 			if err := expireCommerceOrderPayment(tx, &order, input.Now); err != nil {
 				return err
 			}
@@ -167,6 +173,14 @@ func (r *CommercePaymentRepoPG) PreparePayment(ctx context.Context, input Commer
 			}
 			result.Session = session
 			return nil
+		}
+		if input.RenewExpired {
+			if paymentExpiresAt.IsZero() || !paymentExpiresAt.After(input.Now) {
+				return ErrCommercePaymentExpired
+			}
+			if err := renewCommerceOrderPayment(tx, &order, paymentExpiresAt, input.Now); err != nil {
+				return err
+			}
 		}
 		if order.Status != models.CommerceOrderStatusPendingPayment && order.Status != models.CommerceOrderStatusPaymentFailed {
 			return ErrCommercePaymentState
@@ -540,7 +554,7 @@ func (r *CommercePaymentRepoPG) ApplyVerification(ctx context.Context, input Com
 func getOrCreateCommerceInvoice(tx *gorm.DB, order *models.CommerceOrder, invoiceID uuid.UUID, invoiceNumber string, now time.Time) (*models.CommerceInvoice, error) {
 	var existing models.CommerceInvoice
 	err := tx.Preload("Items", func(query *gorm.DB) *gorm.DB { return query.Order("created_at ASC") }).
-		Where("organization_id = ? AND order_id = ?", order.OrganizationID, order.ID).
+		Where("organization_id = ? AND order_id = ? AND status = ?", order.OrganizationID, order.ID, models.CommerceInvoiceStatusIssued).
 		First(&existing).Error
 	if err == nil {
 		return &existing, nil
@@ -650,6 +664,91 @@ func expireCommerceOrderPayment(tx *gorm.DB, order *models.CommerceOrder, now ti
 		IdempotencyKey: "payment-expiry:" + order.ID.String(), CreatedAt: now,
 	}
 	return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&event).Error
+}
+
+func renewCommerceOrderPayment(tx *gorm.DB, order *models.CommerceOrder, paymentExpiresAt, now time.Time) error {
+	switch order.Status {
+	case models.CommerceOrderStatusPendingPayment, models.CommerceOrderStatusPaymentFailed, models.CommerceOrderStatusPaymentExpired:
+	default:
+		return ErrCommercePaymentState
+	}
+	var items []models.CommerceOrderItem
+	if err := tx.Where("organization_id = ? AND order_id = ?", order.OrganizationID, order.ID).
+		Order("variant_id ASC").
+		Find(&items).Error; err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		return ErrCommercePaymentState
+	}
+	if err := releaseCommerceOrderReservations(tx, order); err != nil {
+		return err
+	}
+	for index := range items {
+		item := &items[index]
+		reservationID := uuid.New()
+		reservation := models.CommerceInventoryReservation{
+			ID: reservationID, OrganizationID: order.OrganizationID, StoreID: order.StoreID,
+			VariantID: item.VariantID, ReservationKey: commerceOrderReservationKey(order.ID, item.VariantID) + ":renew:" + reservationID.String(),
+			Quantity: item.Quantity, Status: models.InventoryReservationActive, ExpiresAt: paymentExpiresAt,
+		}
+		result := tx.Model(&models.CommerceInventoryLevel{}).
+			Where("organization_id = ? AND store_id = ? AND variant_id = ? AND quantity_on_hand - quantity_reserved >= ?", order.OrganizationID, order.StoreID, item.VariantID, item.Quantity).
+			Updates(map[string]interface{}{
+				"quantity_reserved": gorm.Expr("quantity_reserved + ?", item.Quantity),
+				"version":           gorm.Expr("version + 1"),
+				"updated_at":        now,
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected != 1 {
+			return ErrCommerceInventoryUnavailable
+		}
+		if err := tx.Create(&reservation).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(item).Update("inventory_reservation_id", reservation.ID).Error; err != nil {
+			return err
+		}
+		movement := models.CommerceInventoryMovement{
+			ID: uuid.New(), OrganizationID: order.OrganizationID, StoreID: order.StoreID,
+			VariantID: item.VariantID, ReservationID: &reservation.ID,
+			MovementType: models.InventoryMovementReservation, QuantityReservedDelta: item.Quantity,
+			Reference: commerceOrderReservationMovementReference(reservation.ID, "renew"),
+			Reason:    "inventory reserved for renewed payment window",
+		}
+		if err := tx.Create(&movement).Error; err != nil {
+			return err
+		}
+	}
+	fromStatus := order.Status
+	if err := tx.Model(order).Updates(map[string]interface{}{
+		"status": models.CommerceOrderStatusPendingPayment, "payment_expires_at": paymentExpiresAt,
+		"version": gorm.Expr("version + 1"), "updated_at": now,
+	}).Error; err != nil {
+		return err
+	}
+	order.Status = models.CommerceOrderStatusPendingPayment
+	order.PaymentExpiresAt = paymentExpiresAt
+	if err := tx.Model(&models.CommercePaymentTransaction{}).
+		Where("organization_id = ? AND order_id = ? AND status IN ?", order.OrganizationID, order.ID, []string{models.CommercePaymentStatusInitializing, models.CommercePaymentStatusPending}).
+		Updates(map[string]interface{}{"status": models.CommercePaymentStatusExpired, "failed_at": now, "failure_reason": "payment link replaced", "updated_at": now}).Error; err != nil {
+		return err
+	}
+	if err := tx.Model(&models.CommerceInvoice{}).
+		Where("organization_id = ? AND order_id = ? AND status = ?", order.OrganizationID, order.ID, models.CommerceInvoiceStatusIssued).
+		Updates(map[string]interface{}{"status": models.CommerceInvoiceStatusVoid, "voided_at": now, "updated_at": now}).Error; err != nil {
+		return err
+	}
+	event := models.CommerceOrderEvent{
+		ID: uuid.New(), OrganizationID: order.OrganizationID, OrderID: order.ID,
+		EventType: models.CommerceOrderEventPaymentInitiated, FromStatus: &fromStatus,
+		ToStatus: models.CommerceOrderStatusPendingPayment, ActorType: models.CommerceOrderActorSystem,
+		Reason: "payment link regenerated", Metadata: json.RawMessage(`{}`),
+		IdempotencyKey: "payment-renewal:" + order.ID.String() + ":" + paymentExpiresAt.Format(time.RFC3339Nano), CreatedAt: now,
+	}
+	return tx.Create(&event).Error
 }
 
 func commitCommercePaymentInventory(tx *gorm.DB, order *models.CommerceOrder, paymentID uuid.UUID, now time.Time) error {

@@ -1297,6 +1297,7 @@ type InitializeCommercePaymentRequest struct {
 	OrganizationId *openapi_types.UUID `json:"organization_id"`
 	PayerEmail     *string             `json:"payer_email,omitempty"`
 	Provider       *string             `json:"provider,omitempty"`
+	RenewExpired   *bool               `json:"renew_expired,omitempty"`
 }
 
 // LoginRequest defines model for LoginRequest.

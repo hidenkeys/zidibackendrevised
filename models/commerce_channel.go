@@ -22,6 +22,7 @@ const (
 	CommerceConversationStateFulfilment           = "fulfilment"
 	CommerceConversationStateDeliveryAddress      = "delivery_address"
 	CommerceConversationStatePaymentEmail         = "payment_email"
+	CommerceConversationStatePaymentRenewal       = "payment_renewal"
 	CommerceConversationStateOrderID              = "order_id"
 	CommerceConversationStateComplaintOrder       = "complaint_order"
 	CommerceConversationStateComplaintDescription = "complaint_description"

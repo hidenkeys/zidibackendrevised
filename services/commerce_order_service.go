@@ -161,6 +161,34 @@ func (s *CommerceOrderService) SetOrderDestinationForChannel(ctx context.Context
 	return s.repo.SetOrderDestination(ctx, organizationID, customerID, orderID, address, latitude, longitude)
 }
 
+func (s *CommerceOrderService) CancelOrderForChannel(ctx context.Context, organizationID, customerID, orderID uuid.UUID, reason string) (*models.CommerceOrder, error) {
+	reason = strings.TrimSpace(reason)
+	if organizationID == uuid.Nil || customerID == uuid.Nil || orderID == uuid.Nil {
+		return nil, ErrCommerceForbidden
+	}
+	order, err := s.repo.GetOrder(ctx, organizationID, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order.CustomerID != customerID {
+		return nil, repository.ErrCommerceNotFound
+	}
+	if reason == "" {
+		reason = "cancelled by customer before payment"
+	}
+	return s.repo.TransitionOrder(ctx, repository.CommerceOrderTransitionInput{
+		OrganizationID: organizationID,
+		OrderID:        order.ID,
+		FromStatus:     order.Status,
+		ToStatus:       models.CommerceOrderStatusCancelled,
+		EventType:      models.CommerceOrderEventCancelled,
+		Reason:         reason,
+		IdempotencyKey: "wa-cancel:" + order.ID.String(),
+		ActorType:      models.CommerceOrderActorChannel,
+		Allowed:        isValidCommerceOrderTransition(order.Status, models.CommerceOrderStatusCancelled, order.FulfilmentMode),
+	})
+}
+
 func (s *CommerceOrderService) GetOrder(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, orderID uuid.UUID) (*models.CommerceOrder, error) {
 	if !canAccessCommerce(actor.Role) {
 		return nil, ErrCommerceForbidden

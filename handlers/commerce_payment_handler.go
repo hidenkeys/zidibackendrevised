@@ -27,7 +27,7 @@ func (s Server) InitializeCommerceOrderPayment(c *fiber.Ctx, orderID uuid.UUID) 
 	}
 	session, created, err := s.commercePaymentService.InitializePayment(c.UserContext(), actor, request.OrganizationId, orderID, services.InitializeCommercePaymentInput{
 		Provider: optionalString(request.Provider), PayerEmail: optionalString(request.PayerEmail),
-		IdempotencyKey: request.IdempotencyKey,
+		IdempotencyKey: request.IdempotencyKey, RenewExpired: optionalBoolValue(request.RenewExpired),
 	})
 	if err != nil {
 		return commerceError(c, err)

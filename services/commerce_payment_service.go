@@ -24,6 +24,7 @@ type InitializeCommercePaymentInput struct {
 	Provider       string
 	PayerEmail     string
 	IdempotencyKey string
+	RenewExpired   bool
 }
 
 type CommercePaymentWebhookResult struct {
@@ -120,11 +121,15 @@ func (s *CommercePaymentService) initializePayment(ctx context.Context, organiza
 
 	now := s.now().UTC()
 	paymentID, invoiceID := uuid.New(), uuid.New()
+	paymentExpiresAt := order.PaymentExpiresAt
+	if input.RenewExpired {
+		paymentExpiresAt = now.Add(commercePaymentReservationLifetime)
+	}
 	preparation, err := s.repo.PreparePayment(ctx, repository.CommercePaymentPreparationInput{
 		PaymentID: paymentID, InvoiceID: invoiceID, OrganizationID: organizationID, OrderID: orderID,
 		InvoiceNumber: commerceInvoiceNumber(now, invoiceID), Provider: providerName,
 		ProviderReference: commercePaymentReference(paymentID), IdempotencyKey: idempotencyKey,
-		PayerEmail: payerEmail, Now: now,
+		PayerEmail: payerEmail, Now: now, PaymentExpiresAt: paymentExpiresAt, RenewExpired: input.RenewExpired,
 	})
 	if err != nil {
 		return nil, false, err

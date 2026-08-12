@@ -112,8 +112,9 @@ func (s *commerceChannelCustomerStub) SetCartItemForChannel(_ context.Context, o
 }
 
 type commerceChannelOrderStub struct {
-	order *models.CommerceOrder
-	err   error
+	order     *models.CommerceOrder
+	err       error
+	cancelled bool
 }
 
 func (s *commerceChannelOrderStub) CheckoutCartForChannel(_ context.Context, organizationID, customerID uuid.UUID, input CheckoutCommerceCartInput) (*models.CommerceOrder, bool, error) {
@@ -136,13 +137,24 @@ func (s *commerceChannelOrderStub) SetOrderDestinationForChannel(_ context.Conte
 	copy.DestinationAddress, copy.DestinationLatitude, copy.DestinationLongitude = &address, latitude, longitude
 	return &copy, nil
 }
+func (s *commerceChannelOrderStub) CancelOrderForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (*models.CommerceOrder, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	s.cancelled = true
+	copy := *s.order
+	copy.Status = models.CommerceOrderStatusCancelled
+	return &copy, nil
+}
 
 type commerceChannelPaymentStub struct {
 	session *repository.CommercePaymentSession
 	err     error
+	input   InitializeCommercePaymentInput
 }
 
-func (s *commerceChannelPaymentStub) InitializePaymentForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, InitializeCommercePaymentInput) (*repository.CommercePaymentSession, bool, error) {
+func (s *commerceChannelPaymentStub) InitializePaymentForChannel(_ context.Context, _, _, _ uuid.UUID, input InitializeCommercePaymentInput) (*repository.CommercePaymentSession, bool, error) {
+	s.input = input
 	if s.err != nil {
 		return nil, false, s.err
 	}
@@ -347,6 +359,90 @@ func TestCommerceWhatsAppPaymentEmailMissingLinkReturnsRetryMessage(t *testing.T
 	}
 	if !strings.Contains(replies[0].Body, "could not create the payment link") || updatedContext.OrderID == nil || *updatedContext.OrderID != orderID {
 		t.Fatalf("retry reply/context missing expected details: body=%q context=%+v", replies[0].Body, updatedContext)
+	}
+}
+
+func TestCommerceWhatsAppExpiredPaymentAsksBeforeRegenerating(t *testing.T) {
+	organizationID, customerID, orderID, cartID, storeID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	contextValue := commerceConversationContext{
+		CartID: &cartID, StoreID: &storeID, OrderID: &orderID,
+		FulfilmentMode: models.FulfilmentModeCustomerPickup,
+	}
+	payments := &commerceChannelPaymentStub{err: repository.ErrCommercePaymentExpired}
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{}, &commerceFoundationRepoStub{}, &commerceCatalogueRepoStub{},
+		&commerceChannelCustomerStub{cartID: cartID},
+		&commerceChannelOrderStub{order: &models.CommerceOrder{ID: orderID, StoreID: storeID}},
+		payments,
+		&commerceChannelFulfilmentStub{},
+	)
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Test Customer"}
+	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStatePaymentEmail}
+	encodedContext, _ := json.Marshal(contextValue)
+	conversation.Context = encodedContext
+	conversation.CurrentIntent = optionalChannelString(models.CommerceConversationIntentOrder)
+
+	state, intent, updatedContext, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID},
+		customer,
+		conversation,
+		CommerceChannelInbound{Text: "customer@example.com"},
+	)
+	if err != nil {
+		t.Fatalf("expired payment should become a renewal prompt: %v", err)
+	}
+	if state != models.CommerceConversationStatePaymentRenewal || intent != models.CommerceConversationIntentOrder || len(replies) != 1 {
+		t.Fatalf("unexpected renewal prompt: state=%s intent=%s replies=%d", state, intent, len(replies))
+	}
+	if updatedContext.OrderID == nil || *updatedContext.OrderID != orderID || updatedContext.PaymentEmail != "customer@example.com" {
+		t.Fatalf("renewal context missing order/email: %+v", updatedContext)
+	}
+	if len(replies[0].Options) != 2 || payments.input.RenewExpired {
+		t.Fatalf("renewal prompt/options or initial renewal flag wrong: reply=%+v input=%+v", replies[0], payments.input)
+	}
+}
+
+func TestCommerceWhatsAppExpiredPaymentDecisionCanRenewOrCancel(t *testing.T) {
+	organizationID, customerID, orderID := uuid.New(), uuid.New(), uuid.New()
+	email := "customer@example.com"
+	contextValue, _ := json.Marshal(commerceConversationContext{OrderID: &orderID, PaymentEmail: email})
+	conversation := &models.CommerceConversation{
+		ID: uuid.New(), State: models.CommerceConversationStatePaymentRenewal,
+		CurrentIntent: optionalChannelString(models.CommerceConversationIntentOrder), Context: contextValue,
+	}
+	payments := &commerceChannelPaymentStub{}
+	orderStub := &commerceChannelOrderStub{order: &models.CommerceOrder{ID: orderID, CustomerID: customerID, Status: models.CommerceOrderStatusPaymentExpired}}
+	service := NewCommerceChannelService(&commerceChannelRepoStub{}, &commerceFoundationRepoStub{}, &commerceCatalogueRepoStub{}, &commerceChannelCustomerStub{}, orderStub, payments, &commerceChannelFulfilmentStub{})
+	service.now = func() time.Time { return time.Date(2026, 8, 12, 19, 0, 0, 0, time.UTC) }
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, Email: &email}
+
+	state, _, _, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID},
+		customer,
+		conversation,
+		CommerceChannelInbound{SelectionID: "payment:renew"},
+	)
+	if err != nil || state != models.CommerceConversationStateIntent || len(replies) != 1 || !payments.input.RenewExpired {
+		t.Fatalf("renew decision did not create a fresh link: state=%s replies=%+v input=%+v err=%v", state, replies, payments.input, err)
+	}
+
+	payments = &commerceChannelPaymentStub{}
+	orderStub = &commerceChannelOrderStub{order: &models.CommerceOrder{ID: orderID, CustomerID: customerID, Status: models.CommerceOrderStatusPaymentExpired}}
+	service = NewCommerceChannelService(&commerceChannelRepoStub{}, &commerceFoundationRepoStub{}, &commerceCatalogueRepoStub{}, &commerceChannelCustomerStub{}, orderStub, payments, &commerceChannelFulfilmentStub{})
+	state, _, updatedContext, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		customer,
+		conversation,
+		CommerceChannelInbound{SelectionID: "payment:cancel"},
+	)
+	if err != nil || state != models.CommerceConversationStateIntent || !orderStub.cancelled || len(replies) != 2 {
+		t.Fatalf("cancel decision did not cancel order: state=%s cancelled=%t replies=%+v err=%v", state, orderStub.cancelled, replies, err)
+	}
+	if updatedContext.OrderID != nil || updatedContext.PaymentEmail != "" {
+		t.Fatalf("cancel decision did not clear context: %+v", updatedContext)
 	}
 }
 

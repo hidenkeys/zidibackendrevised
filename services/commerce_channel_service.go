@@ -72,6 +72,7 @@ type commerceChannelOrder interface {
 	CheckoutCartForChannel(context.Context, uuid.UUID, uuid.UUID, CheckoutCommerceCartInput) (*models.CommerceOrder, bool, error)
 	GetOrderForChannel(context.Context, uuid.UUID, uuid.UUID, string) (*models.CommerceOrder, error)
 	SetOrderDestinationForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string, *float64, *float64) (*models.CommerceOrder, error)
+	CancelOrderForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (*models.CommerceOrder, error)
 }
 
 type commerceChannelPayment interface {
@@ -308,6 +309,7 @@ type commerceConversationContext struct {
 	DestinationLongitude *float64    `json:"destination_longitude,omitempty"`
 	OptionKind           string      `json:"option_kind,omitempty"`
 	OptionIDs            []uuid.UUID `json:"option_ids,omitempty"`
+	PaymentEmail         string      `json:"payment_email,omitempty"`
 }
 
 func (s *CommerceChannelService) processInbound(ctx context.Context, configuration *models.CommerceChannelConfiguration, customer *models.CommerceCustomer, conversation *models.CommerceConversation, input CommerceChannelInbound) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
@@ -365,7 +367,7 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 			Options: []repository.CommerceChannelReplyOption{{ID: "stores:list", Title: "List stores"}},
 		}}, nil
 	}
-	if isCommerceMenuCommand(command) {
+	if isCommerceMenuCommand(command) && state != models.CommerceConversationStatePaymentRenewal {
 		return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{
 			{Body: "No problem. I have ended the current pre-payment session."},
 			s.intentReply(configuration),
@@ -376,6 +378,33 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 	}
 
 	switch state {
+	case models.CommerceConversationStatePaymentRenewal:
+		if conversationContext.OrderID == nil {
+			return models.CommerceConversationStateLocation, models.CommerceConversationIntentOrder, commerceConversationContext{}, []repository.CommerceChannelReply{{
+				Body:    "That payment session is no longer available. Start a fresh order by choosing a store.",
+				Options: []repository.CommerceChannelReplyOption{{ID: "stores:list", Title: "List stores"}},
+			}}, nil
+		}
+		if command == "yes" || command == "y" || command == "proceed" || command == "continue" || command == "payment:renew" {
+			email := strings.TrimSpace(conversationContext.PaymentEmail)
+			if email == "" && customer.Email != nil {
+				email = strings.TrimSpace(*customer.Email)
+			}
+			if email == "" {
+				return models.CommerceConversationStatePaymentEmail, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter an email address so I can generate a new payment link."}}, nil
+			}
+			return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, *conversationContext.OrderID, email, intent, conversationContext, true)
+		}
+		if command == "no" || command == "n" || command == "cancel" || command == "payment:cancel" {
+			if _, err := s.orders.CancelOrderForChannel(ctx, configuration.OrganizationID, customer.ID, *conversationContext.OrderID, "payment link expired and customer declined a new link"); err != nil {
+				return state, intent, conversationContext, nil, err
+			}
+			return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{
+				{Body: "No problem. I have cancelled that unpaid order."},
+				s.intentReply(configuration),
+			}, nil
+		}
+		return state, intent, conversationContext, []repository.CommerceChannelReply{paymentRenewalReply("That payment link has expired. Would you like me to generate a new one?")}, nil
 	case models.CommerceConversationStateIntent:
 		switch parseCommerceIntent(command) {
 		case models.CommerceConversationIntentOrder:
@@ -524,8 +553,9 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		if err != nil {
 			return state, intent, conversationContext, nil, err
 		}
+		conversationContext.PaymentEmail = text
 		if conversationContext.OrderID != nil {
-			return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, *conversationContext.OrderID, text, intent, conversationContext)
+			return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, *conversationContext.OrderID, text, intent, conversationContext, false)
 		}
 		return s.checkoutAndPayment(ctx, configuration, customer, conversation.ID, intent, conversationContext)
 	case models.CommerceConversationStateOrderID:
@@ -612,7 +642,8 @@ func (s *CommerceChannelService) checkoutAndPayment(ctx context.Context, configu
 		}
 	}
 	conversationContext.OrderID = &order.ID
-	return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, order.ID, *customer.Email, intent, conversationContext)
+	conversationContext.PaymentEmail = *customer.Email
+	return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, order.ID, *customer.Email, intent, conversationContext, false)
 }
 
 func (s *CommerceChannelService) collectCustomerDetailsOrCheckout(ctx context.Context, configuration *models.CommerceChannelConfiguration, customer *models.CommerceCustomer, conversationID uuid.UUID, intent string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
@@ -634,11 +665,22 @@ func conversationPhone(customer *models.CommerceCustomer) string {
 	return ""
 }
 
-func (s *CommerceChannelService) initializeChannelPayment(ctx context.Context, organizationID, customerID, orderID uuid.UUID, payerEmail, intent string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
+func (s *CommerceChannelService) initializeChannelPayment(ctx context.Context, organizationID, customerID, orderID uuid.UUID, payerEmail, intent string, conversationContext commerceConversationContext, renewExpired bool) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
+	keyPrefix := "wa-payment:"
+	if renewExpired {
+		keyPrefix = fmt.Sprintf("wa-payment-renew:%s:%d:", orderID.String(), s.now().UTC().Unix()/60)
+	}
 	session, _, err := s.payments.InitializePaymentForChannel(ctx, organizationID, customerID, orderID, InitializeCommercePaymentInput{
-		PayerEmail: payerEmail, IdempotencyKey: "wa-payment:" + orderID.String(),
+		PayerEmail: payerEmail, IdempotencyKey: keyPrefix + orderID.String(), RenewExpired: renewExpired,
 	})
 	if err != nil {
+		if errors.Is(err, repository.ErrCommercePaymentExpired) {
+			conversationContext.OrderID = &orderID
+			conversationContext.PaymentEmail = payerEmail
+			return models.CommerceConversationStatePaymentRenewal, intent, conversationContext, []repository.CommerceChannelReply{
+				paymentRenewalReply("That payment link has expired. Would you like me to generate a new one?"),
+			}, nil
+		}
 		if errors.Is(err, ErrCommercePaymentProviderUnavailable) {
 			return models.CommerceConversationStatePaymentEmail, intent, conversationContext, []repository.CommerceChannelReply{{
 				Body: "I could not create the payment link right now. Please reply with the same email address again in a moment, or type Menu to restart.",
@@ -654,6 +696,16 @@ func (s *CommerceChannelService) initializeChannelPayment(ctx context.Context, o
 	return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{{
 		Body: fmt.Sprintf("Invoice %s is ready. Pay securely here: %s", session.Invoice.InvoiceNumber, *session.Payment.AuthorizationURL),
 	}}, nil
+}
+
+func paymentRenewalReply(body string) repository.CommerceChannelReply {
+	return repository.CommerceChannelReply{
+		Body: body,
+		Options: []repository.CommerceChannelReplyOption{
+			{ID: "payment:renew", Title: "Generate new link"},
+			{ID: "payment:cancel", Title: "Cancel order"},
+		},
+	}
 }
 
 func (s *CommerceChannelService) availableStores(ctx context.Context, organizationID uuid.UUID, latitude, longitude *float64) ([]models.CommerceStore, error) {

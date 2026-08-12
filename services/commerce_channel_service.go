@@ -630,10 +630,17 @@ func (s *CommerceChannelService) initializeChannelPayment(ctx context.Context, o
 		PayerEmail: payerEmail, IdempotencyKey: "wa-payment:" + orderID.String(),
 	})
 	if err != nil {
+		if errors.Is(err, ErrCommercePaymentProviderUnavailable) {
+			return models.CommerceConversationStatePaymentEmail, intent, conversationContext, []repository.CommerceChannelReply{{
+				Body: "I could not create the payment link right now. Please reply with the same email address again in a moment, or type Menu to restart.",
+			}}, nil
+		}
 		return "", "", conversationContext, nil, err
 	}
 	if session == nil || session.Payment == nil || session.Payment.AuthorizationURL == nil {
-		return "", "", conversationContext, nil, fmt.Errorf("%w: payment link is unavailable", ErrCommercePaymentProviderUnavailable)
+		return models.CommerceConversationStatePaymentEmail, intent, conversationContext, []repository.CommerceChannelReply{{
+			Body: "I could not create the payment link right now. Please reply with the same email address again in a moment, or type Menu to restart.",
+		}}, nil
 	}
 	return models.CommerceConversationStateIntent, "", commerceConversationContext{}, []repository.CommerceChannelReply{{
 		Body: fmt.Sprintf("Invoice %s is ready. Pay securely here: %s", session.Invoice.InvoiceNumber, *session.Payment.AuthorizationURL),

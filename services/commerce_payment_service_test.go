@@ -32,7 +32,13 @@ func (s *commercePaymentRepoStub) PreparePayment(_ context.Context, input reposi
 	s.initialize()
 	s.prepareCalls++
 	if existingID, ok := s.paymentByKey[input.OrganizationID.String()+":"+input.IdempotencyKey]; ok {
-		return &repository.CommercePaymentPreparation{Session: cloneCommercePaymentSession(s.sessions[existingID])}, nil
+		session := s.sessions[existingID]
+		if session != nil && session.Payment.Status == models.CommercePaymentStatusFailed && session.Payment.AuthorizationURL == nil {
+			session.Payment.Status = models.CommercePaymentStatusInitializing
+			session.Payment.FailureReason = ""
+			return &repository.CommercePaymentPreparation{Session: cloneCommercePaymentSession(session), Created: true}, nil
+		}
+		return &repository.CommercePaymentPreparation{Session: cloneCommercePaymentSession(session)}, nil
 	}
 	invoice := &models.CommerceInvoice{
 		ID: input.InvoiceID, OrganizationID: input.OrganizationID, OrderID: input.OrderID,
@@ -144,6 +150,7 @@ type commercePaymentProviderStub struct {
 	mu                sync.Mutex
 	validSignature    bool
 	initializeCalls   int
+	initializeErr     error
 	verifyCalls       int
 	initializeRequest payments.InitializeRequest
 	event             *payments.WebhookEvent
@@ -160,6 +167,9 @@ func (s *commercePaymentProviderStub) Initialize(_ context.Context, request paym
 	defer s.mu.Unlock()
 	s.initializeCalls++
 	s.initializeRequest = request
+	if s.initializeErr != nil {
+		return nil, s.initializeErr
+	}
 	return &payments.Initialization{
 		Reference: request.Reference, AuthorizationURL: "https://checkout.paystack.test/session",
 		AccessCode: "access", ProviderResponse: []byte(`{"reference":"ok"}`),
@@ -218,6 +228,36 @@ func TestCommercePaymentInitializationUsesAuthoritativeOrderAmountAndIsIdempoten
 	}
 	if first.Payment.Status != models.CommercePaymentStatusPending || first.Payment.AuthorizationURL == nil {
 		t.Fatalf("payment was not finalized locally: %+v", first.Payment)
+	}
+}
+
+func TestCommercePaymentInitializationRetriesFailedSessionWithoutLink(t *testing.T) {
+	organizationID, orderID, customerID, storeID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	orderRepo := seededCommerceOrderRepo(&models.CommerceOrder{
+		ID: orderID, OrganizationID: organizationID, CustomerID: customerID, StoreID: storeID,
+		Status: models.CommerceOrderStatusPendingPayment, Currency: "NGN", TotalMinor: 420000,
+		PaymentExpiresAt: time.Now().Add(30 * time.Minute),
+	})
+	email := "customer@example.com"
+	customerRepo := seededCommerceCustomerRepo(organizationID, customerID)
+	customerRepo.customers[customerID].Email = &email
+	paymentRepo := &commercePaymentRepoStub{}
+	provider := &commercePaymentProviderStub{initializeErr: errors.New("temporary provider failure")}
+	service := NewCommercePaymentService(paymentRepo, orderRepo, customerRepo, &commerceFoundationRepoStub{}, payments.NewRegistry(provider), "paystack", "")
+	actor := CommerceActor{UserID: uuid.New(), OrganizationID: organizationID, Role: utils.RoleMerchantAdmin}
+
+	first, _, err := service.InitializePayment(context.Background(), actor, nil, orderID, InitializeCommercePaymentInput{IdempotencyKey: "payment-retry-001"})
+	if !errors.Is(err, ErrCommercePaymentProviderUnavailable) || first != nil {
+		t.Fatalf("expected initial provider failure, session=%v err=%v", first, err)
+	}
+	provider.initializeErr = nil
+
+	second, created, err := service.InitializePayment(context.Background(), actor, nil, orderID, InitializeCommercePaymentInput{IdempotencyKey: "payment-retry-001"})
+	if err != nil || !created {
+		t.Fatalf("retry failed payment: created=%v err=%v", created, err)
+	}
+	if second.Payment.AuthorizationURL == nil || provider.initializeCalls != 2 {
+		t.Fatalf("failed initialization was not retried: second=%s link=%v calls=%d", second.Payment.ID, second.Payment.AuthorizationURL, provider.initializeCalls)
 	}
 }
 

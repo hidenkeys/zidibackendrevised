@@ -137,9 +137,18 @@ func (s *commerceChannelOrderStub) SetOrderDestinationForChannel(_ context.Conte
 	return &copy, nil
 }
 
-type commerceChannelPaymentStub struct{}
+type commerceChannelPaymentStub struct {
+	session *repository.CommercePaymentSession
+	err     error
+}
 
-func (*commerceChannelPaymentStub) InitializePaymentForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, InitializeCommercePaymentInput) (*repository.CommercePaymentSession, bool, error) {
+func (s *commerceChannelPaymentStub) InitializePaymentForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, InitializeCommercePaymentInput) (*repository.CommercePaymentSession, bool, error) {
+	if s.err != nil {
+		return nil, false, s.err
+	}
+	if s.session != nil {
+		return s.session, false, nil
+	}
 	link := "https://pay.example/checkout"
 	return &repository.CommercePaymentSession{
 		Invoice: &models.CommerceInvoice{InvoiceNumber: "INV-100"}, Payment: &models.CommercePaymentTransaction{AuthorizationURL: &link},
@@ -295,6 +304,49 @@ func TestCommerceWhatsAppOrderFlowUsesCoreServicesAndPersistsState(t *testing.T)
 	}
 	if conversation.State != models.CommerceConversationStateIntent || !strings.Contains(string(conversation.Context), "{}") {
 		t.Fatalf("checkout did not complete back to the intent menu: state=%s context=%s", conversation.State, conversation.Context)
+	}
+}
+
+func TestCommerceWhatsAppPaymentEmailMissingLinkReturnsRetryMessage(t *testing.T) {
+	organizationID, customerID, orderID, cartID, storeID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	contextValue := commerceConversationContext{
+		CartID: &cartID, StoreID: &storeID, OrderID: &orderID,
+		FulfilmentMode: models.FulfilmentModeCustomerPickup,
+	}
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{}, &commerceFoundationRepoStub{}, &commerceCatalogueRepoStub{},
+		&commerceChannelCustomerStub{cartID: cartID},
+		&commerceChannelOrderStub{order: &models.CommerceOrder{
+			ID: orderID, OrganizationID: organizationID, CustomerID: customerID, StoreID: storeID,
+			OrderNumber: "ORD-101", Currency: "NGN", TotalMinor: 420000,
+		}},
+		&commerceChannelPaymentStub{session: &repository.CommercePaymentSession{
+			Invoice: &models.CommerceInvoice{InvoiceNumber: "INV-101"},
+			Payment: &models.CommercePaymentTransaction{},
+		}},
+		&commerceChannelFulfilmentStub{},
+	)
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Test Customer"}
+	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStatePaymentEmail}
+
+	encodedContext, _ := json.Marshal(contextValue)
+	conversation.Context = encodedContext
+	conversation.CurrentIntent = optionalChannelString(models.CommerceConversationIntentOrder)
+	state, intent, updatedContext, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID},
+		customer,
+		conversation,
+		CommerceChannelInbound{Text: "customer@example.com"},
+	)
+	if err != nil {
+		t.Fatalf("missing payment link should not fail the webhook: %v", err)
+	}
+	if state != models.CommerceConversationStatePaymentEmail || intent != models.CommerceConversationIntentOrder || len(replies) != 1 {
+		t.Fatalf("unexpected retry response: state=%s intent=%s replies=%d", state, intent, len(replies))
+	}
+	if !strings.Contains(replies[0].Body, "could not create the payment link") || updatedContext.OrderID == nil || *updatedContext.OrderID != orderID {
+		t.Fatalf("retry reply/context missing expected details: body=%q context=%+v", replies[0].Body, updatedContext)
 	}
 }
 

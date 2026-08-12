@@ -140,6 +140,27 @@ func (r *CommercePaymentRepoPG) PreparePayment(ctx context.Context, input Commer
 			return nil
 		}
 		if existingErr == nil {
+			existingAuthorizationURL := ""
+			if existing.AuthorizationURL != nil {
+				existingAuthorizationURL = strings.TrimSpace(*existing.AuthorizationURL)
+			}
+			if existing.Status == models.CommercePaymentStatusFailed && existingAuthorizationURL == "" {
+				now := input.Now.UTC()
+				if err := tx.Model(&existing).Updates(map[string]interface{}{
+					"status": models.CommercePaymentStatusInitializing, "failure_reason": "",
+					"provider": input.Provider, "payer_email": input.PayerEmail,
+					"provider_response": json.RawMessage(`{}`), "failed_at": nil, "updated_at": now,
+				}).Error; err != nil {
+					return err
+				}
+				session, err := getCommercePaymentSession(tx, input.OrganizationID, existing.ID)
+				if err != nil {
+					return err
+				}
+				result.Session = session
+				result.Created = true
+				return nil
+			}
 			session, err := getCommercePaymentSession(tx, input.OrganizationID, existing.ID)
 			if err != nil {
 				return err

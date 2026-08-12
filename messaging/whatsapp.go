@@ -68,7 +68,7 @@ func (c *MetaWhatsAppClient) Send(ctx context.Context, message WhatsAppOutboundM
 	if len(message.Buttons) > 0 {
 		payload.Type = "interactive"
 		payload.Text = nil
-		payload.Interactive = &metaInteractive{Type: "button", Body: metaText{Body: strings.TrimSpace(message.Body)}}
+		payload.Interactive = &metaInteractive{Type: "button", Body: metaInteractiveBody{Text: strings.TrimSpace(message.Body)}}
 		for _, button := range message.Buttons {
 			id := strings.TrimSpace(button.ID)
 			title := strings.TrimSpace(button.Title)
@@ -126,11 +126,15 @@ type metaText struct {
 }
 
 type metaInteractive struct {
-	Type   string   `json:"type"`
-	Body   metaText `json:"body"`
+	Type   string              `json:"type"`
+	Body   metaInteractiveBody `json:"body"`
 	Action struct {
 		Buttons []metaButton `json:"buttons"`
 	} `json:"action"`
+}
+
+type metaInteractiveBody struct {
+	Text string `json:"text"`
 }
 
 type metaButton struct {

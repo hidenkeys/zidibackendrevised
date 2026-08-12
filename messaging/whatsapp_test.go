@@ -29,6 +29,14 @@ func TestMetaWhatsAppClientSendsStableButtonIDs(t *testing.T) {
 		if !strings.Contains(string(encoded), "intent:order") {
 			t.Fatalf("button ID was not preserved: %s", encoded)
 		}
+		interactive, ok := payload["interactive"].(map[string]interface{})
+		if !ok {
+			t.Fatalf("interactive payload is missing: %s", encoded)
+		}
+		body, ok := interactive["body"].(map[string]interface{})
+		if !ok || body["text"] != "Choose" || body["body"] != nil {
+			t.Fatalf("interactive body does not match Meta's schema: %s", encoded)
+		}
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(bytes.NewBufferString(`{"messages":[{"id":"wamid.123"}]}`))}, nil
 	})}
 

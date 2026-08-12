@@ -23,6 +23,268 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
+// Defines values for AssignCommerceRiderRequestSource.
+const (
+	AssignCommerceRiderRequestSourceCustomer AssignCommerceRiderRequestSource = "customer"
+	AssignCommerceRiderRequestSourceMerchant AssignCommerceRiderRequestSource = "merchant"
+)
+
+// Defines values for CheckoutCommerceCartRequestFulfilmentMode.
+const (
+	CheckoutCommerceCartRequestFulfilmentModeCustomerPickup CheckoutCommerceCartRequestFulfilmentMode = "customer_pickup"
+	CheckoutCommerceCartRequestFulfilmentModeCustomerRider  CheckoutCommerceCartRequestFulfilmentMode = "customer_rider"
+	CheckoutCommerceCartRequestFulfilmentModeMerchantRider  CheckoutCommerceCartRequestFulfilmentMode = "merchant_rider"
+)
+
+// Defines values for CommerceCartStatus.
+const (
+	CommerceCartStatusAbandoned CommerceCartStatus = "abandoned"
+	CommerceCartStatusActive    CommerceCartStatus = "active"
+	CommerceCartStatusConverted CommerceCartStatus = "converted"
+	CommerceCartStatusExpired   CommerceCartStatus = "expired"
+)
+
+// Defines values for CommerceCategoryStatus.
+const (
+	CommerceCategoryStatusActive   CommerceCategoryStatus = "active"
+	CommerceCategoryStatusInactive CommerceCategoryStatus = "inactive"
+)
+
+// Defines values for CommerceChannelConfigurationChannel.
+const (
+	CommerceChannelConfigurationChannelWhatsapp CommerceChannelConfigurationChannel = "whatsapp"
+)
+
+// Defines values for CommerceChannelConfigurationStatus.
+const (
+	CommerceChannelConfigurationStatusActive   CommerceChannelConfigurationStatus = "active"
+	CommerceChannelConfigurationStatusInactive CommerceChannelConfigurationStatus = "inactive"
+)
+
+// Defines values for CommerceComplaintStatus.
+const (
+	Closed     CommerceComplaintStatus = "closed"
+	InProgress CommerceComplaintStatus = "in_progress"
+	Open       CommerceComplaintStatus = "open"
+	Resolved   CommerceComplaintStatus = "resolved"
+)
+
+// Defines values for CommerceCustomerStatus.
+const (
+	CommerceCustomerStatusActive   CommerceCustomerStatus = "active"
+	CommerceCustomerStatusInactive CommerceCustomerStatus = "inactive"
+)
+
+// Defines values for CommerceCustomerIdentityChannel.
+const (
+	CommerceCustomerIdentityChannelEmail    CommerceCustomerIdentityChannel = "email"
+	CommerceCustomerIdentityChannelPhone    CommerceCustomerIdentityChannel = "phone"
+	CommerceCustomerIdentityChannelWeb      CommerceCustomerIdentityChannel = "web"
+	CommerceCustomerIdentityChannelWhatsapp CommerceCustomerIdentityChannel = "whatsapp"
+)
+
+// Defines values for CommerceDeliveryQuoteFeePaymentMode.
+const (
+	DirectToRider CommerceDeliveryQuoteFeePaymentMode = "direct_to_rider"
+	ZidiCollected CommerceDeliveryQuoteFeePaymentMode = "zidi_collected"
+)
+
+// Defines values for CommerceDeliveryQuoteFeeStatus.
+const (
+	CommerceDeliveryQuoteFeeStatusDue          CommerceDeliveryQuoteFeeStatus = "due"
+	CommerceDeliveryQuoteFeeStatusNotCollected CommerceDeliveryQuoteFeeStatus = "not_collected"
+	CommerceDeliveryQuoteFeeStatusPaid         CommerceDeliveryQuoteFeeStatus = "paid"
+	CommerceDeliveryQuoteFeeStatusPaidExternal CommerceDeliveryQuoteFeeStatus = "paid_external"
+)
+
+// Defines values for CommerceDeliveryQuoteSource.
+const (
+	CommerceDeliveryQuoteSourceManual   CommerceDeliveryQuoteSource = "manual"
+	CommerceDeliveryQuoteSourceProvider CommerceDeliveryQuoteSource = "provider"
+)
+
+// Defines values for CommerceDeliveryQuoteStatus.
+const (
+	CommerceDeliveryQuoteStatusAccepted CommerceDeliveryQuoteStatus = "accepted"
+	CommerceDeliveryQuoteStatusExpired  CommerceDeliveryQuoteStatus = "expired"
+	CommerceDeliveryQuoteStatusQuoted   CommerceDeliveryQuoteStatus = "quoted"
+	CommerceDeliveryQuoteStatusRejected CommerceDeliveryQuoteStatus = "rejected"
+)
+
+// Defines values for CommerceFulfilmentMode.
+const (
+	CommerceFulfilmentModeCustomerPickup CommerceFulfilmentMode = "customer_pickup"
+	CommerceFulfilmentModeCustomerRider  CommerceFulfilmentMode = "customer_rider"
+	CommerceFulfilmentModeMerchantRider  CommerceFulfilmentMode = "merchant_rider"
+)
+
+// Defines values for CommerceFulfilmentEventActorType.
+const (
+	CommerceFulfilmentEventActorTypeCustomer CommerceFulfilmentEventActorType = "customer"
+	CommerceFulfilmentEventActorTypeProvider CommerceFulfilmentEventActorType = "provider"
+	CommerceFulfilmentEventActorTypeSystem   CommerceFulfilmentEventActorType = "system"
+	CommerceFulfilmentEventActorTypeUser     CommerceFulfilmentEventActorType = "user"
+)
+
+// Defines values for CommerceFulfilmentStatus.
+const (
+	CommerceFulfilmentStatusAwaitingCustomerConfirmation CommerceFulfilmentStatus = "awaiting_customer_confirmation"
+	CommerceFulfilmentStatusAwaitingQuote                CommerceFulfilmentStatus = "awaiting_quote"
+	CommerceFulfilmentStatusCancelled                    CommerceFulfilmentStatus = "cancelled"
+	CommerceFulfilmentStatusCompleted                    CommerceFulfilmentStatus = "completed"
+	CommerceFulfilmentStatusDelivered                    CommerceFulfilmentStatus = "delivered"
+	CommerceFulfilmentStatusOutForDelivery               CommerceFulfilmentStatus = "out_for_delivery"
+	CommerceFulfilmentStatusReadyForPickup               CommerceFulfilmentStatus = "ready_for_pickup"
+	CommerceFulfilmentStatusRiderAssigned                CommerceFulfilmentStatus = "rider_assigned"
+	CommerceFulfilmentStatusRiderRequested               CommerceFulfilmentStatus = "rider_requested"
+)
+
+// Defines values for CommerceInvoiceFulfilmentMode.
+const (
+	CommerceInvoiceFulfilmentModeCustomerPickup CommerceInvoiceFulfilmentMode = "customer_pickup"
+	CommerceInvoiceFulfilmentModeCustomerRider  CommerceInvoiceFulfilmentMode = "customer_rider"
+	CommerceInvoiceFulfilmentModeMerchantRider  CommerceInvoiceFulfilmentMode = "merchant_rider"
+)
+
+// Defines values for CommerceInvoiceStatus.
+const (
+	CommerceInvoiceStatusIssued CommerceInvoiceStatus = "issued"
+	CommerceInvoiceStatusPaid   CommerceInvoiceStatus = "paid"
+	CommerceInvoiceStatusVoid   CommerceInvoiceStatus = "void"
+)
+
+// Defines values for CommerceMerchantProfileStatus.
+const (
+	CommerceMerchantProfileStatusActive   CommerceMerchantProfileStatus = "active"
+	CommerceMerchantProfileStatusInactive CommerceMerchantProfileStatus = "inactive"
+)
+
+// Defines values for CommerceOrderFulfilmentMode.
+const (
+	CommerceOrderFulfilmentModeCustomerPickup CommerceOrderFulfilmentMode = "customer_pickup"
+	CommerceOrderFulfilmentModeCustomerRider  CommerceOrderFulfilmentMode = "customer_rider"
+	CommerceOrderFulfilmentModeMerchantRider  CommerceOrderFulfilmentMode = "merchant_rider"
+)
+
+// Defines values for CommerceOrderEventActorType.
+const (
+	CommerceOrderEventActorTypeChannel CommerceOrderEventActorType = "channel"
+	CommerceOrderEventActorTypePayment CommerceOrderEventActorType = "payment"
+	CommerceOrderEventActorTypeSystem  CommerceOrderEventActorType = "system"
+	CommerceOrderEventActorTypeUser    CommerceOrderEventActorType = "user"
+)
+
+// Defines values for CommerceOrderStatus.
+const (
+	CommerceOrderStatusCancelled         CommerceOrderStatus = "cancelled"
+	CommerceOrderStatusCompleted         CommerceOrderStatus = "completed"
+	CommerceOrderStatusDelivered         CommerceOrderStatus = "delivered"
+	CommerceOrderStatusDraft             CommerceOrderStatus = "draft"
+	CommerceOrderStatusFulfilmentPending CommerceOrderStatus = "fulfilment_pending"
+	CommerceOrderStatusOutForDelivery    CommerceOrderStatus = "out_for_delivery"
+	CommerceOrderStatusPaid              CommerceOrderStatus = "paid"
+	CommerceOrderStatusPaymentExpired    CommerceOrderStatus = "payment_expired"
+	CommerceOrderStatusPaymentFailed     CommerceOrderStatus = "payment_failed"
+	CommerceOrderStatusPendingPayment    CommerceOrderStatus = "pending_payment"
+	CommerceOrderStatusProcessing        CommerceOrderStatus = "processing"
+	CommerceOrderStatusReady             CommerceOrderStatus = "ready"
+	CommerceOrderStatusReadyForPickup    CommerceOrderStatus = "ready_for_pickup"
+	CommerceOrderStatusRefunded          CommerceOrderStatus = "refunded"
+)
+
+// Defines values for CommercePaymentStatus.
+const (
+	CommercePaymentStatusExpired        CommercePaymentStatus = "expired"
+	CommercePaymentStatusFailed         CommercePaymentStatus = "failed"
+	CommercePaymentStatusInitializing   CommercePaymentStatus = "initializing"
+	CommercePaymentStatusPending        CommercePaymentStatus = "pending"
+	CommercePaymentStatusReviewRequired CommercePaymentStatus = "review_required"
+	CommercePaymentStatusSucceeded      CommercePaymentStatus = "succeeded"
+)
+
+// Defines values for CommerceProductStatus.
+const (
+	CommerceProductStatusActive   CommerceProductStatus = "active"
+	CommerceProductStatusInactive CommerceProductStatus = "inactive"
+)
+
+// Defines values for CommerceProductVariantStatus.
+const (
+	CommerceProductVariantStatusActive   CommerceProductVariantStatus = "active"
+	CommerceProductVariantStatusInactive CommerceProductVariantStatus = "inactive"
+)
+
+// Defines values for CommerceRiderAssignmentSource.
+const (
+	CommerceRiderAssignmentSourceCustomer CommerceRiderAssignmentSource = "customer"
+	CommerceRiderAssignmentSourceMerchant CommerceRiderAssignmentSource = "merchant"
+)
+
+// Defines values for CommerceRiderAssignmentStatus.
+const (
+	Arrived   CommerceRiderAssignmentStatus = "arrived"
+	Assigned  CommerceRiderAssignmentStatus = "assigned"
+	Cancelled CommerceRiderAssignmentStatus = "cancelled"
+	Delivered CommerceRiderAssignmentStatus = "delivered"
+	PickedUp  CommerceRiderAssignmentStatus = "picked_up"
+)
+
+// Defines values for CommerceStaffAssignmentRole.
+const (
+	CommerceStaffAssignmentRoleStoreManager CommerceStaffAssignmentRole = "store_manager"
+	CommerceStaffAssignmentRoleStoreStaff   CommerceStaffAssignmentRole = "store_staff"
+)
+
+// Defines values for CommerceStaffAssignmentStatus.
+const (
+	CommerceStaffAssignmentStatusActive   CommerceStaffAssignmentStatus = "active"
+	CommerceStaffAssignmentStatusInactive CommerceStaffAssignmentStatus = "inactive"
+)
+
+// Defines values for CommerceStoreStatus.
+const (
+	CommerceStoreStatusActive   CommerceStoreStatus = "active"
+	CommerceStoreStatusInactive CommerceStoreStatus = "inactive"
+)
+
+// Defines values for CommerceStoreFulfilmentModeMode.
+const (
+	CommerceStoreFulfilmentModeModeCustomerPickup CommerceStoreFulfilmentModeMode = "customer_pickup"
+	CommerceStoreFulfilmentModeModeCustomerRider  CommerceStoreFulfilmentModeMode = "customer_rider"
+	CommerceStoreFulfilmentModeModeMerchantRider  CommerceStoreFulfilmentModeMode = "merchant_rider"
+)
+
+// Defines values for CommerceStoreFulfilmentModeInputMode.
+const (
+	CommerceStoreFulfilmentModeInputModeCustomerPickup CommerceStoreFulfilmentModeInputMode = "customer_pickup"
+	CommerceStoreFulfilmentModeInputModeCustomerRider  CommerceStoreFulfilmentModeInputMode = "customer_rider"
+	CommerceStoreFulfilmentModeInputModeMerchantRider  CommerceStoreFulfilmentModeInputMode = "merchant_rider"
+)
+
+// Defines values for ConfigureCommerceWhatsAppRequestStatus.
+const (
+	ConfigureCommerceWhatsAppRequestStatusActive   ConfigureCommerceWhatsAppRequestStatus = "active"
+	ConfigureCommerceWhatsAppRequestStatusInactive ConfigureCommerceWhatsAppRequestStatus = "inactive"
+)
+
+// Defines values for CreateCommerceDeliveryQuoteRequestSource.
+const (
+	CreateCommerceDeliveryQuoteRequestSourceManual   CreateCommerceDeliveryQuoteRequestSource = "manual"
+	CreateCommerceDeliveryQuoteRequestSourceProvider CreateCommerceDeliveryQuoteRequestSource = "provider"
+)
+
+// Defines values for CreateCommerceStaffAssignmentRequestRole.
+const (
+	CreateCommerceStaffAssignmentRequestRoleStoreManager CreateCommerceStaffAssignmentRequestRole = "store_manager"
+	CreateCommerceStaffAssignmentRequestRoleStoreStaff   CreateCommerceStaffAssignmentRequestRole = "store_staff"
+)
+
+// Defines values for DecideCommerceDeliveryQuoteRequestDecision.
+const (
+	Accepted DecideCommerceDeliveryQuoteRequestDecision = "accepted"
+	Rejected DecideCommerceDeliveryQuoteRequestDecision = "rejected"
+)
+
 // Defines values for PaymentStatus.
 const (
 	PaymentStatusCompleted PaymentStatus = "completed"
@@ -35,6 +297,14 @@ const (
 	MultipleChoice QuestionType = "multiple_choice"
 	Rating         QuestionType = "rating"
 	Text           QuestionType = "text"
+)
+
+// Defines values for ResolveCommerceCustomerRequestChannel.
+const (
+	Email    ResolveCommerceCustomerRequestChannel = "email"
+	Phone    ResolveCommerceCustomerRequestChannel = "phone"
+	Web      ResolveCommerceCustomerRequestChannel = "web"
+	Whatsapp ResolveCommerceCustomerRequestChannel = "whatsapp"
 )
 
 // Defines values for TransactionStatus.
@@ -68,6 +338,60 @@ const (
 	TransactionStatusUpdateStatusSuccessful TransactionStatusUpdateStatus = "successful"
 )
 
+// Defines values for UpdateCommerceCategoryRequestStatus.
+const (
+	UpdateCommerceCategoryRequestStatusActive   UpdateCommerceCategoryRequestStatus = "active"
+	UpdateCommerceCategoryRequestStatusInactive UpdateCommerceCategoryRequestStatus = "inactive"
+)
+
+// Defines values for UpdateCommerceMerchantProfileRequestStatus.
+const (
+	UpdateCommerceMerchantProfileRequestStatusActive   UpdateCommerceMerchantProfileRequestStatus = "active"
+	UpdateCommerceMerchantProfileRequestStatusInactive UpdateCommerceMerchantProfileRequestStatus = "inactive"
+)
+
+// Defines values for UpdateCommerceProductRequestStatus.
+const (
+	UpdateCommerceProductRequestStatusActive   UpdateCommerceProductRequestStatus = "active"
+	UpdateCommerceProductRequestStatusInactive UpdateCommerceProductRequestStatus = "inactive"
+)
+
+// Defines values for UpdateCommerceProductVariantRequestStatus.
+const (
+	UpdateCommerceProductVariantRequestStatusActive   UpdateCommerceProductVariantRequestStatus = "active"
+	UpdateCommerceProductVariantRequestStatusInactive UpdateCommerceProductVariantRequestStatus = "inactive"
+)
+
+// Defines values for UpdateCommerceStoreRequestStatus.
+const (
+	Active   UpdateCommerceStoreRequestStatus = "active"
+	Inactive UpdateCommerceStoreRequestStatus = "inactive"
+)
+
+// AdjustCommerceInventoryRequest defines model for AdjustCommerceInventoryRequest.
+type AdjustCommerceInventoryRequest struct {
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	QuantityDelta  int                 `json:"quantity_delta"`
+	Reason         string              `json:"reason"`
+	Reference      string              `json:"reference"`
+}
+
+// AssignCommerceRiderRequest defines model for AssignCommerceRiderRequest.
+type AssignCommerceRiderRequest struct {
+	IdempotencyKey       string                           `json:"idempotency_key"`
+	OrganizationId       *openapi_types.UUID              `json:"organization_id"`
+	Provider             *string                          `json:"provider,omitempty"`
+	ProviderAssignmentId *string                          `json:"provider_assignment_id,omitempty"`
+	RiderName            string                           `json:"rider_name"`
+	RiderPhone           string                           `json:"rider_phone"`
+	Source               AssignCommerceRiderRequestSource `json:"source"`
+	TrackingUrl          *string                          `json:"tracking_url,omitempty"`
+	VehicleDescription   *string                          `json:"vehicle_description,omitempty"`
+}
+
+// AssignCommerceRiderRequestSource defines model for AssignCommerceRiderRequest.Source.
+type AssignCommerceRiderRequestSource string
+
 // Balance defines model for Balance.
 type Balance struct {
 	Amount     float32            `json:"amount"`
@@ -99,6 +423,670 @@ type Campaign struct {
 	WelcomeMessage        string             `json:"welcomeMessage"`
 }
 
+// CheckoutCommerceCartRequest defines model for CheckoutCommerceCartRequest.
+type CheckoutCommerceCartRequest struct {
+	CartId         openapi_types.UUID                        `json:"cart_id"`
+	FulfilmentMode CheckoutCommerceCartRequestFulfilmentMode `json:"fulfilment_mode"`
+	IdempotencyKey string                                    `json:"idempotency_key"`
+	OrganizationId *openapi_types.UUID                       `json:"organization_id"`
+}
+
+// CheckoutCommerceCartRequestFulfilmentMode defines model for CheckoutCommerceCartRequest.FulfilmentMode.
+type CheckoutCommerceCartRequestFulfilmentMode string
+
+// CommerceCart defines model for CommerceCart.
+type CommerceCart struct {
+	CheckoutReady  bool               `json:"checkout_ready"`
+	CreatedAt      time.Time          `json:"created_at"`
+	Currency       string             `json:"currency"`
+	CustomerId     openapi_types.UUID `json:"customer_id"`
+	ExpiresAt      time.Time          `json:"expires_at"`
+	Id             openapi_types.UUID `json:"id"`
+	ItemCount      int                `json:"item_count"`
+	Items          []CommerceCartItem `json:"items"`
+	OrganizationId openapi_types.UUID `json:"organization_id"`
+	Status         CommerceCartStatus `json:"status"`
+	StoreId        openapi_types.UUID `json:"store_id"`
+	SubtotalMinor  int64              `json:"subtotal_minor"`
+	TotalMinor     int64              `json:"total_minor"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	Version        int64              `json:"version"`
+}
+
+// CommerceCartStatus defines model for CommerceCart.Status.
+type CommerceCartStatus string
+
+// CommerceCartItem defines model for CommerceCartItem.
+type CommerceCartItem struct {
+	Available         bool                `json:"available"`
+	AvailableQuantity int                 `json:"available_quantity"`
+	CreatedAt         time.Time           `json:"created_at"`
+	Id                openapi_types.UUID  `json:"id"`
+	LineTotalMinor    *int64              `json:"line_total_minor"`
+	PrimaryImageUrl   *string             `json:"primary_image_url"`
+	ProductId         *openapi_types.UUID `json:"product_id"`
+	ProductName       *string             `json:"product_name"`
+	Quantity          int                 `json:"quantity"`
+	Sku               *string             `json:"sku"`
+	UnavailableReason *string             `json:"unavailable_reason"`
+	UnitPriceMinor    *int64              `json:"unit_price_minor"`
+	UpdatedAt         time.Time           `json:"updated_at"`
+	VariantId         openapi_types.UUID  `json:"variant_id"`
+	VariantName       *string             `json:"variant_name"`
+}
+
+// CommerceCategory defines model for CommerceCategory.
+type CommerceCategory struct {
+	CreatedAt      time.Time              `json:"created_at"`
+	Description    string                 `json:"description"`
+	Id             openapi_types.UUID     `json:"id"`
+	Name           string                 `json:"name"`
+	OrganizationId openapi_types.UUID     `json:"organization_id"`
+	Slug           string                 `json:"slug"`
+	SortOrder      int                    `json:"sort_order"`
+	Status         CommerceCategoryStatus `json:"status"`
+	UpdatedAt      time.Time              `json:"updated_at"`
+}
+
+// CommerceCategoryStatus defines model for CommerceCategory.Status.
+type CommerceCategoryStatus string
+
+// CommerceChannelConfiguration defines model for CommerceChannelConfiguration.
+type CommerceChannelConfiguration struct {
+	Channel            CommerceChannelConfigurationChannel `json:"channel"`
+	CreatedAt          time.Time                           `json:"created_at"`
+	DisplayPhoneNumber *string                             `json:"display_phone_number"`
+	Id                 openapi_types.UUID                  `json:"id"`
+	OrganizationId     openapi_types.UUID                  `json:"organization_id"`
+	ProviderAccountId  string                              `json:"provider_account_id"`
+	Status             CommerceChannelConfigurationStatus  `json:"status"`
+	UpdatedAt          time.Time                           `json:"updated_at"`
+	WelcomeMessage     string                              `json:"welcome_message"`
+}
+
+// CommerceChannelConfigurationChannel defines model for CommerceChannelConfiguration.Channel.
+type CommerceChannelConfigurationChannel string
+
+// CommerceChannelConfigurationStatus defines model for CommerceChannelConfiguration.Status.
+type CommerceChannelConfigurationStatus string
+
+// CommerceComplaint defines model for CommerceComplaint.
+type CommerceComplaint struct {
+	Category       string                  `json:"category"`
+	ConversationId *openapi_types.UUID     `json:"conversation_id"`
+	CreatedAt      time.Time               `json:"created_at"`
+	CustomerId     openapi_types.UUID      `json:"customer_id"`
+	Description    string                  `json:"description"`
+	Id             openapi_types.UUID      `json:"id"`
+	OrderId        *openapi_types.UUID     `json:"order_id"`
+	OrganizationId openapi_types.UUID      `json:"organization_id"`
+	Resolution     *string                 `json:"resolution"`
+	ResolvedAt     *time.Time              `json:"resolved_at"`
+	Status         CommerceComplaintStatus `json:"status"`
+	StoreId        *openapi_types.UUID     `json:"store_id"`
+	UpdatedAt      time.Time               `json:"updated_at"`
+}
+
+// CommerceComplaintList defines model for CommerceComplaintList.
+type CommerceComplaintList struct {
+	Items []CommerceComplaint `json:"items"`
+	Total int64               `json:"total"`
+}
+
+// CommerceComplaintStatus defines model for CommerceComplaintStatus.
+type CommerceComplaintStatus string
+
+// CommerceCustomer defines model for CommerceCustomer.
+type CommerceCustomer struct {
+	CreatedAt      time.Time                  `json:"created_at"`
+	DisplayName    string                     `json:"display_name"`
+	Email          *openapi_types.Email       `json:"email"`
+	Id             openapi_types.UUID         `json:"id"`
+	Identities     []CommerceCustomerIdentity `json:"identities"`
+	OrganizationId openapi_types.UUID         `json:"organization_id"`
+	Status         CommerceCustomerStatus     `json:"status"`
+	UpdatedAt      time.Time                  `json:"updated_at"`
+}
+
+// CommerceCustomerStatus defines model for CommerceCustomer.Status.
+type CommerceCustomerStatus string
+
+// CommerceCustomerIdentity defines model for CommerceCustomerIdentity.
+type CommerceCustomerIdentity struct {
+	Channel    CommerceCustomerIdentityChannel `json:"channel"`
+	CreatedAt  time.Time                       `json:"created_at"`
+	Id         openapi_types.UUID              `json:"id"`
+	Identifier string                          `json:"identifier"`
+	Verified   bool                            `json:"verified"`
+	VerifiedAt *time.Time                      `json:"verified_at"`
+}
+
+// CommerceCustomerIdentityChannel defines model for CommerceCustomerIdentity.Channel.
+type CommerceCustomerIdentityChannel string
+
+// CommerceDeliveryQuote defines model for CommerceDeliveryQuote.
+type CommerceDeliveryQuote struct {
+	AcceptedAt         *time.Time                          `json:"accepted_at"`
+	CreatedAt          time.Time                           `json:"created_at"`
+	Currency           string                              `json:"currency"`
+	DestinationAddress string                              `json:"destination_address"`
+	DistanceMeters     *int                                `json:"distance_meters"`
+	DurationSeconds    *int                                `json:"duration_seconds"`
+	EstimatedFeeMinor  int64                               `json:"estimated_fee_minor"`
+	ExpiresAt          *time.Time                          `json:"expires_at"`
+	FeePaymentMode     CommerceDeliveryQuoteFeePaymentMode `json:"fee_payment_mode"`
+	FeeStatus          CommerceDeliveryQuoteFeeStatus      `json:"fee_status"`
+	Id                 openapi_types.UUID                  `json:"id"`
+	PickupAddress      string                              `json:"pickup_address"`
+	Provider           *string                             `json:"provider"`
+	ProviderQuoteId    *string                             `json:"provider_quote_id"`
+	RejectedAt         *time.Time                          `json:"rejected_at"`
+	Source             CommerceDeliveryQuoteSource         `json:"source"`
+	Status             CommerceDeliveryQuoteStatus         `json:"status"`
+	UpdatedAt          time.Time                           `json:"updated_at"`
+}
+
+// CommerceDeliveryQuoteFeePaymentMode defines model for CommerceDeliveryQuote.FeePaymentMode.
+type CommerceDeliveryQuoteFeePaymentMode string
+
+// CommerceDeliveryQuoteFeeStatus defines model for CommerceDeliveryQuote.FeeStatus.
+type CommerceDeliveryQuoteFeeStatus string
+
+// CommerceDeliveryQuoteSource defines model for CommerceDeliveryQuote.Source.
+type CommerceDeliveryQuoteSource string
+
+// CommerceDeliveryQuoteStatus defines model for CommerceDeliveryQuote.Status.
+type CommerceDeliveryQuoteStatus string
+
+// CommerceFulfilment defines model for CommerceFulfilment.
+type CommerceFulfilment struct {
+	CompletedAt               *time.Time                `json:"completed_at"`
+	CreatedAt                 time.Time                 `json:"created_at"`
+	CustomerId                openapi_types.UUID        `json:"customer_id"`
+	DeliveredAt               *time.Time                `json:"delivered_at"`
+	DestinationAddress        *string                   `json:"destination_address"`
+	Events                    []CommerceFulfilmentEvent `json:"events"`
+	HandedOverAt              *time.Time                `json:"handed_over_at"`
+	HandedOverByUserId        *openapi_types.UUID       `json:"handed_over_by_user_id"`
+	Id                        openapi_types.UUID        `json:"id"`
+	Mode                      CommerceFulfilmentMode    `json:"mode"`
+	OrderId                   openapi_types.UUID        `json:"order_id"`
+	OrganizationId            openapi_types.UUID        `json:"organization_id"`
+	PickupAddress             string                    `json:"pickup_address"`
+	Quotes                    []CommerceDeliveryQuote   `json:"quotes"`
+	RiderAssignments          []CommerceRiderAssignment `json:"rider_assignments"`
+	Status                    CommerceFulfilmentStatus  `json:"status"`
+	StoreId                   openapi_types.UUID        `json:"store_id"`
+	UpdatedAt                 time.Time                 `json:"updated_at"`
+	VerificationCodeExpiresAt time.Time                 `json:"verification_code_expires_at"`
+	VerifiedAt                *time.Time                `json:"verified_at"`
+	VerifiedByUserId          *openapi_types.UUID       `json:"verified_by_user_id"`
+	Version                   int64                     `json:"version"`
+}
+
+// CommerceFulfilmentMode defines model for CommerceFulfilment.Mode.
+type CommerceFulfilmentMode string
+
+// CommerceFulfilmentEvent defines model for CommerceFulfilmentEvent.
+type CommerceFulfilmentEvent struct {
+	ActorType   CommerceFulfilmentEventActorType `json:"actor_type"`
+	ActorUserId *openapi_types.UUID              `json:"actor_user_id"`
+	CreatedAt   time.Time                        `json:"created_at"`
+	EventType   string                           `json:"event_type"`
+	FromStatus  *CommerceFulfilmentStatus        `json:"from_status"`
+	Id          openapi_types.UUID               `json:"id"`
+	Metadata    map[string]interface{}           `json:"metadata"`
+	Reason      string                           `json:"reason"`
+	ToStatus    CommerceFulfilmentStatus         `json:"to_status"`
+}
+
+// CommerceFulfilmentEventActorType defines model for CommerceFulfilmentEvent.ActorType.
+type CommerceFulfilmentEventActorType string
+
+// CommerceFulfilmentStatus defines model for CommerceFulfilmentStatus.
+type CommerceFulfilmentStatus string
+
+// CommerceInventoryLevel defines model for CommerceInventoryLevel.
+type CommerceInventoryLevel struct {
+	AvailableQuantity int                `json:"available_quantity"`
+	CreatedAt         time.Time          `json:"created_at"`
+	Id                openapi_types.UUID `json:"id"`
+	OrganizationId    openapi_types.UUID `json:"organization_id"`
+	QuantityOnHand    int                `json:"quantity_on_hand"`
+	QuantityReserved  int                `json:"quantity_reserved"`
+	ReorderThreshold  int                `json:"reorder_threshold"`
+	StoreId           openapi_types.UUID `json:"store_id"`
+	UpdatedAt         time.Time          `json:"updated_at"`
+	VariantId         openapi_types.UUID `json:"variant_id"`
+	Version           int64              `json:"version"`
+}
+
+// CommerceInvoice defines model for CommerceInvoice.
+type CommerceInvoice struct {
+	CreatedAt        time.Time                     `json:"created_at"`
+	Currency         string                        `json:"currency"`
+	CustomerEmail    *string                       `json:"customer_email"`
+	CustomerId       openapi_types.UUID            `json:"customer_id"`
+	CustomerName     string                        `json:"customer_name"`
+	DeliveryFeeMinor int64                         `json:"delivery_fee_minor"`
+	DiscountMinor    int64                         `json:"discount_minor"`
+	FulfilmentMode   CommerceInvoiceFulfilmentMode `json:"fulfilment_mode"`
+	Id               openapi_types.UUID            `json:"id"`
+	InvoiceNumber    string                        `json:"invoice_number"`
+	IssuedAt         time.Time                     `json:"issued_at"`
+	Items            []CommerceInvoiceItem         `json:"items"`
+	MerchantName     string                        `json:"merchant_name"`
+	OrderId          openapi_types.UUID            `json:"order_id"`
+	OrderNumber      string                        `json:"order_number"`
+	OrganizationId   openapi_types.UUID            `json:"organization_id"`
+	PaidAt           *time.Time                    `json:"paid_at"`
+	Status           CommerceInvoiceStatus         `json:"status"`
+	StoreAddress     string                        `json:"store_address"`
+	StoreId          openapi_types.UUID            `json:"store_id"`
+	StoreName        string                        `json:"store_name"`
+	SubtotalMinor    int64                         `json:"subtotal_minor"`
+	TotalMinor       int64                         `json:"total_minor"`
+	UpdatedAt        time.Time                     `json:"updated_at"`
+	VoidedAt         *time.Time                    `json:"voided_at"`
+}
+
+// CommerceInvoiceFulfilmentMode defines model for CommerceInvoice.FulfilmentMode.
+type CommerceInvoiceFulfilmentMode string
+
+// CommerceInvoiceItem defines model for CommerceInvoiceItem.
+type CommerceInvoiceItem struct {
+	Attributes     map[string]string  `json:"attributes"`
+	CreatedAt      time.Time          `json:"created_at"`
+	Id             openapi_types.UUID `json:"id"`
+	LineTotalMinor int64              `json:"line_total_minor"`
+	OrderItemId    openapi_types.UUID `json:"order_item_id"`
+	ProductId      openapi_types.UUID `json:"product_id"`
+	ProductName    string             `json:"product_name"`
+	Quantity       int                `json:"quantity"`
+	Sku            string             `json:"sku"`
+	UnitPriceMinor int64              `json:"unit_price_minor"`
+	VariantId      openapi_types.UUID `json:"variant_id"`
+	VariantName    string             `json:"variant_name"`
+}
+
+// CommerceInvoiceStatus defines model for CommerceInvoiceStatus.
+type CommerceInvoiceStatus string
+
+// CommerceMerchantProfile defines model for CommerceMerchantProfile.
+type CommerceMerchantProfile struct {
+	CreatedAt       time.Time                     `json:"created_at"`
+	DefaultCurrency string                        `json:"default_currency"`
+	DisplayName     string                        `json:"display_name"`
+	Id              openapi_types.UUID            `json:"id"`
+	OrganizationId  openapi_types.UUID            `json:"organization_id"`
+	Slug            string                        `json:"slug"`
+	Status          CommerceMerchantProfileStatus `json:"status"`
+	Timezone        string                        `json:"timezone"`
+	UpdatedAt       time.Time                     `json:"updated_at"`
+}
+
+// CommerceMerchantProfileStatus defines model for CommerceMerchantProfile.Status.
+type CommerceMerchantProfileStatus string
+
+// CommerceOrder defines model for CommerceOrder.
+type CommerceOrder struct {
+	CartId               openapi_types.UUID          `json:"cart_id"`
+	CreatedAt            time.Time                   `json:"created_at"`
+	Currency             string                      `json:"currency"`
+	CustomerId           openapi_types.UUID          `json:"customer_id"`
+	DeliveryFeeMinor     int64                       `json:"delivery_fee_minor"`
+	DestinationAddress   *string                     `json:"destination_address"`
+	DestinationLatitude  *float64                    `json:"destination_latitude"`
+	DestinationLongitude *float64                    `json:"destination_longitude"`
+	DiscountMinor        int64                       `json:"discount_minor"`
+	Events               []CommerceOrderEvent        `json:"events"`
+	FulfilmentMode       CommerceOrderFulfilmentMode `json:"fulfilment_mode"`
+	Id                   openapi_types.UUID          `json:"id"`
+	Items                []CommerceOrderItem         `json:"items"`
+	OrderNumber          string                      `json:"order_number"`
+	OrganizationId       openapi_types.UUID          `json:"organization_id"`
+	PaymentExpiresAt     time.Time                   `json:"payment_expires_at"`
+	Status               CommerceOrderStatus         `json:"status"`
+	StoreId              openapi_types.UUID          `json:"store_id"`
+	SubtotalMinor        int64                       `json:"subtotal_minor"`
+	TotalMinor           int64                       `json:"total_minor"`
+	UpdatedAt            time.Time                   `json:"updated_at"`
+	Version              int64                       `json:"version"`
+}
+
+// CommerceOrderFulfilmentMode defines model for CommerceOrder.FulfilmentMode.
+type CommerceOrderFulfilmentMode string
+
+// CommerceOrderEvent defines model for CommerceOrderEvent.
+type CommerceOrderEvent struct {
+	ActorType   CommerceOrderEventActorType `json:"actor_type"`
+	ActorUserId *openapi_types.UUID         `json:"actor_user_id"`
+	CreatedAt   time.Time                   `json:"created_at"`
+	EventType   string                      `json:"event_type"`
+	FromStatus  *CommerceOrderStatus        `json:"from_status"`
+	Id          openapi_types.UUID          `json:"id"`
+	Metadata    map[string]interface{}      `json:"metadata"`
+	Reason      string                      `json:"reason"`
+	ToStatus    CommerceOrderStatus         `json:"to_status"`
+}
+
+// CommerceOrderEventActorType defines model for CommerceOrderEvent.ActorType.
+type CommerceOrderEventActorType string
+
+// CommerceOrderItem defines model for CommerceOrderItem.
+type CommerceOrderItem struct {
+	Attributes      map[string]string  `json:"attributes"`
+	CreatedAt       time.Time          `json:"created_at"`
+	Id              openapi_types.UUID `json:"id"`
+	LineTotalMinor  int64              `json:"line_total_minor"`
+	PrimaryImageUrl *string            `json:"primary_image_url"`
+	ProductId       openapi_types.UUID `json:"product_id"`
+	ProductName     string             `json:"product_name"`
+	Quantity        int                `json:"quantity"`
+	Sku             string             `json:"sku"`
+	UnitPriceMinor  int64              `json:"unit_price_minor"`
+	VariantId       openapi_types.UUID `json:"variant_id"`
+	VariantName     string             `json:"variant_name"`
+}
+
+// CommerceOrderList defines model for CommerceOrderList.
+type CommerceOrderList struct {
+	Items  []CommerceOrder `json:"items"`
+	Limit  int             `json:"limit"`
+	Offset int             `json:"offset"`
+	Total  int64           `json:"total"`
+}
+
+// CommerceOrderStatus defines model for CommerceOrderStatus.
+type CommerceOrderStatus string
+
+// CommercePayment defines model for CommercePayment.
+type CommercePayment struct {
+	AmountMinor           int64                 `json:"amount_minor"`
+	AuthorizationUrl      *string               `json:"authorization_url"`
+	ConfirmedAt           *time.Time            `json:"confirmed_at"`
+	CreatedAt             time.Time             `json:"created_at"`
+	Currency              string                `json:"currency"`
+	ExpiresAt             time.Time             `json:"expires_at"`
+	FailureReason         string                `json:"failure_reason"`
+	Id                    openapi_types.UUID    `json:"id"`
+	InitializedAt         *time.Time            `json:"initialized_at"`
+	InvoiceId             openapi_types.UUID    `json:"invoice_id"`
+	OrderId               openapi_types.UUID    `json:"order_id"`
+	OrganizationId        openapi_types.UUID    `json:"organization_id"`
+	PayerEmail            string                `json:"payer_email"`
+	Provider              string                `json:"provider"`
+	ProviderReference     string                `json:"provider_reference"`
+	ProviderTransactionId *string               `json:"provider_transaction_id"`
+	Status                CommercePaymentStatus `json:"status"`
+	UpdatedAt             time.Time             `json:"updated_at"`
+}
+
+// CommercePaymentSession defines model for CommercePaymentSession.
+type CommercePaymentSession struct {
+	Invoice CommerceInvoice `json:"invoice"`
+	Payment CommercePayment `json:"payment"`
+}
+
+// CommercePaymentStatus defines model for CommercePaymentStatus.
+type CommercePaymentStatus string
+
+// CommercePaymentWebhookResponse defines model for CommercePaymentWebhookResponse.
+type CommercePaymentWebhookResponse struct {
+	Acknowledged bool   `json:"acknowledged"`
+	Duplicate    bool   `json:"duplicate"`
+	Outcome      string `json:"outcome"`
+}
+
+// CommerceProduct defines model for CommerceProduct.
+type CommerceProduct struct {
+	CategoryId     openapi_types.UUID       `json:"category_id"`
+	CreatedAt      time.Time                `json:"created_at"`
+	Currency       string                   `json:"currency"`
+	Description    string                   `json:"description"`
+	Id             openapi_types.UUID       `json:"id"`
+	Images         []CommerceProductImage   `json:"images"`
+	Name           string                   `json:"name"`
+	OrganizationId openapi_types.UUID       `json:"organization_id"`
+	Slug           string                   `json:"slug"`
+	Status         CommerceProductStatus    `json:"status"`
+	UpdatedAt      time.Time                `json:"updated_at"`
+	Variants       []CommerceProductVariant `json:"variants"`
+}
+
+// CommerceProductStatus defines model for CommerceProduct.Status.
+type CommerceProductStatus string
+
+// CommerceProductImage defines model for CommerceProductImage.
+type CommerceProductImage struct {
+	AltText   string             `json:"alt_text"`
+	Id        openapi_types.UUID `json:"id"`
+	SortOrder int                `json:"sort_order"`
+	Url       string             `json:"url"`
+}
+
+// CommerceProductImageInput defines model for CommerceProductImageInput.
+type CommerceProductImageInput struct {
+	AltText   *string `json:"alt_text,omitempty"`
+	SortOrder int     `json:"sort_order"`
+	Url       string  `json:"url"`
+}
+
+// CommerceProductList defines model for CommerceProductList.
+type CommerceProductList struct {
+	Items  []CommerceProduct `json:"items"`
+	Limit  int               `json:"limit"`
+	Offset int               `json:"offset"`
+	Total  int64             `json:"total"`
+}
+
+// CommerceProductVariant defines model for CommerceProductVariant.
+type CommerceProductVariant struct {
+	Attributes map[string]string            `json:"attributes"`
+	Id         openapi_types.UUID           `json:"id"`
+	IsDefault  bool                         `json:"is_default"`
+	Name       string                       `json:"name"`
+	PriceMinor int64                        `json:"price_minor"`
+	ProductId  openapi_types.UUID           `json:"product_id"`
+	Sku        string                       `json:"sku"`
+	Status     CommerceProductVariantStatus `json:"status"`
+}
+
+// CommerceProductVariantStatus defines model for CommerceProductVariant.Status.
+type CommerceProductVariantStatus string
+
+// CommerceProductVariantInput defines model for CommerceProductVariantInput.
+type CommerceProductVariantInput struct {
+	Attributes *map[string]string `json:"attributes,omitempty"`
+	IsDefault  bool               `json:"is_default"`
+	Name       string             `json:"name"`
+	PriceMinor int64              `json:"price_minor"`
+	Sku        string             `json:"sku"`
+}
+
+// CommerceRiderAssignment defines model for CommerceRiderAssignment.
+type CommerceRiderAssignment struct {
+	ArrivedAt            *time.Time                    `json:"arrived_at"`
+	AssignedByUserId     openapi_types.UUID            `json:"assigned_by_user_id"`
+	CreatedAt            time.Time                     `json:"created_at"`
+	DeliveredAt          *time.Time                    `json:"delivered_at"`
+	Id                   openapi_types.UUID            `json:"id"`
+	PickedUpAt           *time.Time                    `json:"picked_up_at"`
+	Provider             *string                       `json:"provider"`
+	ProviderAssignmentId *string                       `json:"provider_assignment_id"`
+	RiderName            string                        `json:"rider_name"`
+	RiderPhone           string                        `json:"rider_phone"`
+	Source               CommerceRiderAssignmentSource `json:"source"`
+	Status               CommerceRiderAssignmentStatus `json:"status"`
+	TrackingUrl          *string                       `json:"tracking_url"`
+	UpdatedAt            time.Time                     `json:"updated_at"`
+	VehicleDescription   *string                       `json:"vehicle_description"`
+}
+
+// CommerceRiderAssignmentSource defines model for CommerceRiderAssignment.Source.
+type CommerceRiderAssignmentSource string
+
+// CommerceRiderAssignmentStatus defines model for CommerceRiderAssignment.Status.
+type CommerceRiderAssignmentStatus string
+
+// CommerceStaffAssignment defines model for CommerceStaffAssignment.
+type CommerceStaffAssignment struct {
+	CreatedAt      time.Time                     `json:"created_at"`
+	Id             openapi_types.UUID            `json:"id"`
+	OrganizationId openapi_types.UUID            `json:"organization_id"`
+	Role           CommerceStaffAssignmentRole   `json:"role"`
+	Status         CommerceStaffAssignmentStatus `json:"status"`
+	StoreId        openapi_types.UUID            `json:"store_id"`
+	UpdatedAt      time.Time                     `json:"updated_at"`
+	UserId         openapi_types.UUID            `json:"user_id"`
+}
+
+// CommerceStaffAssignmentRole defines model for CommerceStaffAssignment.Role.
+type CommerceStaffAssignmentRole string
+
+// CommerceStaffAssignmentStatus defines model for CommerceStaffAssignment.Status.
+type CommerceStaffAssignmentStatus string
+
+// CommerceStore defines model for CommerceStore.
+type CommerceStore struct {
+	Address            string                        `json:"address"`
+	City               string                        `json:"city"`
+	Code               string                        `json:"code"`
+	CountryCode        string                        `json:"country_code"`
+	CreatedAt          time.Time                     `json:"created_at"`
+	FulfilmentModes    []CommerceStoreFulfilmentMode `json:"fulfilment_modes"`
+	Hours              []CommerceStoreHour           `json:"hours"`
+	Id                 openapi_types.UUID            `json:"id"`
+	Latitude           *float64                      `json:"latitude"`
+	Longitude          *float64                      `json:"longitude"`
+	Name               string                        `json:"name"`
+	OrganizationId     openapi_types.UUID            `json:"organization_id"`
+	PreparationMinutes int                           `json:"preparation_minutes"`
+	State              string                        `json:"state"`
+	Status             CommerceStoreStatus           `json:"status"`
+	Timezone           string                        `json:"timezone"`
+	UpdatedAt          time.Time                     `json:"updated_at"`
+}
+
+// CommerceStoreStatus defines model for CommerceStore.Status.
+type CommerceStoreStatus string
+
+// CommerceStoreCatalogueItem defines model for CommerceStoreCatalogueItem.
+type CommerceStoreCatalogueItem struct {
+	Attributes          map[string]string  `json:"attributes"`
+	Available           bool               `json:"available"`
+	AvailableQuantity   int                `json:"available_quantity"`
+	BasePriceMinor      int64              `json:"base_price_minor"`
+	CategoryId          openapi_types.UUID `json:"category_id"`
+	CategoryName        string             `json:"category_name"`
+	Currency            string             `json:"currency"`
+	EffectivePriceMinor int64              `json:"effective_price_minor"`
+	Enabled             bool               `json:"enabled"`
+	PriceOverrideMinor  *int64             `json:"price_override_minor"`
+	PrimaryImageUrl     *string            `json:"primary_image_url"`
+	ProductDescription  string             `json:"product_description"`
+	ProductId           openapi_types.UUID `json:"product_id"`
+	ProductName         string             `json:"product_name"`
+	QuantityOnHand      int                `json:"quantity_on_hand"`
+	QuantityReserved    int                `json:"quantity_reserved"`
+	ReorderThreshold    int                `json:"reorder_threshold"`
+	Sku                 string             `json:"sku"`
+	StoreId             openapi_types.UUID `json:"store_id"`
+	VariantId           openapi_types.UUID `json:"variant_id"`
+	VariantName         string             `json:"variant_name"`
+}
+
+// CommerceStoreFulfilmentMode defines model for CommerceStoreFulfilmentMode.
+type CommerceStoreFulfilmentMode struct {
+	Enabled bool                            `json:"enabled"`
+	Id      openapi_types.UUID              `json:"id"`
+	Mode    CommerceStoreFulfilmentModeMode `json:"mode"`
+}
+
+// CommerceStoreFulfilmentModeMode defines model for CommerceStoreFulfilmentMode.Mode.
+type CommerceStoreFulfilmentModeMode string
+
+// CommerceStoreFulfilmentModeInput defines model for CommerceStoreFulfilmentModeInput.
+type CommerceStoreFulfilmentModeInput struct {
+	Enabled bool                                 `json:"enabled"`
+	Mode    CommerceStoreFulfilmentModeInputMode `json:"mode"`
+}
+
+// CommerceStoreFulfilmentModeInputMode defines model for CommerceStoreFulfilmentModeInput.Mode.
+type CommerceStoreFulfilmentModeInputMode string
+
+// CommerceStoreHour defines model for CommerceStoreHour.
+type CommerceStoreHour struct {
+	CloseMinute *int               `json:"close_minute"`
+	DayOfWeek   int                `json:"day_of_week"`
+	Id          openapi_types.UUID `json:"id"`
+	IsClosed    bool               `json:"is_closed"`
+	OpenMinute  *int               `json:"open_minute"`
+}
+
+// CommerceStoreHourInput defines model for CommerceStoreHourInput.
+type CommerceStoreHourInput struct {
+	CloseMinute *int `json:"close_minute"`
+	DayOfWeek   int  `json:"day_of_week"`
+	IsClosed    bool `json:"is_closed"`
+	OpenMinute  *int `json:"open_minute"`
+}
+
+// CommerceStoreOrder defines model for CommerceStoreOrder.
+type CommerceStoreOrder struct {
+	Fulfilment *CommerceFulfilment `json:"fulfilment"`
+	Order      CommerceOrder       `json:"order"`
+}
+
+// CommerceStoreOrderList defines model for CommerceStoreOrderList.
+type CommerceStoreOrderList struct {
+	Items  []CommerceStoreOrder `json:"items"`
+	Limit  int                  `json:"limit"`
+	Offset int                  `json:"offset"`
+	Total  int64                `json:"total"`
+}
+
+// CommerceStoreVariantConfiguration defines model for CommerceStoreVariantConfiguration.
+type CommerceStoreVariantConfiguration struct {
+	CreatedAt          time.Time              `json:"created_at"`
+	Enabled            bool                   `json:"enabled"`
+	Id                 openapi_types.UUID     `json:"id"`
+	Inventory          CommerceInventoryLevel `json:"inventory"`
+	OrganizationId     openapi_types.UUID     `json:"organization_id"`
+	PriceOverrideMinor *int64                 `json:"price_override_minor"`
+	StoreId            openapi_types.UUID     `json:"store_id"`
+	UpdatedAt          time.Time              `json:"updated_at"`
+	VariantId          openapi_types.UUID     `json:"variant_id"`
+}
+
+// CommerceWhatsAppLink defines model for CommerceWhatsAppLink.
+type CommerceWhatsAppLink struct {
+	DisplayPhoneNumber  string `json:"display_phone_number"`
+	MerchantDisplayName string `json:"merchant_display_name"`
+	MerchantSlug        string `json:"merchant_slug"`
+	Url                 string `json:"url"`
+}
+
+// ConfigureCommerceStoreVariantRequest defines model for ConfigureCommerceStoreVariantRequest.
+type ConfigureCommerceStoreVariantRequest struct {
+	Enabled            bool                `json:"enabled"`
+	OrganizationId     *openapi_types.UUID `json:"organization_id"`
+	PriceOverrideMinor *int64              `json:"price_override_minor"`
+	ReorderThreshold   int                 `json:"reorder_threshold"`
+}
+
+// ConfigureCommerceWhatsAppRequest defines model for ConfigureCommerceWhatsAppRequest.
+type ConfigureCommerceWhatsAppRequest struct {
+	DisplayPhoneNumber *string                                 `json:"display_phone_number,omitempty"`
+	OrganizationId     *openapi_types.UUID                     `json:"organization_id,omitempty"`
+	ProviderAccountId  string                                  `json:"provider_account_id"`
+	Status             *ConfigureCommerceWhatsAppRequestStatus `json:"status,omitempty"`
+	WelcomeMessage     *string                                 `json:"welcome_message,omitempty"`
+}
+
+// ConfigureCommerceWhatsAppRequestStatus defines model for ConfigureCommerceWhatsAppRequest.Status.
+type ConfigureCommerceWhatsAppRequestStatus string
+
 // Coupon defines model for Coupon.
 type Coupon struct {
 	CampaignId openapi_types.UUID `json:"campaignId"`
@@ -113,6 +1101,85 @@ type CreateBalanceRequest struct {
 	Amount          float32            `json:"amount"`
 	CampaignId      openapi_types.UUID `json:"campaignId"`
 	StartingBalance float32            `json:"startingBalance"`
+}
+
+// CreateCommerceCartRequest defines model for CreateCommerceCartRequest.
+type CreateCommerceCartRequest struct {
+	CustomerId     openapi_types.UUID  `json:"customer_id"`
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	StoreId        openapi_types.UUID  `json:"store_id"`
+}
+
+// CreateCommerceCategoryRequest defines model for CreateCommerceCategoryRequest.
+type CreateCommerceCategoryRequest struct {
+	Description    *string             `json:"description,omitempty"`
+	Name           string              `json:"name"`
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	Slug           string              `json:"slug"`
+	SortOrder      int                 `json:"sort_order"`
+}
+
+// CreateCommerceDeliveryQuoteRequest defines model for CreateCommerceDeliveryQuoteRequest.
+type CreateCommerceDeliveryQuoteRequest struct {
+	DistanceMeters    *int                                     `json:"distance_meters"`
+	DurationSeconds   *int                                     `json:"duration_seconds"`
+	EstimatedFeeMinor *int64                                   `json:"estimated_fee_minor"`
+	ExpiresAt         *time.Time                               `json:"expires_at"`
+	IdempotencyKey    string                                   `json:"idempotency_key"`
+	OrganizationId    *openapi_types.UUID                      `json:"organization_id"`
+	Provider          *string                                  `json:"provider,omitempty"`
+	Source            CreateCommerceDeliveryQuoteRequestSource `json:"source"`
+}
+
+// CreateCommerceDeliveryQuoteRequestSource defines model for CreateCommerceDeliveryQuoteRequest.Source.
+type CreateCommerceDeliveryQuoteRequestSource string
+
+// CreateCommerceMerchantProfileRequest defines model for CreateCommerceMerchantProfileRequest.
+type CreateCommerceMerchantProfileRequest struct {
+	DefaultCurrency string              `json:"default_currency"`
+	DisplayName     string              `json:"display_name"`
+	OrganizationId  *openapi_types.UUID `json:"organization_id"`
+	Slug            string              `json:"slug"`
+	Timezone        string              `json:"timezone"`
+}
+
+// CreateCommerceProductRequest defines model for CreateCommerceProductRequest.
+type CreateCommerceProductRequest struct {
+	CategoryId     openapi_types.UUID            `json:"category_id"`
+	Currency       string                        `json:"currency"`
+	Description    *string                       `json:"description,omitempty"`
+	Images         *[]CommerceProductImageInput  `json:"images,omitempty"`
+	Name           string                        `json:"name"`
+	OrganizationId *openapi_types.UUID           `json:"organization_id"`
+	Slug           string                        `json:"slug"`
+	Variants       []CommerceProductVariantInput `json:"variants"`
+}
+
+// CreateCommerceStaffAssignmentRequest defines model for CreateCommerceStaffAssignmentRequest.
+type CreateCommerceStaffAssignmentRequest struct {
+	OrganizationId *openapi_types.UUID                      `json:"organization_id"`
+	Role           CreateCommerceStaffAssignmentRequestRole `json:"role"`
+	UserId         openapi_types.UUID                       `json:"user_id"`
+}
+
+// CreateCommerceStaffAssignmentRequestRole defines model for CreateCommerceStaffAssignmentRequest.Role.
+type CreateCommerceStaffAssignmentRequestRole string
+
+// CreateCommerceStoreRequest defines model for CreateCommerceStoreRequest.
+type CreateCommerceStoreRequest struct {
+	Address            string                              `json:"address"`
+	City               string                              `json:"city"`
+	Code               string                              `json:"code"`
+	CountryCode        string                              `json:"country_code"`
+	FulfilmentModes    *[]CommerceStoreFulfilmentModeInput `json:"fulfilment_modes,omitempty"`
+	Hours              *[]CommerceStoreHourInput           `json:"hours,omitempty"`
+	Latitude           *float64                            `json:"latitude"`
+	Longitude          *float64                            `json:"longitude"`
+	Name               string                              `json:"name"`
+	OrganizationId     *openapi_types.UUID                 `json:"organization_id"`
+	PreparationMinutes int                                 `json:"preparation_minutes"`
+	State              string                              `json:"state"`
+	Timezone           string                              `json:"timezone"`
 }
 
 // CreateUserRequestBody defines model for CreateUserRequestBody.
@@ -143,10 +1210,29 @@ type Customer struct {
 	Status         string              `json:"status"`
 }
 
+// DecideCommerceDeliveryQuoteRequest defines model for DecideCommerceDeliveryQuoteRequest.
+type DecideCommerceDeliveryQuoteRequest struct {
+	Decision       DecideCommerceDeliveryQuoteRequestDecision `json:"decision"`
+	IdempotencyKey string                                     `json:"idempotency_key"`
+	OrganizationId *openapi_types.UUID                        `json:"organization_id"`
+	Reason         *string                                    `json:"reason,omitempty"`
+}
+
+// DecideCommerceDeliveryQuoteRequestDecision defines model for DecideCommerceDeliveryQuoteRequest.Decision.
+type DecideCommerceDeliveryQuoteRequestDecision string
+
 // Error defines model for Error.
 type Error struct {
 	ErrorCode string `json:"error_code"`
 	Message   string `json:"message"`
+}
+
+// InitializeCommercePaymentRequest defines model for InitializeCommercePaymentRequest.
+type InitializeCommercePaymentRequest struct {
+	IdempotencyKey string              `json:"idempotency_key"`
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	PayerEmail     *string             `json:"payer_email,omitempty"`
+	Provider       *string             `json:"provider,omitempty"`
 }
 
 // LoginRequest defines model for LoginRequest.
@@ -181,6 +1267,12 @@ type Payment struct {
 // PaymentStatus defines model for Payment.Status.
 type PaymentStatus string
 
+// PrepareCommerceStoreOrderRequest defines model for PrepareCommerceStoreOrderRequest.
+type PrepareCommerceStoreOrderRequest struct {
+	IdempotencyKey string              `json:"idempotency_key"`
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+}
+
 // Question defines model for Question.
 type Question struct {
 	CampaignId    openapi_types.UUID `json:"campaignId"`
@@ -194,12 +1286,39 @@ type Question struct {
 // QuestionType defines model for Question.Type.
 type QuestionType string
 
+// ResolveCommerceCustomerRequest defines model for ResolveCommerceCustomerRequest.
+type ResolveCommerceCustomerRequest struct {
+	Channel        ResolveCommerceCustomerRequestChannel `json:"channel"`
+	DisplayName    *string                               `json:"display_name,omitempty"`
+	Email          *openapi_types.Email                  `json:"email,omitempty"`
+	Identifier     string                                `json:"identifier"`
+	OrganizationId *openapi_types.UUID                   `json:"organization_id"`
+}
+
+// ResolveCommerceCustomerRequestChannel defines model for ResolveCommerceCustomerRequest.Channel.
+type ResolveCommerceCustomerRequestChannel string
+
 // Response defines model for Response.
 type Response struct {
 	Answer     string             `json:"answer"`
 	CustomerId openapi_types.UUID `json:"customerId"`
 	Id         openapi_types.UUID `json:"id"`
 	QuestionId openapi_types.UUID `json:"questionId"`
+}
+
+// SetCommerceCartItemRequest defines model for SetCommerceCartItemRequest.
+type SetCommerceCartItemRequest struct {
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	Quantity       int                 `json:"quantity"`
+}
+
+// StartCommerceFulfilmentRequest defines model for StartCommerceFulfilmentRequest.
+type StartCommerceFulfilmentRequest struct {
+	DestinationAddress   *string             `json:"destination_address,omitempty"`
+	DestinationLatitude  *float64            `json:"destination_latitude"`
+	DestinationLongitude *float64            `json:"destination_longitude"`
+	IdempotencyKey       string              `json:"idempotency_key"`
+	OrganizationId       *openapi_types.UUID `json:"organization_id"`
 }
 
 // Transaction defines model for Transaction.
@@ -251,10 +1370,105 @@ type TransactionStatusUpdate struct {
 // TransactionStatusUpdateStatus defines model for TransactionStatusUpdate.Status.
 type TransactionStatusUpdateStatus string
 
+// TransitionCommerceFulfilmentRequest defines model for TransitionCommerceFulfilmentRequest.
+type TransitionCommerceFulfilmentRequest struct {
+	IdempotencyKey string              `json:"idempotency_key"`
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	Reason         *string             `json:"reason,omitempty"`
+}
+
+// TransitionCommerceOrderRequest defines model for TransitionCommerceOrderRequest.
+type TransitionCommerceOrderRequest struct {
+	IdempotencyKey string              `json:"idempotency_key"`
+	OrganizationId *openapi_types.UUID `json:"organization_id"`
+	Reason         *string             `json:"reason,omitempty"`
+	Status         CommerceOrderStatus `json:"status"`
+}
+
 // UpdateBalanceRequest defines model for UpdateBalanceRequest.
 type UpdateBalanceRequest struct {
 	Amount float32 `json:"amount"`
 }
+
+// UpdateCommerceCategoryRequest defines model for UpdateCommerceCategoryRequest.
+type UpdateCommerceCategoryRequest struct {
+	Description    *string                             `json:"description,omitempty"`
+	Name           string                              `json:"name"`
+	OrganizationId *openapi_types.UUID                 `json:"organization_id"`
+	Slug           string                              `json:"slug"`
+	SortOrder      int                                 `json:"sort_order"`
+	Status         UpdateCommerceCategoryRequestStatus `json:"status"`
+}
+
+// UpdateCommerceCategoryRequestStatus defines model for UpdateCommerceCategoryRequest.Status.
+type UpdateCommerceCategoryRequestStatus string
+
+// UpdateCommerceComplaintRequest defines model for UpdateCommerceComplaintRequest.
+type UpdateCommerceComplaintRequest struct {
+	OrganizationId *openapi_types.UUID     `json:"organization_id,omitempty"`
+	Resolution     *string                 `json:"resolution,omitempty"`
+	Status         CommerceComplaintStatus `json:"status"`
+}
+
+// UpdateCommerceMerchantProfileRequest defines model for UpdateCommerceMerchantProfileRequest.
+type UpdateCommerceMerchantProfileRequest struct {
+	DefaultCurrency string                                     `json:"default_currency"`
+	DisplayName     string                                     `json:"display_name"`
+	OrganizationId  *openapi_types.UUID                        `json:"organization_id"`
+	Slug            string                                     `json:"slug"`
+	Status          UpdateCommerceMerchantProfileRequestStatus `json:"status"`
+	Timezone        string                                     `json:"timezone"`
+}
+
+// UpdateCommerceMerchantProfileRequestStatus defines model for UpdateCommerceMerchantProfileRequest.Status.
+type UpdateCommerceMerchantProfileRequestStatus string
+
+// UpdateCommerceProductRequest defines model for UpdateCommerceProductRequest.
+type UpdateCommerceProductRequest struct {
+	CategoryId     openapi_types.UUID                 `json:"category_id"`
+	Currency       string                             `json:"currency"`
+	Description    *string                            `json:"description,omitempty"`
+	Name           string                             `json:"name"`
+	OrganizationId *openapi_types.UUID                `json:"organization_id"`
+	Slug           string                             `json:"slug"`
+	Status         UpdateCommerceProductRequestStatus `json:"status"`
+}
+
+// UpdateCommerceProductRequestStatus defines model for UpdateCommerceProductRequest.Status.
+type UpdateCommerceProductRequestStatus string
+
+// UpdateCommerceProductVariantRequest defines model for UpdateCommerceProductVariantRequest.
+type UpdateCommerceProductVariantRequest struct {
+	Attributes     *map[string]string                        `json:"attributes,omitempty"`
+	Name           string                                    `json:"name"`
+	OrganizationId *openapi_types.UUID                       `json:"organization_id"`
+	PriceMinor     int64                                     `json:"price_minor"`
+	Status         UpdateCommerceProductVariantRequestStatus `json:"status"`
+}
+
+// UpdateCommerceProductVariantRequestStatus defines model for UpdateCommerceProductVariantRequest.Status.
+type UpdateCommerceProductVariantRequestStatus string
+
+// UpdateCommerceStoreRequest defines model for UpdateCommerceStoreRequest.
+type UpdateCommerceStoreRequest struct {
+	Address            string                              `json:"address"`
+	City               string                              `json:"city"`
+	Code               string                              `json:"code"`
+	CountryCode        string                              `json:"country_code"`
+	FulfilmentModes    *[]CommerceStoreFulfilmentModeInput `json:"fulfilment_modes,omitempty"`
+	Hours              *[]CommerceStoreHourInput           `json:"hours,omitempty"`
+	Latitude           *float64                            `json:"latitude"`
+	Longitude          *float64                            `json:"longitude"`
+	Name               string                              `json:"name"`
+	OrganizationId     *openapi_types.UUID                 `json:"organization_id"`
+	PreparationMinutes int                                 `json:"preparation_minutes"`
+	State              string                              `json:"state"`
+	Status             UpdateCommerceStoreRequestStatus    `json:"status"`
+	Timezone           string                              `json:"timezone"`
+}
+
+// UpdateCommerceStoreRequestStatus defines model for UpdateCommerceStoreRequest.Status.
+type UpdateCommerceStoreRequestStatus string
 
 // User defines model for User.
 type User struct {
@@ -267,6 +1481,19 @@ type User struct {
 	Password       string              `json:"password"`
 	Role           string              `json:"role"`
 }
+
+// VerifyCommerceFulfilmentHandoverRequest defines model for VerifyCommerceFulfilmentHandoverRequest.
+type VerifyCommerceFulfilmentHandoverRequest struct {
+	IdempotencyKey   string              `json:"idempotency_key"`
+	OrganizationId   *openapi_types.UUID `json:"organization_id"`
+	VerificationCode string              `json:"verification_code"`
+}
+
+// CommerceFulfilmentId defines model for CommerceFulfilmentId.
+type CommerceFulfilmentId = openapi_types.UUID
+
+// CommerceOrganizationId defines model for CommerceOrganizationId.
+type CommerceOrganizationId = openapi_types.UUID
 
 // BadRequestError defines model for BadRequestError.
 type BadRequestError = Error
@@ -313,6 +1540,150 @@ type GetCampaignsCampaignIdQuestionsParams struct {
 
 // PostCampaignsCampaignIdQuestionsJSONBody defines parameters for PostCampaignsCampaignIdQuestions.
 type PostCampaignsCampaignIdQuestionsJSONBody = []Question
+
+// GetCommerceCartParams defines parameters for GetCommerceCart.
+type GetCommerceCartParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ClearCommerceCartParams defines parameters for ClearCommerceCart.
+type ClearCommerceCartParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// DeleteCommerceCartItemParams defines parameters for DeleteCommerceCartItem.
+type DeleteCommerceCartItemParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ListCommerceCategoriesParams defines parameters for ListCommerceCategories.
+type ListCommerceCategoriesParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommerceWhatsAppConfigurationParams defines parameters for GetCommerceWhatsAppConfiguration.
+type GetCommerceWhatsAppConfigurationParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ListCommerceComplaintsParams defines parameters for ListCommerceComplaints.
+type ListCommerceComplaintsParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId  `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+	StoreId        *openapi_types.UUID      `form:"store_id,omitempty" json:"store_id,omitempty"`
+	Status         *CommerceComplaintStatus `form:"status,omitempty" json:"status,omitempty"`
+	Limit          *int                     `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset         *int                     `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetCommerceCustomerParams defines parameters for GetCommerceCustomer.
+type GetCommerceCustomerParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommerceMerchantProfileParams defines parameters for GetCommerceMerchantProfile.
+type GetCommerceMerchantProfileParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ListCommerceOrdersParams defines parameters for ListCommerceOrders.
+type ListCommerceOrdersParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+	StoreId        *openapi_types.UUID     `form:"store_id,omitempty" json:"store_id,omitempty"`
+	CustomerId     *openapi_types.UUID     `form:"customer_id,omitempty" json:"customer_id,omitempty"`
+	Status         *CommerceOrderStatus    `form:"status,omitempty" json:"status,omitempty"`
+	Limit          *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset         *int                    `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetCommerceOrderParams defines parameters for GetCommerceOrder.
+type GetCommerceOrderParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommerceOrderFulfilmentParams defines parameters for GetCommerceOrderFulfilment.
+type GetCommerceOrderFulfilmentParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommerceOrderInvoiceParams defines parameters for GetCommerceOrderInvoice.
+type GetCommerceOrderInvoiceParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommercePaymentParams defines parameters for GetCommercePayment.
+type GetCommercePaymentParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// CommercePaymentWebhookJSONBody defines parameters for CommercePaymentWebhook.
+type CommercePaymentWebhookJSONBody map[string]interface{}
+
+// ListCommerceProductsParams defines parameters for ListCommerceProducts.
+type ListCommerceProductsParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+	CategoryId     *openapi_types.UUID     `form:"category_id,omitempty" json:"category_id,omitempty"`
+	Limit          *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset         *int                    `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetCommerceProductParams defines parameters for GetCommerceProduct.
+type GetCommerceProductParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ListCommerceStoreOrdersParams defines parameters for ListCommerceStoreOrders.
+type ListCommerceStoreOrdersParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+	StoreId        *openapi_types.UUID     `form:"store_id,omitempty" json:"store_id,omitempty"`
+	Limit          *int                    `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset         *int                    `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListCommerceStoresParams defines parameters for ListCommerceStores.
+type ListCommerceStoresParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommerceStoreParams defines parameters for GetCommerceStore.
+type GetCommerceStoreParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ListCommerceStoreCatalogueParams defines parameters for ListCommerceStoreCatalogue.
+type ListCommerceStoreCatalogueParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// GetCommerceInventoryLevelParams defines parameters for GetCommerceInventoryLevel.
+type GetCommerceInventoryLevelParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
+
+// ListCommerceStoreStaffParams defines parameters for ListCommerceStoreStaff.
+type ListCommerceStoreStaffParams struct {
+	// OrganizationId Target organization for platform administrators; other roles are restricted to their token organization.
+	OrganizationId *CommerceOrganizationId `form:"organization_id,omitempty" json:"organization_id,omitempty"`
+}
 
 // GetAllCustomersParams defines parameters for GetAllCustomers.
 type GetAllCustomersParams struct {
@@ -469,6 +1840,96 @@ type PostCampaignsCampaignIdQuestionsJSONRequestBody = PostCampaignsCampaignIdQu
 // UpdateCampaignJSONRequestBody defines body for UpdateCampaign for application/json ContentType.
 type UpdateCampaignJSONRequestBody = Campaign
 
+// CreateCommerceCartJSONRequestBody defines body for CreateCommerceCart for application/json ContentType.
+type CreateCommerceCartJSONRequestBody = CreateCommerceCartRequest
+
+// SetCommerceCartItemJSONRequestBody defines body for SetCommerceCartItem for application/json ContentType.
+type SetCommerceCartItemJSONRequestBody = SetCommerceCartItemRequest
+
+// CreateCommerceCategoryJSONRequestBody defines body for CreateCommerceCategory for application/json ContentType.
+type CreateCommerceCategoryJSONRequestBody = CreateCommerceCategoryRequest
+
+// UpdateCommerceCategoryJSONRequestBody defines body for UpdateCommerceCategory for application/json ContentType.
+type UpdateCommerceCategoryJSONRequestBody = UpdateCommerceCategoryRequest
+
+// ConfigureCommerceWhatsAppJSONRequestBody defines body for ConfigureCommerceWhatsApp for application/json ContentType.
+type ConfigureCommerceWhatsAppJSONRequestBody = ConfigureCommerceWhatsAppRequest
+
+// CheckoutCommerceCartJSONRequestBody defines body for CheckoutCommerceCart for application/json ContentType.
+type CheckoutCommerceCartJSONRequestBody = CheckoutCommerceCartRequest
+
+// UpdateCommerceComplaintJSONRequestBody defines body for UpdateCommerceComplaint for application/json ContentType.
+type UpdateCommerceComplaintJSONRequestBody = UpdateCommerceComplaintRequest
+
+// ResolveCommerceCustomerJSONRequestBody defines body for ResolveCommerceCustomer for application/json ContentType.
+type ResolveCommerceCustomerJSONRequestBody = ResolveCommerceCustomerRequest
+
+// RecordCommerceFulfilmentArrivalJSONRequestBody defines body for RecordCommerceFulfilmentArrival for application/json ContentType.
+type RecordCommerceFulfilmentArrivalJSONRequestBody = TransitionCommerceFulfilmentRequest
+
+// CompleteCommerceFulfilmentJSONRequestBody defines body for CompleteCommerceFulfilment for application/json ContentType.
+type CompleteCommerceFulfilmentJSONRequestBody = TransitionCommerceFulfilmentRequest
+
+// MarkCommerceFulfilmentDeliveredJSONRequestBody defines body for MarkCommerceFulfilmentDelivered for application/json ContentType.
+type MarkCommerceFulfilmentDeliveredJSONRequestBody = TransitionCommerceFulfilmentRequest
+
+// VerifyCommerceFulfilmentHandoverJSONRequestBody defines body for VerifyCommerceFulfilmentHandover for application/json ContentType.
+type VerifyCommerceFulfilmentHandoverJSONRequestBody = VerifyCommerceFulfilmentHandoverRequest
+
+// CreateCommerceDeliveryQuoteJSONRequestBody defines body for CreateCommerceDeliveryQuote for application/json ContentType.
+type CreateCommerceDeliveryQuoteJSONRequestBody = CreateCommerceDeliveryQuoteRequest
+
+// DecideCommerceDeliveryQuoteJSONRequestBody defines body for DecideCommerceDeliveryQuote for application/json ContentType.
+type DecideCommerceDeliveryQuoteJSONRequestBody = DecideCommerceDeliveryQuoteRequest
+
+// AssignCommerceRiderJSONRequestBody defines body for AssignCommerceRider for application/json ContentType.
+type AssignCommerceRiderJSONRequestBody = AssignCommerceRiderRequest
+
+// CreateCommerceMerchantProfileJSONRequestBody defines body for CreateCommerceMerchantProfile for application/json ContentType.
+type CreateCommerceMerchantProfileJSONRequestBody = CreateCommerceMerchantProfileRequest
+
+// UpdateCommerceMerchantProfileJSONRequestBody defines body for UpdateCommerceMerchantProfile for application/json ContentType.
+type UpdateCommerceMerchantProfileJSONRequestBody = UpdateCommerceMerchantProfileRequest
+
+// StartCommerceFulfilmentJSONRequestBody defines body for StartCommerceFulfilment for application/json ContentType.
+type StartCommerceFulfilmentJSONRequestBody = StartCommerceFulfilmentRequest
+
+// InitializeCommerceOrderPaymentJSONRequestBody defines body for InitializeCommerceOrderPayment for application/json ContentType.
+type InitializeCommerceOrderPaymentJSONRequestBody = InitializeCommercePaymentRequest
+
+// TransitionCommerceOrderJSONRequestBody defines body for TransitionCommerceOrder for application/json ContentType.
+type TransitionCommerceOrderJSONRequestBody = TransitionCommerceOrderRequest
+
+// CommercePaymentWebhookJSONRequestBody defines body for CommercePaymentWebhook for application/json ContentType.
+type CommercePaymentWebhookJSONRequestBody CommercePaymentWebhookJSONBody
+
+// CreateCommerceProductJSONRequestBody defines body for CreateCommerceProduct for application/json ContentType.
+type CreateCommerceProductJSONRequestBody = CreateCommerceProductRequest
+
+// UpdateCommerceProductJSONRequestBody defines body for UpdateCommerceProduct for application/json ContentType.
+type UpdateCommerceProductJSONRequestBody = UpdateCommerceProductRequest
+
+// UpdateCommerceProductVariantJSONRequestBody defines body for UpdateCommerceProductVariant for application/json ContentType.
+type UpdateCommerceProductVariantJSONRequestBody = UpdateCommerceProductVariantRequest
+
+// MarkCommerceStoreOrderPreparedJSONRequestBody defines body for MarkCommerceStoreOrderPrepared for application/json ContentType.
+type MarkCommerceStoreOrderPreparedJSONRequestBody = PrepareCommerceStoreOrderRequest
+
+// CreateCommerceStoreJSONRequestBody defines body for CreateCommerceStore for application/json ContentType.
+type CreateCommerceStoreJSONRequestBody = CreateCommerceStoreRequest
+
+// UpdateCommerceStoreJSONRequestBody defines body for UpdateCommerceStore for application/json ContentType.
+type UpdateCommerceStoreJSONRequestBody = UpdateCommerceStoreRequest
+
+// ConfigureCommerceStoreVariantJSONRequestBody defines body for ConfigureCommerceStoreVariant for application/json ContentType.
+type ConfigureCommerceStoreVariantJSONRequestBody = ConfigureCommerceStoreVariantRequest
+
+// AdjustCommerceInventoryJSONRequestBody defines body for AdjustCommerceInventory for application/json ContentType.
+type AdjustCommerceInventoryJSONRequestBody = AdjustCommerceInventoryRequest
+
+// AssignCommerceStoreStaffJSONRequestBody defines body for AssignCommerceStoreStaff for application/json ContentType.
+type AssignCommerceStoreStaffJSONRequestBody = CreateCommerceStaffAssignmentRequest
+
 // CreateCustomerJSONRequestBody defines body for CreateCustomer for application/json ContentType.
 type CreateCustomerJSONRequestBody = Customer
 
@@ -561,6 +2022,162 @@ type ServerInterface interface {
 	// Generate tokens for a campaign
 	// (POST /campaigns/{id}/generate-tokens)
 	GenerateTokens(c *fiber.Ctx, id openapi_types.UUID) error
+	// Get or create a customer's active cart for one store
+	// (POST /commerce/carts)
+	CreateCommerceCart(c *fiber.Ctx) error
+	// Get an active commerce cart with current authoritative totals
+	// (GET /commerce/carts/{cart_id})
+	GetCommerceCart(c *fiber.Ctx, cartId openapi_types.UUID, params GetCommerceCartParams) error
+	// Remove all items from an active commerce cart
+	// (DELETE /commerce/carts/{cart_id}/items)
+	ClearCommerceCart(c *fiber.Ctx, cartId openapi_types.UUID, params ClearCommerceCartParams) error
+	// Remove a variant from an active commerce cart
+	// (DELETE /commerce/carts/{cart_id}/items/{variant_id})
+	DeleteCommerceCartItem(c *fiber.Ctx, cartId openapi_types.UUID, variantId openapi_types.UUID, params DeleteCommerceCartItemParams) error
+	// Set a variant quantity using current store price and availability
+	// (PUT /commerce/carts/{cart_id}/items/{variant_id})
+	SetCommerceCartItem(c *fiber.Ctx, cartId openapi_types.UUID, variantId openapi_types.UUID) error
+	// List commerce categories
+	// (GET /commerce/categories)
+	ListCommerceCategories(c *fiber.Ctx, params ListCommerceCategoriesParams) error
+	// Create a commerce category
+	// (POST /commerce/categories)
+	CreateCommerceCategory(c *fiber.Ctx) error
+	// Update a commerce category
+	// (PATCH /commerce/categories/{category_id})
+	UpdateCommerceCategory(c *fiber.Ctx, categoryId openapi_types.UUID) error
+	// Get the merchant WhatsApp commerce channel configuration
+	// (GET /commerce/channels/whatsapp)
+	GetCommerceWhatsAppConfiguration(c *fiber.Ctx, params GetCommerceWhatsAppConfigurationParams) error
+	// Configure the merchant WhatsApp commerce channel
+	// (PUT /commerce/channels/whatsapp)
+	ConfigureCommerceWhatsApp(c *fiber.Ctx) error
+	// Create an authoritative single-store order from an active cart
+	// (POST /commerce/checkouts)
+	CheckoutCommerceCart(c *fiber.Ctx) error
+	// List commerce complaints visible to the current user
+	// (GET /commerce/complaints)
+	ListCommerceComplaints(c *fiber.Ctx, params ListCommerceComplaintsParams) error
+	// Update a commerce complaint
+	// (PATCH /commerce/complaints/{complaint_id})
+	UpdateCommerceComplaint(c *fiber.Ctx, complaintId openapi_types.UUID) error
+	// Resolve or create a commerce customer by channel identity
+	// (POST /commerce/customers/resolve)
+	ResolveCommerceCustomer(c *fiber.Ctx) error
+	// Get a commerce customer
+	// (GET /commerce/customers/{customer_id})
+	GetCommerceCustomer(c *fiber.Ctx, customerId openapi_types.UUID, params GetCommerceCustomerParams) error
+	// Record customer or rider arrival before secure handover
+	// (POST /commerce/fulfilments/{fulfilment_id}/arrival)
+	RecordCommerceFulfilmentArrival(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId) error
+	// Complete a delivered rider fulfilment
+	// (POST /commerce/fulfilments/{fulfilment_id}/complete)
+	CompleteCommerceFulfilment(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId) error
+	// Mark a rider delivery as delivered
+	// (POST /commerce/fulfilments/{fulfilment_id}/delivered)
+	MarkCommerceFulfilmentDelivered(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId) error
+	// Verify the customer's code before handing an order to a customer or rider
+	// (POST /commerce/fulfilments/{fulfilment_id}/handover)
+	VerifyCommerceFulfilmentHandover(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId) error
+	// Record a manual estimate or request one from a configured delivery provider
+	// (POST /commerce/fulfilments/{fulfilment_id}/quotes)
+	CreateCommerceDeliveryQuote(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId) error
+	// Record a customer's acceptance or rejection of a delivery estimate
+	// (POST /commerce/fulfilments/{fulfilment_id}/quotes/{quote_id}/decision)
+	DecideCommerceDeliveryQuote(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId, quoteId openapi_types.UUID) error
+	// Record the verified identity of a customer- or merchant-arranged rider
+	// (POST /commerce/fulfilments/{fulfilment_id}/rider-assignments)
+	AssignCommerceRider(c *fiber.Ctx, fulfilmentId CommerceFulfilmentId) error
+	// Get a commerce merchant profile
+	// (GET /commerce/merchant-profile)
+	GetCommerceMerchantProfile(c *fiber.Ctx, params GetCommerceMerchantProfileParams) error
+	// Create a commerce merchant profile
+	// (POST /commerce/merchant-profile)
+	CreateCommerceMerchantProfile(c *fiber.Ctx) error
+	// Update commerce merchant business settings
+	// (PUT /commerce/merchant-profile)
+	UpdateCommerceMerchantProfile(c *fiber.Ctx) error
+	// List commerce orders visible to the current user
+	// (GET /commerce/orders)
+	ListCommerceOrders(c *fiber.Ctx, params ListCommerceOrdersParams) error
+	// Get a commerce order with item snapshots and event history
+	// (GET /commerce/orders/{order_id})
+	GetCommerceOrder(c *fiber.Ctx, orderId openapi_types.UUID, params GetCommerceOrderParams) error
+	// Get an order's fulfilment, quote, rider, and event history
+	// (GET /commerce/orders/{order_id}/fulfilment)
+	GetCommerceOrderFulfilment(c *fiber.Ctx, orderId openapi_types.UUID, params GetCommerceOrderFulfilmentParams) error
+	// Start the order's mode-specific fulfilment workflow after it is ready
+	// (POST /commerce/orders/{order_id}/fulfilment)
+	StartCommerceFulfilment(c *fiber.Ctx, orderId openapi_types.UUID) error
+	// Get the immutable invoice snapshot for an order
+	// (GET /commerce/orders/{order_id}/invoice)
+	GetCommerceOrderInvoice(c *fiber.Ctx, orderId openapi_types.UUID, params GetCommerceOrderInvoiceParams) error
+	// Issue an invoice and initialize a provider payment for an order
+	// (POST /commerce/orders/{order_id}/payments)
+	InitializeCommerceOrderPayment(c *fiber.Ctx, orderId openapi_types.UUID) error
+	// Apply an allowed operational order status transition
+	// (PATCH /commerce/orders/{order_id}/status)
+	TransitionCommerceOrder(c *fiber.Ctx, orderId openapi_types.UUID) error
+	// Get a commerce payment and its invoice without trusting a browser redirect
+	// (GET /commerce/payments/{payment_id})
+	GetCommercePayment(c *fiber.Ctx, paymentId openapi_types.UUID, params GetCommercePaymentParams) error
+	// Receive a signed provider webhook and verify the transaction server-side
+	// (POST /commerce/payments/{provider}/webhook)
+	CommercePaymentWebhook(c *fiber.Ctx, provider string) error
+	// List commerce products
+	// (GET /commerce/products)
+	ListCommerceProducts(c *fiber.Ctx, params ListCommerceProductsParams) error
+	// Create a commerce product with variants and images
+	// (POST /commerce/products)
+	CreateCommerceProduct(c *fiber.Ctx) error
+	// Get a commerce product
+	// (GET /commerce/products/{product_id})
+	GetCommerceProduct(c *fiber.Ctx, productId openapi_types.UUID, params GetCommerceProductParams) error
+	// Update commerce product metadata
+	// (PATCH /commerce/products/{product_id})
+	UpdateCommerceProduct(c *fiber.Ctx, productId openapi_types.UUID) error
+	// Update a commerce product variant and its base price
+	// (PATCH /commerce/products/{product_id}/variants/{variant_id})
+	UpdateCommerceProductVariant(c *fiber.Ctx, productId openapi_types.UUID, variantId openapi_types.UUID) error
+	// Resolve an active merchant's public WhatsApp commerce link
+	// (GET /commerce/public/merchants/{merchant_slug}/whatsapp-link)
+	GetPublicCommerceWhatsAppLink(c *fiber.Ctx, merchantSlug string) error
+	// List the operational order queue visible to store staff
+	// (GET /commerce/store-orders)
+	ListCommerceStoreOrders(c *fiber.Ctx, params ListCommerceStoreOrdersParams) error
+	// Mark an order prepared and start its fulfilment workflow
+	// (POST /commerce/store-orders/{order_id}/prepared)
+	MarkCommerceStoreOrderPrepared(c *fiber.Ctx, orderId openapi_types.UUID) error
+	// List commerce stores visible to the current user
+	// (GET /commerce/stores)
+	ListCommerceStores(c *fiber.Ctx, params ListCommerceStoresParams) error
+	// Create a commerce store
+	// (POST /commerce/stores)
+	CreateCommerceStore(c *fiber.Ctx) error
+	// Get a commerce store visible to the current user
+	// (GET /commerce/stores/{store_id})
+	GetCommerceStore(c *fiber.Ctx, storeId openapi_types.UUID, params GetCommerceStoreParams) error
+	// Update store details, hours, and fulfilment options
+	// (PUT /commerce/stores/{store_id})
+	UpdateCommerceStore(c *fiber.Ctx, storeId openapi_types.UUID) error
+	// List the configured catalogue for a store
+	// (GET /commerce/stores/{store_id}/catalogue)
+	ListCommerceStoreCatalogue(c *fiber.Ctx, storeId openapi_types.UUID, params ListCommerceStoreCatalogueParams) error
+	// Configure product availability and pricing for a store
+	// (PUT /commerce/stores/{store_id}/catalogue/{variant_id})
+	ConfigureCommerceStoreVariant(c *fiber.Ctx, storeId openapi_types.UUID, variantId openapi_types.UUID) error
+	// Get store inventory for a product variant
+	// (GET /commerce/stores/{store_id}/inventory/{variant_id})
+	GetCommerceInventoryLevel(c *fiber.Ctx, storeId openapi_types.UUID, variantId openapi_types.UUID, params GetCommerceInventoryLevelParams) error
+	// Apply an idempotent store inventory adjustment
+	// (POST /commerce/stores/{store_id}/inventory/{variant_id}/adjustments)
+	AdjustCommerceInventory(c *fiber.Ctx, storeId openapi_types.UUID, variantId openapi_types.UUID) error
+	// List staff assigned to a commerce store
+	// (GET /commerce/stores/{store_id}/staff)
+	ListCommerceStoreStaff(c *fiber.Ctx, storeId openapi_types.UUID, params ListCommerceStoreStaffParams) error
+	// Assign a user to a commerce store
+	// (POST /commerce/stores/{store_id}/staff)
+	AssignCommerceStoreStaff(c *fiber.Ctx, storeId openapi_types.UUID) error
 	// Get all customers
 	// (GET /customers)
 	GetAllCustomers(c *fiber.Ctx, params GetAllCustomersParams) error
@@ -1009,6 +2626,1281 @@ func (siw *ServerInterfaceWrapper) GenerateTokens(c *fiber.Ctx) error {
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GenerateTokens(c, id)
+}
+
+// CreateCommerceCart operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommerceCart(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateCommerceCart(c)
+}
+
+// GetCommerceCart operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceCart(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "cart_id" -------------
+	var cartId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "cart_id", c.Params("cart_id"), &cartId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter cart_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceCartParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceCart(c, cartId, params)
+}
+
+// ClearCommerceCart operation middleware
+func (siw *ServerInterfaceWrapper) ClearCommerceCart(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "cart_id" -------------
+	var cartId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "cart_id", c.Params("cart_id"), &cartId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter cart_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ClearCommerceCartParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.ClearCommerceCart(c, cartId, params)
+}
+
+// DeleteCommerceCartItem operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCommerceCartItem(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "cart_id" -------------
+	var cartId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "cart_id", c.Params("cart_id"), &cartId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter cart_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "variant_id" -------------
+	var variantId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "variant_id", c.Params("variant_id"), &variantId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter variant_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteCommerceCartItemParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.DeleteCommerceCartItem(c, cartId, variantId, params)
+}
+
+// SetCommerceCartItem operation middleware
+func (siw *ServerInterfaceWrapper) SetCommerceCartItem(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "cart_id" -------------
+	var cartId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "cart_id", c.Params("cart_id"), &cartId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter cart_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "variant_id" -------------
+	var variantId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "variant_id", c.Params("variant_id"), &variantId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter variant_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.SetCommerceCartItem(c, cartId, variantId)
+}
+
+// ListCommerceCategories operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceCategories(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceCategoriesParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceCategories(c, params)
+}
+
+// CreateCommerceCategory operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommerceCategory(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateCommerceCategory(c)
+}
+
+// UpdateCommerceCategory operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCommerceCategory(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "category_id" -------------
+	var categoryId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "category_id", c.Params("category_id"), &categoryId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter category_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateCommerceCategory(c, categoryId)
+}
+
+// GetCommerceWhatsAppConfiguration operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceWhatsAppConfiguration(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceWhatsAppConfigurationParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceWhatsAppConfiguration(c, params)
+}
+
+// ConfigureCommerceWhatsApp operation middleware
+func (siw *ServerInterfaceWrapper) ConfigureCommerceWhatsApp(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.ConfigureCommerceWhatsApp(c)
+}
+
+// CheckoutCommerceCart operation middleware
+func (siw *ServerInterfaceWrapper) CheckoutCommerceCart(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CheckoutCommerceCart(c)
+}
+
+// ListCommerceComplaints operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceComplaints(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceComplaintsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "store_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "store_id", query, &params.StoreId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", query, &params.Status)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter status: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceComplaints(c, params)
+}
+
+// UpdateCommerceComplaint operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCommerceComplaint(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "complaint_id" -------------
+	var complaintId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "complaint_id", c.Params("complaint_id"), &complaintId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter complaint_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateCommerceComplaint(c, complaintId)
+}
+
+// ResolveCommerceCustomer operation middleware
+func (siw *ServerInterfaceWrapper) ResolveCommerceCustomer(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.ResolveCommerceCustomer(c)
+}
+
+// GetCommerceCustomer operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceCustomer(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "customer_id" -------------
+	var customerId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "customer_id", c.Params("customer_id"), &customerId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter customer_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceCustomerParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceCustomer(c, customerId, params)
+}
+
+// RecordCommerceFulfilmentArrival operation middleware
+func (siw *ServerInterfaceWrapper) RecordCommerceFulfilmentArrival(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.RecordCommerceFulfilmentArrival(c, fulfilmentId)
+}
+
+// CompleteCommerceFulfilment operation middleware
+func (siw *ServerInterfaceWrapper) CompleteCommerceFulfilment(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CompleteCommerceFulfilment(c, fulfilmentId)
+}
+
+// MarkCommerceFulfilmentDelivered operation middleware
+func (siw *ServerInterfaceWrapper) MarkCommerceFulfilmentDelivered(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.MarkCommerceFulfilmentDelivered(c, fulfilmentId)
+}
+
+// VerifyCommerceFulfilmentHandover operation middleware
+func (siw *ServerInterfaceWrapper) VerifyCommerceFulfilmentHandover(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.VerifyCommerceFulfilmentHandover(c, fulfilmentId)
+}
+
+// CreateCommerceDeliveryQuote operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommerceDeliveryQuote(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateCommerceDeliveryQuote(c, fulfilmentId)
+}
+
+// DecideCommerceDeliveryQuote operation middleware
+func (siw *ServerInterfaceWrapper) DecideCommerceDeliveryQuote(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "quote_id" -------------
+	var quoteId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "quote_id", c.Params("quote_id"), &quoteId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter quote_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.DecideCommerceDeliveryQuote(c, fulfilmentId, quoteId)
+}
+
+// AssignCommerceRider operation middleware
+func (siw *ServerInterfaceWrapper) AssignCommerceRider(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "fulfilment_id" -------------
+	var fulfilmentId CommerceFulfilmentId
+
+	err = runtime.BindStyledParameter("simple", false, "fulfilment_id", c.Params("fulfilment_id"), &fulfilmentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter fulfilment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.AssignCommerceRider(c, fulfilmentId)
+}
+
+// GetCommerceMerchantProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceMerchantProfile(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceMerchantProfileParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceMerchantProfile(c, params)
+}
+
+// CreateCommerceMerchantProfile operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommerceMerchantProfile(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateCommerceMerchantProfile(c)
+}
+
+// UpdateCommerceMerchantProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCommerceMerchantProfile(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateCommerceMerchantProfile(c)
+}
+
+// ListCommerceOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceOrders(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceOrdersParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "store_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "store_id", query, &params.StoreId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "customer_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "customer_id", query, &params.CustomerId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter customer_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", query, &params.Status)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter status: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceOrders(c, params)
+}
+
+// GetCommerceOrder operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceOrder(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceOrderParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceOrder(c, orderId, params)
+}
+
+// GetCommerceOrderFulfilment operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceOrderFulfilment(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceOrderFulfilmentParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceOrderFulfilment(c, orderId, params)
+}
+
+// StartCommerceFulfilment operation middleware
+func (siw *ServerInterfaceWrapper) StartCommerceFulfilment(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.StartCommerceFulfilment(c, orderId)
+}
+
+// GetCommerceOrderInvoice operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceOrderInvoice(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceOrderInvoiceParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceOrderInvoice(c, orderId, params)
+}
+
+// InitializeCommerceOrderPayment operation middleware
+func (siw *ServerInterfaceWrapper) InitializeCommerceOrderPayment(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.InitializeCommerceOrderPayment(c, orderId)
+}
+
+// TransitionCommerceOrder operation middleware
+func (siw *ServerInterfaceWrapper) TransitionCommerceOrder(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.TransitionCommerceOrder(c, orderId)
+}
+
+// GetCommercePayment operation middleware
+func (siw *ServerInterfaceWrapper) GetCommercePayment(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "payment_id" -------------
+	var paymentId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "payment_id", c.Params("payment_id"), &paymentId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter payment_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommercePaymentParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommercePayment(c, paymentId, params)
+}
+
+// CommercePaymentWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CommercePaymentWebhook(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "provider" -------------
+	var provider string
+
+	err = runtime.BindStyledParameter("simple", false, "provider", c.Params("provider"), &provider)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter provider: %w", err).Error())
+	}
+
+	return siw.Handler.CommercePaymentWebhook(c, provider)
+}
+
+// ListCommerceProducts operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceProducts(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceProductsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "category_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "category_id", query, &params.CategoryId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter category_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceProducts(c, params)
+}
+
+// CreateCommerceProduct operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommerceProduct(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateCommerceProduct(c)
+}
+
+// GetCommerceProduct operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceProduct(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "product_id", c.Params("product_id"), &productId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter product_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceProductParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceProduct(c, productId, params)
+}
+
+// UpdateCommerceProduct operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCommerceProduct(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "product_id", c.Params("product_id"), &productId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter product_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateCommerceProduct(c, productId)
+}
+
+// UpdateCommerceProductVariant operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCommerceProductVariant(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "product_id", c.Params("product_id"), &productId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter product_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "variant_id" -------------
+	var variantId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "variant_id", c.Params("variant_id"), &variantId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter variant_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateCommerceProductVariant(c, productId, variantId)
+}
+
+// GetPublicCommerceWhatsAppLink operation middleware
+func (siw *ServerInterfaceWrapper) GetPublicCommerceWhatsAppLink(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "merchant_slug" -------------
+	var merchantSlug string
+
+	err = runtime.BindStyledParameter("simple", false, "merchant_slug", c.Params("merchant_slug"), &merchantSlug)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter merchant_slug: %w", err).Error())
+	}
+
+	return siw.Handler.GetPublicCommerceWhatsAppLink(c, merchantSlug)
+}
+
+// ListCommerceStoreOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceStoreOrders(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceStoreOrdersParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "store_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "store_id", query, &params.StoreId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceStoreOrders(c, params)
+}
+
+// MarkCommerceStoreOrderPrepared operation middleware
+func (siw *ServerInterfaceWrapper) MarkCommerceStoreOrderPrepared(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "order_id", c.Params("order_id"), &orderId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter order_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.MarkCommerceStoreOrderPrepared(c, orderId)
+}
+
+// ListCommerceStores operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceStores(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceStoresParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceStores(c, params)
+}
+
+// CreateCommerceStore operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommerceStore(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateCommerceStore(c)
+}
+
+// GetCommerceStore operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceStore(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceStoreParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceStore(c, storeId, params)
+}
+
+// UpdateCommerceStore operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCommerceStore(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateCommerceStore(c, storeId)
+}
+
+// ListCommerceStoreCatalogue operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceStoreCatalogue(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceStoreCatalogueParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceStoreCatalogue(c, storeId, params)
+}
+
+// ConfigureCommerceStoreVariant operation middleware
+func (siw *ServerInterfaceWrapper) ConfigureCommerceStoreVariant(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "variant_id" -------------
+	var variantId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "variant_id", c.Params("variant_id"), &variantId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter variant_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.ConfigureCommerceStoreVariant(c, storeId, variantId)
+}
+
+// GetCommerceInventoryLevel operation middleware
+func (siw *ServerInterfaceWrapper) GetCommerceInventoryLevel(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "variant_id" -------------
+	var variantId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "variant_id", c.Params("variant_id"), &variantId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter variant_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCommerceInventoryLevelParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.GetCommerceInventoryLevel(c, storeId, variantId, params)
+}
+
+// AdjustCommerceInventory operation middleware
+func (siw *ServerInterfaceWrapper) AdjustCommerceInventory(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	// ------------- Path parameter "variant_id" -------------
+	var variantId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "variant_id", c.Params("variant_id"), &variantId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter variant_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.AdjustCommerceInventory(c, storeId, variantId)
+}
+
+// ListCommerceStoreStaff operation middleware
+func (siw *ServerInterfaceWrapper) ListCommerceStoreStaff(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommerceStoreStaffParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "organization_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "organization_id", query, &params.OrganizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	return siw.Handler.ListCommerceStoreStaff(c, storeId, params)
+}
+
+// AssignCommerceStoreStaff operation middleware
+func (siw *ServerInterfaceWrapper) AssignCommerceStoreStaff(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "store_id" -------------
+	var storeId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "store_id", c.Params("store_id"), &storeId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter store_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.AssignCommerceStoreStaff(c, storeId)
 }
 
 // GetAllCustomers operation middleware
@@ -1875,6 +4767,110 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Post(options.BaseURL+"/campaigns/:id/generate-tokens", wrapper.GenerateTokens)
 
+	router.Post(options.BaseURL+"/commerce/carts", wrapper.CreateCommerceCart)
+
+	router.Get(options.BaseURL+"/commerce/carts/:cart_id", wrapper.GetCommerceCart)
+
+	router.Delete(options.BaseURL+"/commerce/carts/:cart_id/items", wrapper.ClearCommerceCart)
+
+	router.Delete(options.BaseURL+"/commerce/carts/:cart_id/items/:variant_id", wrapper.DeleteCommerceCartItem)
+
+	router.Put(options.BaseURL+"/commerce/carts/:cart_id/items/:variant_id", wrapper.SetCommerceCartItem)
+
+	router.Get(options.BaseURL+"/commerce/categories", wrapper.ListCommerceCategories)
+
+	router.Post(options.BaseURL+"/commerce/categories", wrapper.CreateCommerceCategory)
+
+	router.Patch(options.BaseURL+"/commerce/categories/:category_id", wrapper.UpdateCommerceCategory)
+
+	router.Get(options.BaseURL+"/commerce/channels/whatsapp", wrapper.GetCommerceWhatsAppConfiguration)
+
+	router.Put(options.BaseURL+"/commerce/channels/whatsapp", wrapper.ConfigureCommerceWhatsApp)
+
+	router.Post(options.BaseURL+"/commerce/checkouts", wrapper.CheckoutCommerceCart)
+
+	router.Get(options.BaseURL+"/commerce/complaints", wrapper.ListCommerceComplaints)
+
+	router.Patch(options.BaseURL+"/commerce/complaints/:complaint_id", wrapper.UpdateCommerceComplaint)
+
+	router.Post(options.BaseURL+"/commerce/customers/resolve", wrapper.ResolveCommerceCustomer)
+
+	router.Get(options.BaseURL+"/commerce/customers/:customer_id", wrapper.GetCommerceCustomer)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/arrival", wrapper.RecordCommerceFulfilmentArrival)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/complete", wrapper.CompleteCommerceFulfilment)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/delivered", wrapper.MarkCommerceFulfilmentDelivered)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/handover", wrapper.VerifyCommerceFulfilmentHandover)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/quotes", wrapper.CreateCommerceDeliveryQuote)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/quotes/:quote_id/decision", wrapper.DecideCommerceDeliveryQuote)
+
+	router.Post(options.BaseURL+"/commerce/fulfilments/:fulfilment_id/rider-assignments", wrapper.AssignCommerceRider)
+
+	router.Get(options.BaseURL+"/commerce/merchant-profile", wrapper.GetCommerceMerchantProfile)
+
+	router.Post(options.BaseURL+"/commerce/merchant-profile", wrapper.CreateCommerceMerchantProfile)
+
+	router.Put(options.BaseURL+"/commerce/merchant-profile", wrapper.UpdateCommerceMerchantProfile)
+
+	router.Get(options.BaseURL+"/commerce/orders", wrapper.ListCommerceOrders)
+
+	router.Get(options.BaseURL+"/commerce/orders/:order_id", wrapper.GetCommerceOrder)
+
+	router.Get(options.BaseURL+"/commerce/orders/:order_id/fulfilment", wrapper.GetCommerceOrderFulfilment)
+
+	router.Post(options.BaseURL+"/commerce/orders/:order_id/fulfilment", wrapper.StartCommerceFulfilment)
+
+	router.Get(options.BaseURL+"/commerce/orders/:order_id/invoice", wrapper.GetCommerceOrderInvoice)
+
+	router.Post(options.BaseURL+"/commerce/orders/:order_id/payments", wrapper.InitializeCommerceOrderPayment)
+
+	router.Patch(options.BaseURL+"/commerce/orders/:order_id/status", wrapper.TransitionCommerceOrder)
+
+	router.Get(options.BaseURL+"/commerce/payments/:payment_id", wrapper.GetCommercePayment)
+
+	router.Post(options.BaseURL+"/commerce/payments/:provider/webhook", wrapper.CommercePaymentWebhook)
+
+	router.Get(options.BaseURL+"/commerce/products", wrapper.ListCommerceProducts)
+
+	router.Post(options.BaseURL+"/commerce/products", wrapper.CreateCommerceProduct)
+
+	router.Get(options.BaseURL+"/commerce/products/:product_id", wrapper.GetCommerceProduct)
+
+	router.Patch(options.BaseURL+"/commerce/products/:product_id", wrapper.UpdateCommerceProduct)
+
+	router.Patch(options.BaseURL+"/commerce/products/:product_id/variants/:variant_id", wrapper.UpdateCommerceProductVariant)
+
+	router.Get(options.BaseURL+"/commerce/public/merchants/:merchant_slug/whatsapp-link", wrapper.GetPublicCommerceWhatsAppLink)
+
+	router.Get(options.BaseURL+"/commerce/store-orders", wrapper.ListCommerceStoreOrders)
+
+	router.Post(options.BaseURL+"/commerce/store-orders/:order_id/prepared", wrapper.MarkCommerceStoreOrderPrepared)
+
+	router.Get(options.BaseURL+"/commerce/stores", wrapper.ListCommerceStores)
+
+	router.Post(options.BaseURL+"/commerce/stores", wrapper.CreateCommerceStore)
+
+	router.Get(options.BaseURL+"/commerce/stores/:store_id", wrapper.GetCommerceStore)
+
+	router.Put(options.BaseURL+"/commerce/stores/:store_id", wrapper.UpdateCommerceStore)
+
+	router.Get(options.BaseURL+"/commerce/stores/:store_id/catalogue", wrapper.ListCommerceStoreCatalogue)
+
+	router.Put(options.BaseURL+"/commerce/stores/:store_id/catalogue/:variant_id", wrapper.ConfigureCommerceStoreVariant)
+
+	router.Get(options.BaseURL+"/commerce/stores/:store_id/inventory/:variant_id", wrapper.GetCommerceInventoryLevel)
+
+	router.Post(options.BaseURL+"/commerce/stores/:store_id/inventory/:variant_id/adjustments", wrapper.AdjustCommerceInventory)
+
+	router.Get(options.BaseURL+"/commerce/stores/:store_id/staff", wrapper.ListCommerceStoreStaff)
+
+	router.Post(options.BaseURL+"/commerce/stores/:store_id/staff", wrapper.AssignCommerceStoreStaff)
+
 	router.Get(options.BaseURL+"/customers", wrapper.GetAllCustomers)
 
 	router.Post(options.BaseURL+"/customers", wrapper.CreateCustomer)
@@ -1948,80 +4944,205 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"9O8AAAD//6LM5l02kgAA",
+	"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",
+	"/wIAAP//Tfg2b6LMAQA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

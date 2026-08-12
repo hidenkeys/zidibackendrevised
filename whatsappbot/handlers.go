@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/hidenkeys/zidibackend/services"
 	"github.com/hidenkeys/zidibackend/utils"
 	"gorm.io/gorm"
 )
@@ -18,7 +19,7 @@ func WebhookVerification(c *fiber.Ctx) error {
 
 	verifyToken := os.Getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
 
-	if mode == "subscribe" && token == verifyToken {
+	if verifyToken != "" && mode == "subscribe" && token == verifyToken {
 		log.Println("✅ Webhook verified successfully")
 		return c.SendString(challenge)
 	}
@@ -29,12 +30,15 @@ func WebhookVerification(c *fiber.Ctx) error {
 
 // WebhookHandler handles incoming WhatsApp messages
 func WebhookHandler(db *gorm.DB) fiber.Handler {
+	return WebhookHandlerWithCommerce(db, nil)
+}
+
+func WebhookHandlerWithCommerce(db *gorm.DB, channel *services.CommerceChannelService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Verify webhook signature (optional but recommended)
 		signature := c.Get("X-Hub-Signature-256")
 		body := c.Body()
 
-		if signature != "" && !VerifyWebhookSignature(body, signature) {
+		if signature == "" || !VerifyWebhookSignature(body, signature) {
 			log.Println("❌ Invalid webhook signature")
 			return c.Status(403).SendString("Invalid signature")
 		}
@@ -47,7 +51,7 @@ func WebhookHandler(db *gorm.DB) fiber.Handler {
 		}
 
 		// Handle the webhook
-		if err := HandleWebhook(payload, db); err != nil {
+		if err := HandleWebhookWithCommerceContext(c.UserContext(), payload, db, channel); err != nil {
 			log.Printf("❌ Error handling webhook: %v", err)
 			return c.Status(500).SendString("Internal server error")
 		}

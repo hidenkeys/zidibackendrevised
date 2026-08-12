@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "organization_id": "${BING_CHUN_ORGANIZATION_ID}",
+  "merchant": {
+    "slug": "bing-chun-nigeria",
+    "display_name": "Bing Chun Nigeria",
+    "default_currency": "NGN",
+    "timezone": "Africa/Lagos",
+    "status": "active"
+  },
+  "stores": [
+    {
+      "code": "JARA-IKEJA",
+      "name": "Bingchun Jara Mall",
+      "address": "Jara Mall, 22 Simbiat Abiola Way, Ikeja, Lagos 101233",
+      "city": "Ikeja",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.592294,
+      "longitude": 3.3386004,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "active",
+      "hours": [
+        { "day_of_week": 0, "open_minute": 630, "close_minute": 1200, "is_closed": false },
+        { "day_of_week": 1, "open_minute": 630, "close_minute": 1200, "is_closed": false },
+        { "day_of_week": 2, "open_minute": 630, "close_minute": 1200, "is_closed": false },
+        { "day_of_week": 3, "open_minute": 630, "close_minute": 1200, "is_closed": false },
+        { "day_of_week": 4, "open_minute": 630, "close_minute": 1200, "is_closed": false },
+        { "day_of_week": 5, "open_minute": 630, "close_minute": 1200, "is_closed": false },
+        { "day_of_week": 6, "open_minute": 630, "close_minute": 1200, "is_closed": false }
+      ],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    },
+    {
+      "code": "MARYLAND",
+      "name": "Bing Chun Maryland",
+      "address": "Purple Mall, 350 Ikorodu Road, Maryland, Lagos 100211",
+      "city": "Maryland",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.571211,
+      "longitude": 3.3663151,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "inactive",
+      "hours": [],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    },
+    {
+      "code": "SURULERE",
+      "name": "Bing Chun Surulere",
+      "address": "75A Bode Thomas Street, Surulere, Lagos 101241",
+      "city": "Surulere",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.4901147,
+      "longitude": 3.3559498,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "inactive",
+      "hours": [],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    },
+    {
+      "code": "FESTAC",
+      "name": "Bing Chun Festac",
+      "address": "22 Road, beside Groove Mall, Festac Town, Lagos 102102",
+      "city": "Festac",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.4696356,
+      "longitude": 3.2821729,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "inactive",
+      "hours": [],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    },
+    {
+      "code": "VI-BONNY-CAMP",
+      "name": "Bing Chun Victoria Island",
+      "address": "CCP4+CCQ, Bonny Camp Street, Victoria Island, Lagos 106104",
+      "city": "Victoria Island",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.4360783,
+      "longitude": 3.4061192,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "inactive",
+      "hours": [],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    },
+    {
+      "code": "CURATE-ONIRU",
+      "name": "Bing Chun CURATE",
+      "address": "CURATE, Water Corporation Drive, Eti-Osa, Lagos 106104",
+      "city": "Oniru",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.4230016,
+      "longitude": 3.4453773,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "inactive",
+      "hours": [],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    },
+    {
+      "code": "OLIVE-LEKKI",
+      "name": "Bing Chun Lekki",
+      "address": "Olive Mall, 7B Emma Abimbola Cole, Lekki, Lagos 105102",
+      "city": "Lekki",
+      "state": "Lagos",
+      "country_code": "NG",
+      "latitude": 6.4425329,
+      "longitude": 3.4769091,
+      "timezone": "Africa/Lagos",
+      "preparation_minutes": 20,
+      "status": "active",
+      "hours": [
+        { "day_of_week": 0, "open_minute": 540, "close_minute": 1260, "is_closed": false },
+        { "day_of_week": 1, "open_minute": 540, "close_minute": 1260, "is_closed": false },
+        { "day_of_week": 2, "open_minute": 540, "close_minute": 1260, "is_closed": false },
+        { "day_of_week": 3, "open_minute": 540, "close_minute": 1260, "is_closed": false },
+        { "day_of_week": 4, "open_minute": 540, "close_minute": 1260, "is_closed": false },
+        { "day_of_week": 5, "open_minute": 540, "close_minute": 1260, "is_closed": false },
+        { "day_of_week": 6, "open_minute": 540, "close_minute": 1260, "is_closed": false }
+      ],
+      "fulfilment_modes": [
+        { "mode": "customer_pickup", "enabled": true },
+        { "mode": "customer_rider", "enabled": true },
+        { "mode": "merchant_rider", "enabled": false }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "name": "Fruit tea",
+      "slug": "fruit-tea",
+      "description": "Bright, juicy and built for Lagos heat.",
+      "sort_order": 1,
+      "status": "active",
+      "products": [
+        { "name": "Strawberry Lemon Tea", "slug": "strawberry-lemon-tea", "description": "A chilled strawberry and lemon pairing with a bright finish.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-001", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Grapes Crystal Tea", "slug": "grapes-crystal-tea", "description": "A cool grape-forward tea made for slow, icy sips.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-002", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Mulberry Popping Pearls", "slug": "mulberry-popping-pearls", "description": "Deep berry flavour with playful popping pearls.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-003", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Blueberry Fruit Tea", "slug": "blueberry-fruit-tea", "description": "A refreshing blueberry-led fruit tea served cold.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-004", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Lemon Green Tea", "slug": "lemon-green-tea", "description": "Lemon and green tea in a clean, citrusy pour.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-005", "price_minor": 300000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Strawberry Mulberry Tea", "slug": "strawberry-mulberry-tea", "description": "Two berry flavours in one vivid, chilled cup.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-006", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Lychee Jasmine Tea", "slug": "lychee-jasmine-tea", "description": "Floral jasmine tea lifted with sweet lychee flavour.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-007", "price_minor": 300000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Jasmine Honey Tea", "slug": "jasmine-honey-tea", "description": "A light jasmine tea with mellow honey sweetness.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-FT-008", "price_minor": 240000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] }
+      ]
+    },
+    {
+      "name": "Milk tea",
+      "slug": "milk-tea",
+      "description": "Creamy comfort, tea depth and plenty of personality.",
+      "sort_order": 2,
+      "status": "active",
+      "products": [
+        { "name": "Original Milk Tea", "slug": "original-milk-tea", "description": "The straight-up classic: smooth milk tea served chilled.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-MT-001", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Lychee Jasmine Milk Tea", "slug": "lychee-jasmine-milk-tea", "description": "Floral jasmine milk tea with a juicy lychee lift.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-MT-002", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Strawberry Coconut Jasmine Milk Tea", "slug": "strawberry-coconut-jasmine-milk-tea", "description": "Strawberry, coconut and jasmine meet in one creamy pour.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-MT-003", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Coconut Milk Tea", "slug": "coconut-milk-tea", "description": "A mellow, coconut-led take on chilled milk tea.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-MT-004", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Brown Sugar Boba Milk Tea", "slug": "brown-sugar-boba-milk-tea", "description": "Brown sugar richness, milk tea and chewy boba.", "currency": "NGN", "status": "active", "enabled": false, "initial_quantity": 0, "variants": [{ "name": "Regular", "sku": "BCNG-MT-005", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] }
+      ]
+    },
+    {
+      "name": "Sundaes",
+      "slug": "sundaes",
+      "description": "Soft-serve dressed up with fruit, boba, biscuits and chocolate.",
+      "sort_order": 3,
+      "status": "active",
+      "products": [
+        { "name": "Chocolate Boba Sundae", "slug": "chocolate-boba-sundae", "description": "Vanilla soft-serve with chocolate swirls and glossy boba.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SU-001", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Chocolate Oreo Sundae", "slug": "chocolate-oreo-sundae", "description": "Soft-serve piled with cookie crunch and chocolate.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SU-002", "price_minor": 480000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Brown Sugar Boba Sundae", "slug": "brown-sugar-boba-sundae", "description": "Creamy soft-serve with brown sugar character and boba.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SU-003", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Strawberry Sundae", "slug": "strawberry-sundae", "description": "Vanilla soft-serve finished with strawberry flavour.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SU-004", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Mulberry Sundae", "slug": "mulberry-sundae", "description": "A berry-bright sundae with a vivid mulberry finish.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SU-005", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Chocolate Biscuit Sundae", "slug": "chocolate-biscuit-sundae", "description": "Chocolate, biscuit crunch and cold vanilla soft-serve.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SU-006", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] }
+      ]
+    },
+    {
+      "name": "Smoothies",
+      "slug": "smoothies",
+      "description": "Blended, cold and ready when the day runs hot.",
+      "sort_order": 4,
+      "status": "active",
+      "products": [
+        { "name": "Grape Smoothie", "slug": "grape-smoothie", "description": "An icy grape blend with a fruit-forward finish.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SM-001", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Blueberry Smoothie", "slug": "blueberry-smoothie", "description": "A bright blueberry smoothie blended cold.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SM-002", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Strawberry Smoothie", "slug": "strawberry-smoothie", "description": "A chilled strawberry blend for an easy cool-down.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-SM-003", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Cocoa Smoothie", "slug": "cocoa-smoothie", "description": "A chocolatey cold blend with a smooth cocoa finish.", "currency": "NGN", "status": "active", "enabled": false, "initial_quantity": 0, "variants": [{ "name": "Regular", "sku": "BCNG-SM-004", "price_minor": 360000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] }
+      ]
+    },
+    {
+      "name": "Milkshakes",
+      "slug": "milkshakes",
+      "description": "Creamy, playful and unapologetically dessert-like.",
+      "sort_order": 5,
+      "status": "active",
+      "products": [
+        { "name": "Chocolate Oreo Milkshake", "slug": "chocolate-oreo-milkshake", "description": "A creamy chocolate shake with cookie crunch.", "currency": "NGN", "status": "active", "variants": [{ "name": "Regular", "sku": "BCNG-MS-001", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Chocolate Boba Milkshake", "slug": "chocolate-boba-milkshake", "description": "Chocolate milkshake meets a generous boba topping.", "currency": "NGN", "status": "active", "enabled": false, "initial_quantity": 0, "variants": [{ "name": "Regular", "sku": "BCNG-MS-002", "price_minor": 420000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] }
+      ]
+    },
+    {
+      "name": "Toppings",
+      "slug": "toppings",
+      "description": "Add an extra layer of chew, bounce or coconut.",
+      "sort_order": 6,
+      "status": "active",
+      "products": [
+        { "name": "Jelly", "slug": "jelly", "description": "A playful extra for your favourite drink.", "currency": "NGN", "status": "active", "variants": [{ "name": "Portion", "sku": "BCNG-TP-001", "price_minor": 55000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Coconut Jelly", "slug": "coconut-jelly", "description": "A coconut-flavoured chew for milk tea or fruit tea.", "currency": "NGN", "status": "active", "variants": [{ "name": "Portion", "sku": "BCNG-TP-002", "price_minor": 55000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] },
+        { "name": "Boba", "slug": "boba", "description": "The classic chewy finish for tea and desserts.", "currency": "NGN", "status": "active", "enabled": false, "initial_quantity": 0, "variants": [{ "name": "Portion", "sku": "BCNG-TP-003", "price_minor": 55000, "attributes": {}, "is_default": true, "status": "active" }], "images": [] }
+      ]
+    }
+  ],
+  "inventory_defaults": {
+    "enabled": true,
+    "initial_quantity": 25,
+    "reorder_threshold": 5
+  },
+  "whatsapp": {
+    "provider_account_id": "${BING_CHUN_WHATSAPP_PROVIDER_ACCOUNT_ID}",
+    "display_phone_number": "${BING_CHUN_WHATSAPP_DISPLAY_PHONE_NUMBER}",
+    "welcome_message": "Welcome to Bing Chun Nigeria. I can help you find a store, browse the menu, place an order, track an order, or report an issue.",
+    "status": "active"
+  }
+}

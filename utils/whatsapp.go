@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // WhatsApp API structures
@@ -70,7 +71,18 @@ type WebhookPayload struct {
 							ID    string `json:"id"`
 							Title string `json:"title"`
 						} `json:"button_reply,omitempty"`
+						ListReply *struct {
+							ID          string `json:"id"`
+							Title       string `json:"title"`
+							Description string `json:"description"`
+						} `json:"list_reply,omitempty"`
 					} `json:"interactive,omitempty"`
+					Location *struct {
+						Latitude  float64 `json:"latitude"`
+						Longitude float64 `json:"longitude"`
+						Name      string  `json:"name"`
+						Address   string  `json:"address"`
+					} `json:"location,omitempty"`
 					Type string `json:"type"`
 				} `json:"messages"`
 			} `json:"value"`
@@ -80,7 +92,7 @@ type WebhookPayload struct {
 }
 
 func SendWhatsAppMessage(to, message string) error {
-	url := fmt.Sprintf("https://graph.facebook.com/v18.0/%s/messages", os.Getenv("WHATSAPP_PHONE_NUMBER_ID"))
+	url := whatsappAPIURL(os.Getenv("WHATSAPP_PHONE_NUMBER_ID"))
 
 	msg := WhatsAppMessage{
 		MessagingProduct: "whatsapp",
@@ -95,7 +107,7 @@ func SendWhatsAppMessage(to, message string) error {
 }
 
 func SendWhatsAppButtons(to, bodyText string, buttons []string) error {
-	url := fmt.Sprintf("https://graph.facebook.com/v18.0/%s/messages", os.Getenv("WHATSAPP_PHONE_NUMBER_ID"))
+	url := whatsappAPIURL(os.Getenv("WHATSAPP_PHONE_NUMBER_ID"))
 
 	msg := WhatsAppMessage{
 		MessagingProduct: "whatsapp",
@@ -185,7 +197,7 @@ func sendWhatsAppRequest(url string, payload interface{}) error {
 	req.Header.Set("Authorization", "Bearer "+os.Getenv("WHATSAPP_ACCESS_TOKEN"))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("❌ Error sending WhatsApp request: %v", err)
@@ -193,18 +205,29 @@ func sendWhatsAppRequest(url string, payload interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	body, readErr := io.ReadAll(resp.Body)
+	_, readErr := io.ReadAll(resp.Body)
 	if readErr != nil {
 		log.Printf("❌ WhatsApp API error: status=%d failed_to_read_body=%v", resp.StatusCode, readErr)
 		return fmt.Errorf("whatsapp api error: status=%d failed_to_read_body=%v", resp.StatusCode, readErr)
 	}
 
-	trimmedBody := strings.TrimSpace(string(body))
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		log.Printf("❌ WhatsApp API error: status=%d body=%s", resp.StatusCode, trimmedBody)
-		return fmt.Errorf("whatsapp api error: status=%d body=%s", resp.StatusCode, trimmedBody)
+		log.Printf("❌ WhatsApp API error: status=%d", resp.StatusCode)
+		return fmt.Errorf("whatsapp api error: status=%d", resp.StatusCode)
 	}
 
-	log.Printf("✅ WhatsApp API send ok: status=%d body=%s", resp.StatusCode, trimmedBody)
+	log.Printf("✅ WhatsApp API send ok: status=%d", resp.StatusCode)
 	return nil
+}
+
+func whatsappAPIURL(phoneNumberID string) string {
+	baseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("WHATSAPP_GRAPH_API_BASE_URL")), "/")
+	if baseURL == "" {
+		baseURL = "https://graph.facebook.com"
+	}
+	version := strings.Trim(strings.TrimSpace(os.Getenv("WHATSAPP_GRAPH_API_VERSION")), "/")
+	if version == "" {
+		version = "v23.0"
+	}
+	return fmt.Sprintf("%s/%s/%s/messages", baseURL, version, strings.TrimSpace(phoneNumberID))
 }

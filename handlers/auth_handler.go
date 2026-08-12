@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/gofiber/fiber/v2"
 	"github.com/hidenkeys/zidibackend/api"
+	"github.com/hidenkeys/zidibackend/middleware"
 	"github.com/hidenkeys/zidibackend/utils"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"time"
 )
 
 func (s Server) LoginUser(c *fiber.Ctx) error {
@@ -58,19 +58,15 @@ func (s Server) LoginUser(c *fiber.Ctx) error {
 }
 
 func (s Server) LogoutUser(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-	if token == "" {
+	claims, ok := middleware.CurrentUser(c)
+	if !ok || claims.TokenID == "" || claims.ExpiresAt.IsZero() {
 		return c.Status(http.StatusUnauthorized).JSON(api.Error{
 			ErrorCode: "401",
-			Message:   "Missing token",
+			Message:   "Invalid token claims",
 		})
 	}
 
-	// Assume token expiration is 24 hours (or use actual JWT expiration)
-	expiry := time.Now().Add(24 * time.Hour)
-
-	// Store token in revoked list
-	if err := utils.RevokeToken(s.db, token, expiry); err != nil {
+	if err := utils.RevokeToken(s.db, claims.TokenID, claims.ExpiresAt); err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
 			Message:   "Could not log out",
@@ -105,7 +101,7 @@ func (s Server) SuperuserLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	if user.Role != "zidi" {
+	if !utils.IsPlatformRole(user.Role) {
 		return c.Status(http.StatusUnauthorized).JSON(api.Error{
 			ErrorCode: "401",
 			Message:   "Insufficient privileges",

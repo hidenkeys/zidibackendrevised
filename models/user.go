@@ -14,5 +14,5 @@ type User struct {
 	Address        string
 	Password       string
 	Role           string
-	OrganizationID uuid.UUID `gorm:"constraint:OnDelete:CASCADE;"`
+	OrganizationID uuid.UUID `gorm:"type:uuid;not null;constraint:OnDelete:CASCADE;"`
 }

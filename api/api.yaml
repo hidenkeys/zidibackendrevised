@@ -1518,12 +1518,1883 @@ paths:
         "500":
           description: Internal server error
 
+  /commerce/merchant-profile:
+    post:
+      summary: Create a commerce merchant profile
+      operationId: CreateCommerceMerchantProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceMerchantProfileRequest"
+      responses:
+        "201":
+          description: Commerce merchant profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceMerchantProfile"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Merchant profile or slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get a commerce merchant profile
+      operationId: GetCommerceMerchantProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce merchant profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceMerchantProfile"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update commerce merchant business settings
+      operationId: UpdateCommerceMerchantProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommerceMerchantProfileRequest"
+      responses:
+        "200":
+          description: Updated commerce merchant profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceMerchantProfile"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Merchant slug already exists
+
+  /commerce/stores:
+    post:
+      summary: Create a commerce store
+      operationId: CreateCommerceStore
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceStoreRequest"
+      responses:
+        "201":
+          description: Commerce store created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStore"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Store code already exists for the merchant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: List commerce stores visible to the current user
+      operationId: ListCommerceStores
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce stores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommerceStore"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/stores/{store_id}:
+    get:
+      summary: Get a commerce store visible to the current user
+      operationId: GetCommerceStore
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStore"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update store details, hours, and fulfilment options
+      operationId: UpdateCommerceStore
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommerceStoreRequest"
+      responses:
+        "200":
+          description: Updated commerce store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStore"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Store code already exists
+
+  /commerce/stores/{store_id}/staff:
+    post:
+      summary: Assign a user to a commerce store
+      operationId: AssignCommerceStoreStaff
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceStaffAssignmentRequest"
+      responses:
+        "201":
+          description: Store staff assignment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStaffAssignment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Store staff assignment already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: List staff assigned to a commerce store
+      operationId: ListCommerceStoreStaff
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Store staff assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommerceStaffAssignment"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/categories:
+    post:
+      summary: Create a commerce category
+      operationId: CreateCommerceCategory
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceCategoryRequest"
+      responses:
+        "201":
+          description: Commerce category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCategory"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Category slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: List commerce categories
+      operationId: ListCommerceCategories
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommerceCategory"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/categories/{category_id}:
+    patch:
+      summary: Update a commerce category
+      operationId: UpdateCommerceCategory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommerceCategoryRequest"
+      responses:
+        "200":
+          description: Updated commerce category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCategory"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Category slug already exists
+  /commerce/products:
+    post:
+      summary: Create a commerce product with variants and images
+      operationId: CreateCommerceProduct
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceProductRequest"
+      responses:
+        "201":
+          description: Commerce product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceProduct"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Product slug or variant SKU already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: List commerce products
+      operationId: ListCommerceProducts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+        - name: category_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Commerce products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceProductList"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/products/{product_id}:
+    get:
+      summary: Get a commerce product
+      operationId: GetCommerceProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceProduct"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      summary: Update commerce product metadata
+      operationId: UpdateCommerceProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommerceProductRequest"
+      responses:
+        "200":
+          description: Updated commerce product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceProduct"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Product slug already exists
+
+  /commerce/products/{product_id}/variants/{variant_id}:
+    patch:
+      summary: Update a commerce product variant and its base price
+      operationId: UpdateCommerceProductVariant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommerceProductVariantRequest"
+      responses:
+        "200":
+          description: Updated commerce product variant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceProductVariant"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/stores/{store_id}/catalogue:
+    get:
+      summary: List the configured catalogue for a store
+      operationId: ListCommerceStoreCatalogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Store catalogue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommerceStoreCatalogueItem"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/stores/{store_id}/catalogue/{variant_id}:
+    put:
+      summary: Configure product availability and pricing for a store
+      operationId: ConfigureCommerceStoreVariant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigureCommerceStoreVariantRequest"
+      responses:
+        "200":
+          description: Store variant configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStoreVariantConfiguration"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/stores/{store_id}/inventory/{variant_id}:
+    get:
+      summary: Get store inventory for a product variant
+      operationId: GetCommerceInventoryLevel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Store inventory level
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceInventoryLevel"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/stores/{store_id}/inventory/{variant_id}/adjustments:
+    post:
+      summary: Apply an idempotent store inventory adjustment
+      operationId: AdjustCommerceInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdjustCommerceInventoryRequest"
+      responses:
+        "200":
+          description: Updated store inventory level
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceInventoryLevel"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Adjustment conflicts with current or reserved inventory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/customers/resolve:
+    post:
+      summary: Resolve or create a commerce customer by channel identity
+      operationId: ResolveCommerceCustomer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveCommerceCustomerRequest"
+      responses:
+        "200":
+          description: Existing commerce customer resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCustomer"
+        "201":
+          description: Commerce customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCustomer"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/customers/{customer_id}:
+    get:
+      summary: Get a commerce customer
+      operationId: GetCommerceCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCustomer"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/carts:
+    post:
+      summary: Get or create a customer's active cart for one store
+      operationId: CreateCommerceCart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceCartRequest"
+      responses:
+        "200":
+          description: Existing active cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCart"
+        "201":
+          description: Active cart created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCart"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/carts/{cart_id}:
+    get:
+      summary: Get an active commerce cart with current authoritative totals
+      operationId: GetCommerceCart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cart_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Active commerce cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCart"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/carts/{cart_id}/items:
+    delete:
+      summary: Remove all items from an active commerce cart
+      operationId: ClearCommerceCart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cart_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Cleared commerce cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCart"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/carts/{cart_id}/items/{variant_id}:
+    put:
+      summary: Set a variant quantity using current store price and availability
+      operationId: SetCommerceCartItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cart_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetCommerceCartItemRequest"
+      responses:
+        "200":
+          description: Updated commerce cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCart"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Product is unavailable or uses a different currency
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Remove a variant from an active commerce cart
+      operationId: DeleteCommerceCartItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cart_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Updated commerce cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceCart"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/checkouts:
+    post:
+      summary: Create an authoritative single-store order from an active cart
+      operationId: CheckoutCommerceCart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutCommerceCartRequest"
+      responses:
+        "200":
+          description: Existing order returned for an idempotent checkout retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceOrder"
+        "201":
+          description: Commerce order created with inventory reserved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceOrder"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Cart, inventory, or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/orders:
+    get:
+      summary: List commerce orders visible to the current user
+      operationId: ListCommerceOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+        - name: store_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CommerceOrderStatus"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Commerce orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceOrderList"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/store-orders:
+    get:
+      summary: List the operational order queue visible to store staff
+      operationId: ListCommerceStoreOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+        - name: store_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Store order queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStoreOrderList"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/store-orders/{order_id}/prepared:
+    post:
+      summary: Mark an order prepared and start its fulfilment workflow
+      operationId: MarkCommerceStoreOrderPrepared
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrepareCommerceStoreOrderRequest"
+      responses:
+        "200":
+          description: Prepared order and its active fulfilment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceStoreOrder"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Order cannot be prepared from its current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/orders/{order_id}:
+    get:
+      summary: Get a commerce order with item snapshots and event history
+      operationId: GetCommerceOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceOrder"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/orders/{order_id}/status:
+    patch:
+      summary: Apply an allowed operational order status transition
+      operationId: TransitionCommerceOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionCommerceOrderRequest"
+      responses:
+        "200":
+          description: Updated commerce order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceOrder"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied or payment-owned transition requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Invalid or stale order transition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/orders/{order_id}/fulfilment:
+    post:
+      summary: Start the order's mode-specific fulfilment workflow after it is ready
+      operationId: StartCommerceFulfilment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartCommerceFulfilmentRequest"
+      responses:
+        "200":
+          description: Existing fulfilment returned for an idempotent retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "201":
+          description: Fulfilment started and customer notification queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Order is not ready for fulfilment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get an order's fulfilment, quote, rider, and event history
+      operationId: GetCommerceOrderFulfilment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce fulfilment aggregate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/fulfilments/{fulfilment_id}/quotes:
+    post:
+      summary: Record a manual estimate or request one from a configured delivery provider
+      operationId: CreateCommerceDeliveryQuote
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommerceDeliveryQuoteRequest"
+      responses:
+        "200":
+          description: Updated fulfilment with delivery estimate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Fulfilment cannot receive a delivery estimate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Configured delivery provider is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/fulfilments/{fulfilment_id}/quotes/{quote_id}/decision:
+    post:
+      summary: Record a customer's acceptance or rejection of a delivery estimate
+      operationId: DecideCommerceDeliveryQuote
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+        - name: quote_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecideCommerceDeliveryQuoteRequest"
+      responses:
+        "200":
+          description: Updated fulfilment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Quote is expired, already decided, or no longer current
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/fulfilments/{fulfilment_id}/rider-assignments:
+    post:
+      summary: Record the verified identity of a customer- or merchant-arranged rider
+      operationId: AssignCommerceRider
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignCommerceRiderRequest"
+      responses:
+        "200":
+          description: Updated fulfilment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Fulfilment is not ready for a rider assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/fulfilments/{fulfilment_id}/handover:
+    post:
+      summary: Verify the customer's code before handing an order to a customer or rider
+      operationId: VerifyCommerceFulfilmentHandover
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyCommerceFulfilmentHandoverRequest"
+      responses:
+        "200":
+          description: Handover verified and order advanced atomically
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Incorrect or expired code, temporary lockout, or invalid fulfilment state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/fulfilments/{fulfilment_id}/arrival:
+    post:
+      summary: Record customer or rider arrival before secure handover
+      operationId: RecordCommerceFulfilmentArrival
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionCommerceFulfilmentRequest"
+      responses:
+        "200":
+          description: Arrival recorded in the fulfilment audit history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Customer or rider cannot arrive in the current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/fulfilments/{fulfilment_id}/delivered:
+    post:
+      summary: Mark a rider delivery as delivered
+      operationId: MarkCommerceFulfilmentDelivered
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionCommerceFulfilmentRequest"
+      responses:
+        "200":
+          description: Delivery marked delivered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Fulfilment is not out for delivery
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/fulfilments/{fulfilment_id}/complete:
+    post:
+      summary: Complete a delivered rider fulfilment
+      operationId: CompleteCommerceFulfilment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionCommerceFulfilmentRequest"
+      responses:
+        "200":
+          description: Fulfilment completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Fulfilment has not been delivered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/orders/{order_id}/payments:
+    post:
+      summary: Issue an invoice and initialize a provider payment for an order
+      operationId: InitializeCommerceOrderPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitializeCommercePaymentRequest"
+      responses:
+        "200":
+          description: Existing payment returned for an idempotent retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommercePaymentSession"
+        "201":
+          description: Payment initialized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommercePaymentSession"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Payment window expired, payment is initializing, or order is not payable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Payment provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/orders/{order_id}/invoice:
+    get:
+      summary: Get the immutable invoice snapshot for an order
+      operationId: GetCommerceOrderInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceInvoice"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/payments/{payment_id}:
+    get:
+      summary: Get a commerce payment and its invoice without trusting a browser redirect
+      operationId: GetCommercePayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: Commerce payment session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommercePaymentSession"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/payments/{provider}/webhook:
+    post:
+      summary: Receive a signed provider webhook and verify the transaction server-side
+      operationId: CommercePaymentWebhook
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Webhook acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommercePaymentWebhookResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          description: Invalid provider signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Provider verification unavailable; delivery should be retried
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /commerce/channels/whatsapp:
+    get:
+      summary: Get the merchant WhatsApp commerce channel configuration
+      operationId: GetCommerceWhatsAppConfiguration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+      responses:
+        "200":
+          description: WhatsApp commerce channel configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceChannelConfiguration"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Configure the merchant WhatsApp commerce channel
+      operationId: ConfigureCommerceWhatsApp
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigureCommerceWhatsAppRequest"
+      responses:
+        "200":
+          description: WhatsApp commerce channel configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceChannelConfiguration"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+
+  /commerce/public/merchants/{merchant_slug}/whatsapp-link:
+    get:
+      summary: Resolve an active merchant's public WhatsApp commerce link
+      operationId: GetPublicCommerceWhatsAppLink
+      security: []
+      parameters:
+        - name: merchant_slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+      responses:
+        "200":
+          description: Public WhatsApp commerce link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceWhatsAppLink"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /commerce/complaints:
+    get:
+      summary: List commerce complaints visible to the current user
+      operationId: ListCommerceComplaints
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceOrganizationId"
+        - name: store_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CommerceComplaintStatus"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Commerce complaint queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceComplaintList"
+        "403":
+          description: Commerce access denied
+
+  /commerce/complaints/{complaint_id}:
+    patch:
+      summary: Update a commerce complaint
+      operationId: UpdateCommerceComplaint
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: complaint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommerceComplaintRequest"
+      responses:
+        "200":
+          description: Updated commerce complaint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceComplaint"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT # Optional, but helps with documentation
+  parameters:
+    CommerceFulfilmentId:
+      name: fulfilment_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CommerceOrganizationId:
+      name: organization_id
+      in: query
+      required: false
+      description: Target organization for platform administrators; other roles are restricted to their token organization.
+      schema:
+        type: string
+        format: uuid
   schemas:
     Organization:
       type: object
@@ -2062,6 +3933,2322 @@ components:
     #          format: float
     #        status:
     #          type: string
+
+    CreateCommerceCategoryRequest:
+      type: object
+      required:
+        - name
+        - slug
+        - sort_order
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ""
+        sort_order:
+          type: integer
+          minimum: 0
+
+    UpdateCommerceCategoryRequest:
+      type: object
+      required: [name, slug, sort_order, status]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        sort_order:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum: [active, inactive]
+
+    CommerceCategory:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - slug
+        - description
+        - sort_order
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        sort_order:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCommerceProductRequest:
+      type: object
+      required:
+        - category_id
+        - name
+        - slug
+        - currency
+        - variants
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        category_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ""
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        variants:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CommerceProductVariantInput"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceProductImageInput"
+
+    CommerceProductVariantInput:
+      type: object
+      required:
+        - name
+        - sku
+        - price_minor
+        - is_default
+      properties:
+        name:
+          type: string
+          minLength: 1
+        sku:
+          type: string
+          minLength: 1
+        price_minor:
+          type: integer
+          format: int64
+          minimum: 0
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        is_default:
+          type: boolean
+
+    UpdateCommerceProductRequest:
+      type: object
+      required: [category_id, name, slug, currency, status]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        category_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        status:
+          type: string
+          enum: [active, inactive]
+
+    UpdateCommerceProductVariantRequest:
+      type: object
+      required: [name, price_minor, status]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+        price_minor:
+          type: integer
+          format: int64
+          minimum: 0
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    CommerceProductImageInput:
+      type: object
+      required:
+        - url
+        - sort_order
+      properties:
+        url:
+          type: string
+          format: uri
+        alt_text:
+          type: string
+          default: ""
+        sort_order:
+          type: integer
+          minimum: 0
+
+    CommerceProduct:
+      type: object
+      required:
+        - id
+        - organization_id
+        - category_id
+        - name
+        - slug
+        - description
+        - currency
+        - status
+        - variants
+        - images
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceProductVariant"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceProductImage"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceProductVariant:
+      type: object
+      required:
+        - id
+        - product_id
+        - name
+        - sku
+        - price_minor
+        - attributes
+        - is_default
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sku:
+          type: string
+        price_minor:
+          type: integer
+          format: int64
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        is_default:
+          type: boolean
+        status:
+          type: string
+          enum: [active, inactive]
+
+    CommerceProductImage:
+      type: object
+      required:
+        - id
+        - url
+        - alt_text
+        - sort_order
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        alt_text:
+          type: string
+        sort_order:
+          type: integer
+
+    CommerceProductList:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceProduct"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ConfigureCommerceStoreVariantRequest:
+      type: object
+      required:
+        - enabled
+        - reorder_threshold
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        enabled:
+          type: boolean
+        price_override_minor:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        reorder_threshold:
+          type: integer
+          minimum: 0
+
+    CommerceStoreVariantConfiguration:
+      type: object
+      required:
+        - id
+        - organization_id
+        - store_id
+        - variant_id
+        - enabled
+        - inventory
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        enabled:
+          type: boolean
+        price_override_minor:
+          type: integer
+          format: int64
+          nullable: true
+        inventory:
+          $ref: "#/components/schemas/CommerceInventoryLevel"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceStoreCatalogueItem:
+      type: object
+      required:
+        - store_id
+        - category_id
+        - category_name
+        - product_id
+        - product_name
+        - product_description
+        - currency
+        - variant_id
+        - variant_name
+        - sku
+        - attributes
+        - base_price_minor
+        - effective_price_minor
+        - enabled
+        - quantity_on_hand
+        - quantity_reserved
+        - available_quantity
+        - reorder_threshold
+        - available
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        category_name:
+          type: string
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        product_description:
+          type: string
+        currency:
+          type: string
+        variant_id:
+          type: string
+          format: uuid
+        variant_name:
+          type: string
+        sku:
+          type: string
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        base_price_minor:
+          type: integer
+          format: int64
+        price_override_minor:
+          type: integer
+          format: int64
+          nullable: true
+        effective_price_minor:
+          type: integer
+          format: int64
+        primary_image_url:
+          type: string
+          format: uri
+          nullable: true
+        enabled:
+          type: boolean
+        quantity_on_hand:
+          type: integer
+        quantity_reserved:
+          type: integer
+        available_quantity:
+          type: integer
+        reorder_threshold:
+          type: integer
+        available:
+          type: boolean
+
+    CommerceInventoryLevel:
+      type: object
+      required:
+        - id
+        - organization_id
+        - store_id
+        - variant_id
+        - quantity_on_hand
+        - quantity_reserved
+        - available_quantity
+        - reorder_threshold
+        - version
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        quantity_on_hand:
+          type: integer
+        quantity_reserved:
+          type: integer
+        available_quantity:
+          type: integer
+        reorder_threshold:
+          type: integer
+        version:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AdjustCommerceInventoryRequest:
+      type: object
+      required:
+        - quantity_delta
+        - reference
+        - reason
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity_delta:
+          type: integer
+        reference:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+          minLength: 1
+
+    CreateCommerceMerchantProfileRequest:
+      type: object
+      required:
+        - slug
+        - display_name
+        - default_currency
+        - timezone
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        slug:
+          type: string
+          minLength: 1
+          example: example-merchant
+        display_name:
+          type: string
+          minLength: 1
+          example: Example Merchant
+        default_currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: NGN
+        timezone:
+          type: string
+          minLength: 1
+          example: Africa/Lagos
+
+    UpdateCommerceMerchantProfileRequest:
+      type: object
+      required: [slug, display_name, default_currency, timezone, status]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        slug:
+          type: string
+          minLength: 1
+        display_name:
+          type: string
+          minLength: 1
+        default_currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        timezone:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          enum: [active, inactive]
+
+    CommerceMerchantProfile:
+      type: object
+      required:
+        - id
+        - organization_id
+        - slug
+        - display_name
+        - default_currency
+        - timezone
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        display_name:
+          type: string
+        default_currency:
+          type: string
+        timezone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCommerceStoreRequest:
+      type: object
+      required:
+        - code
+        - name
+        - address
+        - city
+        - state
+        - country_code
+        - timezone
+        - preparation_minutes
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        city:
+          type: string
+          minLength: 1
+        state:
+          type: string
+          minLength: 1
+        country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        timezone:
+          type: string
+          minLength: 1
+        preparation_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        hours:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreHourInput"
+        fulfilment_modes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreFulfilmentModeInput"
+
+    UpdateCommerceStoreRequest:
+      type: object
+      required: [code, name, address, city, state, country_code, timezone, preparation_minutes, status]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        city:
+          type: string
+          minLength: 1
+        state:
+          type: string
+          minLength: 1
+        country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        timezone:
+          type: string
+          minLength: 1
+        preparation_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        hours:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreHourInput"
+        fulfilment_modes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreFulfilmentModeInput"
+        status:
+          type: string
+          enum: [active, inactive]
+
+    CommerceStoreHourInput:
+      type: object
+      required:
+        - day_of_week
+        - is_closed
+      properties:
+        day_of_week:
+          type: integer
+          minimum: 0
+          maximum: 6
+        open_minute:
+          type: integer
+          minimum: 0
+          maximum: 1439
+          nullable: true
+        close_minute:
+          type: integer
+          minimum: 1
+          maximum: 1440
+          nullable: true
+        is_closed:
+          type: boolean
+
+    CommerceStoreFulfilmentModeInput:
+      type: object
+      required:
+        - mode
+        - enabled
+      properties:
+        mode:
+          type: string
+          enum: [customer_pickup, customer_rider, merchant_rider]
+        enabled:
+          type: boolean
+
+    CommerceStore:
+      type: object
+      required:
+        - id
+        - organization_id
+        - code
+        - name
+        - address
+        - city
+        - state
+        - country_code
+        - timezone
+        - preparation_minutes
+        - status
+        - hours
+        - fulfilment_modes
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        country_code:
+          type: string
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        timezone:
+          type: string
+        preparation_minutes:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive]
+        hours:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreHour"
+        fulfilment_modes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreFulfilmentMode"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceStoreHour:
+      allOf:
+        - $ref: "#/components/schemas/CommerceStoreHourInput"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    CommerceStoreFulfilmentMode:
+      allOf:
+        - $ref: "#/components/schemas/CommerceStoreFulfilmentModeInput"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    CreateCommerceStaffAssignmentRequest:
+      type: object
+      required:
+        - user_id
+        - role
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        user_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [store_manager, store_staff]
+
+    CommerceStaffAssignment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - store_id
+        - user_id
+        - role
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [store_manager, store_staff]
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ResolveCommerceCustomerRequest:
+      type: object
+      required:
+        - channel
+        - identifier
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        channel:
+          type: string
+          enum: [whatsapp, phone, email, web]
+        identifier:
+          type: string
+          minLength: 3
+          maxLength: 320
+        display_name:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+
+    CommerceCustomerIdentity:
+      type: object
+      required:
+        - id
+        - channel
+        - identifier
+        - verified
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum: [whatsapp, phone, email, web]
+        identifier:
+          type: string
+        verified:
+          type: boolean
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CommerceCustomer:
+      type: object
+      required:
+        - id
+        - organization_id
+        - display_name
+        - status
+        - identities
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        identities:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceCustomerIdentity"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCommerceCartRequest:
+      type: object
+      required:
+        - customer_id
+        - store_id
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        customer_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+
+    SetCommerceCartItemRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+    CommerceCartItem:
+      type: object
+      required:
+        - id
+        - variant_id
+        - quantity
+        - available_quantity
+        - available
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+        product_name:
+          type: string
+          nullable: true
+        variant_id:
+          type: string
+          format: uuid
+        variant_name:
+          type: string
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+        primary_image_url:
+          type: string
+          format: uri
+          nullable: true
+        quantity:
+          type: integer
+        unit_price_minor:
+          type: integer
+          format: int64
+          nullable: true
+        line_total_minor:
+          type: integer
+          format: int64
+          nullable: true
+        available_quantity:
+          type: integer
+        available:
+          type: boolean
+        unavailable_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceCart:
+      type: object
+      required:
+        - id
+        - organization_id
+        - customer_id
+        - store_id
+        - currency
+        - status
+        - version
+        - expires_at
+        - items
+        - item_count
+        - subtotal_minor
+        - total_minor
+        - checkout_ready
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        status:
+          type: string
+          enum: [active, converted, abandoned, expired]
+        version:
+          type: integer
+          format: int64
+        expires_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceCartItem"
+        item_count:
+          type: integer
+        subtotal_minor:
+          type: integer
+          format: int64
+        total_minor:
+          type: integer
+          format: int64
+        checkout_ready:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CheckoutCommerceCartRequest:
+      type: object
+      required:
+        - cart_id
+        - fulfilment_mode
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        cart_id:
+          type: string
+          format: uuid
+        fulfilment_mode:
+          type: string
+          enum: [customer_pickup, customer_rider, merchant_rider]
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    TransitionCommerceOrderRequest:
+      type: object
+      required:
+        - status
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          $ref: "#/components/schemas/CommerceOrderStatus"
+        reason:
+          type: string
+          maxLength: 500
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    CommerceOrderStatus:
+      type: string
+      enum:
+        - draft
+        - pending_payment
+        - paid
+        - processing
+        - ready
+        - fulfilment_pending
+        - ready_for_pickup
+        - out_for_delivery
+        - delivered
+        - completed
+        - payment_failed
+        - payment_expired
+        - cancelled
+        - refunded
+
+    CommerceOrderItem:
+      type: object
+      required:
+        - id
+        - product_id
+        - variant_id
+        - product_name
+        - variant_name
+        - sku
+        - attributes
+        - quantity
+        - unit_price_minor
+        - line_total_minor
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        variant_name:
+          type: string
+        sku:
+          type: string
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        primary_image_url:
+          type: string
+          format: uri
+          nullable: true
+        quantity:
+          type: integer
+        unit_price_minor:
+          type: integer
+          format: int64
+        line_total_minor:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+
+    CommerceOrderEvent:
+      type: object
+      required:
+        - id
+        - event_type
+        - to_status
+        - actor_type
+        - reason
+        - metadata
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        from_status:
+          allOf:
+            - $ref: "#/components/schemas/CommerceOrderStatus"
+          nullable: true
+        to_status:
+          $ref: "#/components/schemas/CommerceOrderStatus"
+        actor_type:
+          type: string
+          enum: [system, user, payment, channel]
+        actor_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    CommerceOrder:
+      type: object
+      required:
+        - id
+        - organization_id
+        - cart_id
+        - customer_id
+        - store_id
+        - order_number
+        - fulfilment_mode
+        - status
+        - currency
+        - subtotal_minor
+        - discount_minor
+        - delivery_fee_minor
+        - total_minor
+        - version
+        - payment_expires_at
+        - items
+        - events
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        cart_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        order_number:
+          type: string
+        fulfilment_mode:
+          type: string
+          enum: [customer_pickup, customer_rider, merchant_rider]
+        destination_address:
+          type: string
+          nullable: true
+        destination_latitude:
+          type: number
+          format: double
+          nullable: true
+        destination_longitude:
+          type: number
+          format: double
+          nullable: true
+        status:
+          $ref: "#/components/schemas/CommerceOrderStatus"
+        currency:
+          type: string
+        subtotal_minor:
+          type: integer
+          format: int64
+        discount_minor:
+          type: integer
+          format: int64
+        delivery_fee_minor:
+          type: integer
+          format: int64
+        total_minor:
+          type: integer
+          format: int64
+        version:
+          type: integer
+          format: int64
+        payment_expires_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceOrderItem"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceOrderEvent"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceOrderList:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceOrder"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    PrepareCommerceStoreOrderRequest:
+      type: object
+      required:
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 170
+
+    CommerceStoreOrder:
+      type: object
+      required:
+        - order
+      properties:
+        order:
+          $ref: "#/components/schemas/CommerceOrder"
+        fulfilment:
+          allOf:
+            - $ref: "#/components/schemas/CommerceFulfilment"
+          nullable: true
+
+    CommerceStoreOrderList:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceStoreOrder"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    StartCommerceFulfilmentRequest:
+      type: object
+      required:
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        destination_address:
+          type: string
+          maxLength: 500
+        destination_latitude:
+          type: number
+          format: double
+          nullable: true
+        destination_longitude:
+          type: number
+          format: double
+          nullable: true
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    CreateCommerceDeliveryQuoteRequest:
+      type: object
+      required:
+        - source
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum: [manual, provider]
+        provider:
+          type: string
+          maxLength: 50
+        estimated_fee_minor:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        distance_meters:
+          type: integer
+          minimum: 0
+          nullable: true
+        duration_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    DecideCommerceDeliveryQuoteRequest:
+      type: object
+      required:
+        - decision
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        decision:
+          type: string
+          enum: [accepted, rejected]
+        reason:
+          type: string
+          maxLength: 500
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    AssignCommerceRiderRequest:
+      type: object
+      required:
+        - source
+        - rider_name
+        - rider_phone
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum: [customer, merchant]
+        provider:
+          type: string
+          maxLength: 50
+        provider_assignment_id:
+          type: string
+          maxLength: 200
+        rider_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        rider_phone:
+          type: string
+          minLength: 7
+          maxLength: 40
+        vehicle_description:
+          type: string
+          maxLength: 200
+        tracking_url:
+          type: string
+          format: uri
+          maxLength: 2000
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    VerifyCommerceFulfilmentHandoverRequest:
+      type: object
+      required:
+        - verification_code
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        verification_code:
+          type: string
+          pattern: "^[0-9]{6}$"
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    TransitionCommerceFulfilmentRequest:
+      type: object
+      required:
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+          maxLength: 500
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    CommerceFulfilmentStatus:
+      type: string
+      enum:
+        - ready_for_pickup
+        - awaiting_quote
+        - awaiting_customer_confirmation
+        - rider_requested
+        - rider_assigned
+        - out_for_delivery
+        - delivered
+        - completed
+        - cancelled
+
+    CommerceDeliveryQuote:
+      type: object
+      required:
+        - id
+        - source
+        - status
+        - pickup_address
+        - destination_address
+        - estimated_fee_minor
+        - currency
+        - fee_payment_mode
+        - fee_status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [manual, provider]
+        provider:
+          type: string
+          nullable: true
+        provider_quote_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [quoted, accepted, rejected, expired]
+        pickup_address:
+          type: string
+        destination_address:
+          type: string
+        distance_meters:
+          type: integer
+          nullable: true
+        duration_seconds:
+          type: integer
+          nullable: true
+        estimated_fee_minor:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        fee_payment_mode:
+          type: string
+          enum: [direct_to_rider, zidi_collected]
+        fee_status:
+          type: string
+          enum: [not_collected, due, paid_external, paid]
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+        rejected_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceRiderAssignment:
+      type: object
+      required:
+        - id
+        - source
+        - rider_name
+        - rider_phone
+        - status
+        - assigned_by_user_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [customer, merchant]
+        provider:
+          type: string
+          nullable: true
+        provider_assignment_id:
+          type: string
+          nullable: true
+        rider_name:
+          type: string
+        rider_phone:
+          type: string
+        vehicle_description:
+          type: string
+          nullable: true
+        tracking_url:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          type: string
+          enum: [assigned, arrived, picked_up, delivered, cancelled]
+        assigned_by_user_id:
+          type: string
+          format: uuid
+        arrived_at:
+          type: string
+          format: date-time
+          nullable: true
+        picked_up_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceFulfilmentEvent:
+      type: object
+      required:
+        - id
+        - event_type
+        - to_status
+        - actor_type
+        - reason
+        - metadata
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        from_status:
+          allOf:
+            - $ref: "#/components/schemas/CommerceFulfilmentStatus"
+          nullable: true
+        to_status:
+          $ref: "#/components/schemas/CommerceFulfilmentStatus"
+        actor_type:
+          type: string
+          enum: [user, system, customer, provider]
+        actor_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    CommerceFulfilment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - order_id
+        - store_id
+        - customer_id
+        - mode
+        - status
+        - pickup_address
+        - verification_code_expires_at
+        - version
+        - quotes
+        - rider_assignments
+        - events
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [customer_pickup, customer_rider, merchant_rider]
+        status:
+          $ref: "#/components/schemas/CommerceFulfilmentStatus"
+        pickup_address:
+          type: string
+        destination_address:
+          type: string
+          nullable: true
+        verification_code_expires_at:
+          type: string
+          format: date-time
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        verified_by_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        handed_over_at:
+          type: string
+          format: date-time
+          nullable: true
+        handed_over_by_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+          format: int64
+        quotes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceDeliveryQuote"
+        rider_assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceRiderAssignment"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceFulfilmentEvent"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    InitializeCommercePaymentRequest:
+      type: object
+      required:
+        - idempotency_key
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        provider:
+          type: string
+          minLength: 2
+          maxLength: 50
+        payer_email:
+          type: string
+          maxLength: 320
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 200
+
+    CommerceInvoiceStatus:
+      type: string
+      enum: [issued, paid, void]
+
+    CommercePaymentStatus:
+      type: string
+      enum: [initializing, pending, succeeded, failed, expired, review_required]
+
+    CommerceInvoiceItem:
+      type: object
+      required:
+        - id
+        - order_item_id
+        - product_id
+        - variant_id
+        - product_name
+        - variant_name
+        - sku
+        - attributes
+        - quantity
+        - unit_price_minor
+        - line_total_minor
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_item_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        variant_name:
+          type: string
+        sku:
+          type: string
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        quantity:
+          type: integer
+        unit_price_minor:
+          type: integer
+          format: int64
+        line_total_minor:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+
+    CommerceInvoice:
+      type: object
+      required:
+        - id
+        - organization_id
+        - order_id
+        - store_id
+        - customer_id
+        - invoice_number
+        - status
+        - merchant_name
+        - store_name
+        - store_address
+        - customer_name
+        - order_number
+        - fulfilment_mode
+        - currency
+        - subtotal_minor
+        - discount_minor
+        - delivery_fee_minor
+        - total_minor
+        - issued_at
+        - items
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        invoice_number:
+          type: string
+        status:
+          $ref: "#/components/schemas/CommerceInvoiceStatus"
+        merchant_name:
+          type: string
+        store_name:
+          type: string
+        store_address:
+          type: string
+        customer_name:
+          type: string
+        customer_email:
+          type: string
+          nullable: true
+        order_number:
+          type: string
+        fulfilment_mode:
+          type: string
+          enum: [customer_pickup, customer_rider, merchant_rider]
+        currency:
+          type: string
+        subtotal_minor:
+          type: integer
+          format: int64
+        discount_minor:
+          type: integer
+          format: int64
+        delivery_fee_minor:
+          type: integer
+          format: int64
+        total_minor:
+          type: integer
+          format: int64
+        issued_at:
+          type: string
+          format: date-time
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        voided_at:
+          type: string
+          format: date-time
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceInvoiceItem"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommercePayment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - order_id
+        - invoice_id
+        - provider
+        - provider_reference
+        - status
+        - currency
+        - amount_minor
+        - payer_email
+        - failure_reason
+        - expires_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        invoice_id:
+          type: string
+          format: uuid
+        provider:
+          type: string
+        provider_reference:
+          type: string
+        provider_transaction_id:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/CommercePaymentStatus"
+        currency:
+          type: string
+        amount_minor:
+          type: integer
+          format: int64
+        payer_email:
+          type: string
+        authorization_url:
+          type: string
+          format: uri
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+        initialized_at:
+          type: string
+          format: date-time
+          nullable: true
+        confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        failure_reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommercePaymentSession:
+      type: object
+      required:
+        - invoice
+        - payment
+      properties:
+        invoice:
+          $ref: "#/components/schemas/CommerceInvoice"
+        payment:
+          $ref: "#/components/schemas/CommercePayment"
+
+    CommercePaymentWebhookResponse:
+      type: object
+      required:
+        - acknowledged
+        - outcome
+        - duplicate
+      properties:
+        acknowledged:
+          type: boolean
+        outcome:
+          type: string
+        duplicate:
+          type: boolean
+
+    ConfigureCommerceWhatsAppRequest:
+      type: object
+      required: [provider_account_id]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        provider_account_id:
+          type: string
+          minLength: 3
+          maxLength: 200
+        display_phone_number:
+          type: string
+          maxLength: 40
+        welcome_message:
+          type: string
+          maxLength: 1000
+        status:
+          type: string
+          enum: [active, inactive]
+
+    CommerceChannelConfiguration:
+      type: object
+      required: [id, organization_id, channel, provider_account_id, welcome_message, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum: [whatsapp]
+        provider_account_id:
+          type: string
+        display_phone_number:
+          type: string
+          nullable: true
+        welcome_message:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceWhatsAppLink:
+      type: object
+      required: [merchant_slug, merchant_display_name, display_phone_number, url]
+      properties:
+        merchant_slug:
+          type: string
+        merchant_display_name:
+          type: string
+        display_phone_number:
+          type: string
+        url:
+          type: string
+          format: uri
+
+    CommerceComplaintStatus:
+      type: string
+      enum: [open, in_progress, resolved, closed]
+
+    CommerceComplaint:
+      type: object
+      required: [id, organization_id, customer_id, category, description, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        conversation_id:
+          type: string
+          format: uuid
+          nullable: true
+        category:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/CommerceComplaintStatus"
+        resolution:
+          type: string
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommerceComplaintList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceComplaint"
+        total:
+          type: integer
+          format: int64
+
+    UpdateCommerceComplaintRequest:
+      type: object
+      required: [status]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/CommerceComplaintStatus"
+        resolution:
+          type: string
+          maxLength: 4000
 
     Error:
       type: object

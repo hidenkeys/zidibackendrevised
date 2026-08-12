@@ -97,22 +97,7 @@ func VerifyWebhookSignature(payload []byte, signature string) bool {
 }
 
 func HandleWebhook(payload utils.WebhookPayload, db *gorm.DB) error {
-	for _, entry := range payload.Entry {
-		for _, change := range entry.Changes {
-			if change.Field == "messages" {
-				for _, message := range change.Value.Messages {
-					err := handleMessage(message.From, message, db)
-					if err != nil {
-						log.Printf("❌ Error handling message from %s: %v", message.From, err)
-						if sendErr := utils.SendWhatsAppMessage(message.From, "❌ Sorry—something went wrong on our side. Please try again."); sendErr != nil {
-							log.Printf("❌ Failed to send WhatsApp error message to %s: %v", message.From, sendErr)
-						}
-					}
-				}
-			}
-		}
-	}
-	return nil
+	return HandleWebhookWithCommerce(payload, db, nil)
 }
 
 func handleMessage(from string, message struct {
@@ -128,7 +113,18 @@ func handleMessage(from string, message struct {
 			ID    string `json:"id"`
 			Title string `json:"title"`
 		} `json:"button_reply,omitempty"`
+		ListReply *struct {
+			ID          string `json:"id"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
+		} `json:"list_reply,omitempty"`
 	} `json:"interactive,omitempty"`
+	Location *struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+		Name      string  `json:"name"`
+		Address   string  `json:"address"`
+	} `json:"location,omitempty"`
 	Type string `json:"type"`
 }, db *gorm.DB) error {
 	defer func() {

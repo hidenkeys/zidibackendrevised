@@ -37,17 +37,25 @@ type ppayment struct {
 }
 
 type Server struct {
-	db                 *gorm.DB
-	orgService         *services.OrganizationService
-	usrService         *services.UserService
-	campaignService    *services.CampaignService
-	customerService    *services.CustomerService
-	questionService    *services.QuestionService
-	responseService    *services.ResponseService
-	paymentService     *services.PaymentService
-	transactionService *services.TransactionService
-	balanceService     *services.BalanceService
-	orderService       *services.OrderService
+	db                          *gorm.DB
+	orgService                  *services.OrganizationService
+	usrService                  *services.UserService
+	campaignService             *services.CampaignService
+	customerService             *services.CustomerService
+	questionService             *services.QuestionService
+	responseService             *services.ResponseService
+	paymentService              *services.PaymentService
+	transactionService          *services.TransactionService
+	balanceService              *services.BalanceService
+	orderService                *services.OrderService
+	commerceFoundationService   *services.CommerceFoundationService
+	commerceCatalogueService    *services.CommerceCatalogueService
+	commerceCustomerCartService *services.CommerceCustomerCartService
+	commerceOrderService        *services.CommerceOrderService
+	commercePaymentService      *services.CommercePaymentService
+	commerceFulfilmentService   *services.CommerceFulfilmentService
+	commerceStoreOrderService   *services.CommerceStoreOrderService
+	commerceChannelService      *services.CommerceChannelService
 }
 
 type PaystackWebhookPayload struct {
@@ -332,19 +340,27 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 
 }
 
-func NewServer(db *gorm.DB, balanceService *services.BalanceService, transactionService *services.TransactionService, orgService *services.OrganizationService, usrService *services.UserService, campaignService *services.CampaignService, customerService *services.CustomerService, questionService *services.QuestionService, responseService *services.ResponseService, paymentService *services.PaymentService, orderService *services.OrderService) *Server {
+func NewServer(db *gorm.DB, balanceService *services.BalanceService, transactionService *services.TransactionService, orgService *services.OrganizationService, usrService *services.UserService, campaignService *services.CampaignService, customerService *services.CustomerService, questionService *services.QuestionService, responseService *services.ResponseService, paymentService *services.PaymentService, orderService *services.OrderService, commerceFoundationService *services.CommerceFoundationService, commerceCatalogueService *services.CommerceCatalogueService, commerceCustomerCartService *services.CommerceCustomerCartService, commerceOrderService *services.CommerceOrderService, commercePaymentService *services.CommercePaymentService, commerceFulfilmentService *services.CommerceFulfilmentService, commerceStoreOrderService *services.CommerceStoreOrderService, commerceChannelService *services.CommerceChannelService) *Server {
 	return &Server{
-		db:                 db,
-		balanceService:     balanceService,
-		transactionService: transactionService,
-		orgService:         orgService,
-		usrService:         usrService,
-		campaignService:    campaignService,
-		customerService:    customerService,
-		questionService:    questionService,
-		responseService:    responseService,
-		paymentService:     paymentService,
-		orderService:       orderService,
+		db:                          db,
+		balanceService:              balanceService,
+		transactionService:          transactionService,
+		orgService:                  orgService,
+		usrService:                  usrService,
+		campaignService:             campaignService,
+		customerService:             customerService,
+		questionService:             questionService,
+		responseService:             responseService,
+		paymentService:              paymentService,
+		orderService:                orderService,
+		commerceFoundationService:   commerceFoundationService,
+		commerceCatalogueService:    commerceCatalogueService,
+		commerceCustomerCartService: commerceCustomerCartService,
+		commerceOrderService:        commerceOrderService,
+		commercePaymentService:      commercePaymentService,
+		commerceFulfilmentService:   commerceFulfilmentService,
+		commerceStoreOrderService:   commerceStoreOrderService,
+		commerceChannelService:      commerceChannelService,
 	}
 }
 

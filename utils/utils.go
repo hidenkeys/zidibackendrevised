@@ -7,13 +7,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"github.com/hidenkeys/zidibackend/models"
 	brevo "github.com/sendinblue/APIv3-go-library/v2/lib"
-	"gorm.io/gorm"
 	"io"
 	"net/smtp"
 
@@ -22,44 +19,8 @@ import (
 	"net/http"
 	//"net/smtp"
 	"os"
-	"strings"
 	"time"
 )
-
-type UserClaims struct {
-	ID             string `json:"user_id"`
-	Role           string `json:"role"`
-	OrganizationID string `json:"organization_id"`
-}
-
-// RevokeToken stores a token in the database
-func RevokeToken(db *gorm.DB, token string, expiry time.Time) error {
-	t := models.Token{
-		Token:     token,
-		ExpiresAt: expiry,
-	}
-	return db.Create(&t).Error
-}
-
-func IsTokenRevoked(db *gorm.DB, token string) (bool, error) {
-	var count int64
-	err := db.Model(&models.Token{}).Where("token = ?", token).Count(&count).Error
-	return count > 0, err
-}
-
-var jwtSecret = []byte("your-secret-key")
-
-func GenerateJWTToken(userID, orgID, role string) (string, error) {
-	claims := jwt.MapClaims{
-		"userId":         userID,
-		"organizationId": orgID,
-		"role":           role,                                  // Include role in JWT
-		"exp":            time.Now().Add(time.Hour * 72).Unix(), // Token expires in 72 hours
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
-}
 
 func GenerateTokens(charType string, length int, count int) []string {
 	charsets := map[string]string{
@@ -91,34 +52,13 @@ func GenerateTokens(charType string, length int, count int) []string {
 	return tokenList
 }
 
-// UserRoles defines user roles
-const (
-	RoleZidi  = "zidi"
-	RoleAdmin = "admin"
-	RoleUser  = "user"
-)
-
-// CheckUserRole checks if the user has a required role
-func CheckUserRole(c *fiber.Ctx, allowedRoles ...string) bool {
-	user, ok := c.Locals("user").(UserClaims)
-	if !ok {
-		return false
-	}
-
-	// Convert role to lowercase and compare
-	userRole := strings.ToLower(user.Role)
-	for _, role := range allowedRoles {
-		if userRole == strings.ToLower(role) {
-			return true
-		}
-	}
-	return false
-}
-
 // send email zoho
 func SendEmail00(to, subject, body string) error {
-	from := "teniola.sobande@zidihq.com"
-	password := "EVYvaG9HJGrh"
+	from := os.Getenv("ZOHO_SMTP_FROM")
+	password := os.Getenv("ZOHO_SMTP_PASSWORD")
+	if from == "" || password == "" {
+		return errors.New("ZOHO_SMTP_FROM and ZOHO_SMTP_PASSWORD must be configured")
+	}
 
 	// Use Zoho SMTP host in PlainAuth
 	auth := smtp.PlainAuth("", from, password, "smtp.zoho.com")

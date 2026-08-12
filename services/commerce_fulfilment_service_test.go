@@ -21,6 +21,7 @@ type commerceFulfilmentRepoStub struct {
 	handoverInput repository.CommerceVerifyHandoverInput
 	arrivalInput  repository.CommerceFulfilmentTransitionInput
 	decisionInput repository.CommerceDeliveryQuoteDecisionInput
+	reminderInput repository.CommerceFulfilmentTransitionInput
 	operationErr  error
 }
 
@@ -67,6 +68,11 @@ func (s *commerceFulfilmentRepoStub) DecideDeliveryQuote(_ context.Context, inpu
 }
 
 func (s *commerceFulfilmentRepoStub) AssignRider(context.Context, repository.CommerceAssignRiderInput) (*models.CommerceFulfilment, error) {
+	return cloneCommerceFulfilment(s.item), s.operationErr
+}
+
+func (s *commerceFulfilmentRepoStub) QueueHandoverCodeReminder(_ context.Context, input repository.CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
+	s.reminderInput = input
 	return cloneCommerceFulfilment(s.item), s.operationErr
 }
 
@@ -249,6 +255,28 @@ func TestHandoverHashesCodeAndFulfilmentStatesCannotUseGenericOrderEndpoint(t *t
 		if canActorRequestCommerceOrderStatus(actor.Role, status) {
 			t.Fatalf("generic order endpoint can bypass fulfilment-owned status %q", status)
 		}
+	}
+}
+
+func TestResendHandoverCodeAuthorizesStaffAndQueuesProtectedReminder(t *testing.T) {
+	organizationID, orderID, fulfilmentID, storeID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	repo := &commerceFulfilmentRepoStub{item: &models.CommerceFulfilment{
+		ID: fulfilmentID, OrganizationID: organizationID, OrderID: orderID, StoreID: storeID,
+		Mode: models.FulfilmentModeCustomerRider, Status: models.CommerceFulfilmentStatusRiderAssigned,
+	}}
+	service := NewCommerceFulfilmentService(repo, seededCommerceOrderRepo(&models.CommerceOrder{
+		ID: orderID, OrganizationID: organizationID, StoreID: storeID,
+	}), &commerceFoundationRepoStub{}, commercefulfilment.NewRegistry(), testCommerceCodeManager(t))
+	actor := CommerceActor{UserID: uuid.New(), OrganizationID: organizationID, Role: utils.RoleStoreStaff}
+
+	_, err := service.ResendHandoverCode(context.Background(), actor, nil, fulfilmentID, TransitionCommerceFulfilmentInput{
+		IdempotencyKey: "handover-reminder-001",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repo.reminderInput.FulfilmentID != fulfilmentID || repo.reminderInput.ActorUserID == nil || *repo.reminderInput.ActorUserID != actor.UserID {
+		t.Fatalf("handover reminder was not attributed correctly: %+v", repo.reminderInput)
 	}
 }
 

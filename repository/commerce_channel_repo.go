@@ -385,6 +385,7 @@ func (r *CommerceChannelRepoPG) ClaimCustomerOutboxEvents(ctx context.Context, l
 	topics := []string{
 		models.CommerceOutboxTopicPaymentCustomer, models.CommerceOutboxTopicFulfilmentReady,
 		models.CommerceOutboxTopicDeliveryQuoteAvailable, models.CommerceOutboxTopicRiderAssigned,
+		models.CommerceOutboxTopicHandoverCodeReminder,
 		models.CommerceOutboxTopicOutForDelivery, models.CommerceOutboxTopicFulfilmentDelivered,
 	}
 	var items []models.CommerceOutboxEvent

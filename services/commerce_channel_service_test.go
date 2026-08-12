@@ -188,6 +188,26 @@ func TestRiderAssignedNotificationIncludesCustomerHandoverCode(t *testing.T) {
 	}
 }
 
+func TestHandoverCodeReminderIncludesExistingProtectedCode(t *testing.T) {
+	organizationID, customerID, orderID, fulfilmentID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	service := NewCommerceChannelDeliveryService(
+		&commerceChannelRepoStub{}, nil,
+		seededCommerceOrderRepo(&models.CommerceOrder{ID: orderID, OrganizationID: organizationID, CustomerID: customerID, OrderNumber: "ZC-200"}),
+		&commerceFulfilmentRepoStub{item: &models.CommerceFulfilment{ID: fulfilmentID, OrganizationID: organizationID, CustomerID: customerID, OrderID: orderID}},
+		&commerceChannelFulfilmentStub{},
+	)
+	payload, _ := json.Marshal(map[string]uuid.UUID{"customer_id": customerID, "order_id": orderID, "fulfilment_id": fulfilmentID})
+	recipientID, reply, _, err := service.notificationReply(context.Background(), &models.CommerceOutboxEvent{
+		OrganizationID: organizationID, Topic: models.CommerceOutboxTopicHandoverCodeReminder, Payload: payload,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if recipientID != customerID || !strings.Contains(reply.Body, "your handover code is 123456") {
+		t.Fatalf("handover reminder did not include the protected code: recipient=%s body=%q", recipientID, reply.Body)
+	}
+}
+
 func TestCommerceWhatsAppOrderFlowUsesCoreServicesAndPersistsState(t *testing.T) {
 	organizationID, customerID, storeID, categoryID, variantID, cartID, orderID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	openMinute, closeMinute := 0, 1440

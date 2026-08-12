@@ -403,6 +403,23 @@ func (s *CommerceFulfilmentService) AssignRider(ctx context.Context, actor Comme
 	return s.repo.AssignRider(ctx, repository.CommerceAssignRiderInput{Assignment: assignment, ActorUserID: actor.UserID, IdempotencyKey: key, Now: now})
 }
 
+func (s *CommerceFulfilmentService) ResendHandoverCode(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, fulfilmentID uuid.UUID, input TransitionCommerceFulfilmentInput) (*models.CommerceFulfilment, error) {
+	organizationID, _, err := s.authorizeFulfilment(ctx, actor, requestedOrganizationID, fulfilmentID)
+	if err != nil {
+		return nil, err
+	}
+	key, err := validateCommerceFulfilmentKey(fulfilmentID, input.IdempotencyKey)
+	if err != nil {
+		return nil, err
+	}
+	actorUserID := actor.UserID
+	return s.repo.QueueHandoverCodeReminder(ctx, repository.CommerceFulfilmentTransitionInput{
+		OrganizationID: organizationID, FulfilmentID: fulfilmentID,
+		ActorType: models.CommerceFulfilmentActorUser, ActorUserID: &actorUserID,
+		Reason: "customer handover code reminder requested", IdempotencyKey: key, Now: time.Now().UTC(),
+	})
+}
+
 func (s *CommerceFulfilmentService) VerifyHandover(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, fulfilmentID uuid.UUID, input VerifyCommerceHandoverInput) (*models.CommerceFulfilment, error) {
 	organizationID, _, err := s.authorizeFulfilment(ctx, actor, requestedOrganizationID, fulfilmentID)
 	if err != nil {

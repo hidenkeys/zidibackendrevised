@@ -122,6 +122,24 @@ func (s Server) VerifyCommerceFulfilmentHandover(c *fiber.Ctx, fulfilmentID api.
 	return c.JSON(commerceFulfilmentResponse(item))
 }
 
+func (s Server) ResendCommerceFulfilmentHandoverCode(c *fiber.Ctx, fulfilmentID api.CommerceFulfilmentId) error {
+	actor, err := commerceActor(c)
+	if err != nil {
+		return commerceError(c, err)
+	}
+	var request api.TransitionCommerceFulfilmentRequest
+	if err := c.BodyParser(&request); err != nil {
+		return commerceError(c, services.ErrCommerceValidation)
+	}
+	item, err := s.commerceFulfilmentService.ResendHandoverCode(c.UserContext(), actor, request.OrganizationId, fulfilmentID, services.TransitionCommerceFulfilmentInput{
+		Reason: optionalString(request.Reason), IdempotencyKey: request.IdempotencyKey,
+	})
+	if err != nil {
+		return commerceError(c, err)
+	}
+	return c.JSON(commerceFulfilmentResponse(item))
+}
+
 func (s Server) RecordCommerceFulfilmentArrival(c *fiber.Ctx, fulfilmentID api.CommerceFulfilmentId) error {
 	actor, err := commerceActor(c)
 	if err != nil {

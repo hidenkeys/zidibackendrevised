@@ -51,6 +51,7 @@ const (
 	CommerceFulfilmentEventQuoteRejected   = "delivery_quote_rejected"
 	CommerceFulfilmentEventQuoteExpired    = "delivery_quote_expired"
 	CommerceFulfilmentEventRiderAssigned   = "rider_assigned"
+	CommerceFulfilmentEventCodeReminder    = "handover_code_reminder_sent"
 	CommerceFulfilmentEventCustomerArrived = "customer_arrived"
 	CommerceFulfilmentEventRiderArrived    = "rider_arrived"
 	CommerceFulfilmentEventHandoverFailed  = "handover_verification_failed"
@@ -61,6 +62,7 @@ const (
 	CommerceOutboxTopicFulfilmentReady        = "commerce.fulfilment.ready"
 	CommerceOutboxTopicDeliveryQuoteAvailable = "commerce.fulfilment.delivery_quote_available"
 	CommerceOutboxTopicRiderAssigned          = "commerce.fulfilment.rider_assigned"
+	CommerceOutboxTopicHandoverCodeReminder   = "commerce.fulfilment.handover_code_reminder"
 	CommerceOutboxTopicOutForDelivery         = "commerce.fulfilment.out_for_delivery"
 	CommerceOutboxTopicFulfilmentDelivered    = "commerce.fulfilment.delivered"
 )

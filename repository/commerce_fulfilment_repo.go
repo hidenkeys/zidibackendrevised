@@ -87,6 +87,7 @@ type CommerceFulfilmentRepository interface {
 	CreateDeliveryQuote(ctx context.Context, input CommerceCreateDeliveryQuoteInput) (*models.CommerceFulfilment, error)
 	DecideDeliveryQuote(ctx context.Context, input CommerceDeliveryQuoteDecisionInput) (*models.CommerceFulfilment, error)
 	AssignRider(ctx context.Context, input CommerceAssignRiderInput) (*models.CommerceFulfilment, error)
+	QueueHandoverCodeReminder(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
 	RecordArrival(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
 	VerifyHandover(ctx context.Context, input CommerceVerifyHandoverInput) (*models.CommerceFulfilment, error)
 	MarkDelivered(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
@@ -456,6 +457,41 @@ func (r *CommerceFulfilmentRepoPG) AssignRider(ctx context.Context, input Commer
 		return nil, mapCommerceFulfilmentWriteError("assign commerce rider", err)
 	}
 	return r.GetFulfilment(ctx, input.Assignment.OrganizationID, input.Assignment.FulfilmentID)
+}
+
+func (r *CommerceFulfilmentRepoPG) QueueHandoverCodeReminder(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if event, err := getCommerceFulfilmentEventByKey(tx, input.OrganizationID, input.FulfilmentID, input.IdempotencyKey); err == nil {
+			if event.EventType != models.CommerceFulfilmentEventCodeReminder {
+				return ErrCommerceConflict
+			}
+			return nil
+		} else if !errors.Is(err, ErrCommerceNotFound) {
+			return err
+		}
+
+		item, err := lockCommerceFulfilment(tx, input.OrganizationID, input.FulfilmentID)
+		if err != nil {
+			return err
+		}
+		if item.VerifiedAt != nil || !item.VerificationCodeExpiresAt.After(input.Now) || len(item.VerificationCodeCiphertext) == 0 {
+			return ErrCommerceFulfilmentState
+		}
+		if item.Status != models.CommerceFulfilmentStatusReadyForPickup && item.Status != models.CommerceFulfilmentStatusRiderAssigned {
+			return ErrCommerceFulfilmentState
+		}
+		if err := createCommerceFulfilmentEvent(tx, item, models.CommerceFulfilmentEventCodeReminder, &item.Status,
+			item.Status, models.CommerceFulfilmentActorUser, input.ActorUserID,
+			"customer handover code reminder requested", input.IdempotencyKey, nil, input.Now); err != nil {
+			return err
+		}
+		return createCommerceFulfilmentOutbox(tx, item, models.CommerceOutboxTopicHandoverCodeReminder,
+			input.IdempotencyKey+":notify", nil, input.Now)
+	})
+	if err != nil {
+		return nil, mapCommerceFulfilmentWriteError("queue commerce handover code reminder", err)
+	}
+	return r.GetFulfilment(ctx, input.OrganizationID, input.FulfilmentID)
 }
 
 func (r *CommerceFulfilmentRepoPG) RecordArrival(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {

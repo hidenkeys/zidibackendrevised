@@ -188,6 +188,14 @@ func (s *CommerceChannelDeliveryService) notificationReply(ctx context.Context, 
 			}
 		}
 		return uuid.Nil, repository.CommerceChannelReply{}, nil, repository.ErrCommerceFulfilmentState
+	case models.CommerceOutboxTopicHandoverCodeReminder:
+		code, err := s.fulfilment.RevealVerificationCode(ctx, event.OrganizationID, payload.CustomerID, payload.FulfilmentID)
+		if err != nil {
+			return uuid.Nil, repository.CommerceChannelReply{}, nil, err
+		}
+		return payload.CustomerID, repository.CommerceChannelReply{
+			Body: fmt.Sprintf("Reminder for order %s: your handover code is %s. Share it only when you receive the order.", order.OrderNumber, code),
+		}, email, nil
 	case models.CommerceOutboxTopicOutForDelivery:
 		return payload.CustomerID, repository.CommerceChannelReply{Body: fmt.Sprintf("Order %s is now out for delivery.", order.OrderNumber)}, email, nil
 	case models.CommerceOutboxTopicFulfilmentDelivered:
@@ -211,6 +219,8 @@ func commerceOrderEmail(order *models.CommerceOrder, topic string) *repository.C
 		status = "Delivery quote available"
 	case models.CommerceOutboxTopicRiderAssigned:
 		status = "Rider assigned"
+	case models.CommerceOutboxTopicHandoverCodeReminder:
+		status = "Handover code reminder"
 	case models.CommerceOutboxTopicOutForDelivery:
 		status = "Out for delivery"
 	case models.CommerceOutboxTopicFulfilmentDelivered:

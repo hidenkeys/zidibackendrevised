@@ -3003,6 +3003,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /commerce/fulfilments/{fulfilment_id}/handover-code/reminders:
+    post:
+      summary: Resend the protected handover code to the customer
+      operationId: ResendCommerceFulfilmentHandoverCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionCommerceFulfilmentRequest"
+      responses:
+        "200":
+          description: Handover code reminder queued for customer delivery
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Handover is complete, the code is expired, or the fulfilment is not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /commerce/fulfilments/{fulfilment_id}/arrival:
     post:
       summary: Record customer or rider arrival before secure handover

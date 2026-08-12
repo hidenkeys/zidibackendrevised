@@ -875,7 +875,7 @@ func (r *CommerceFulfilmentRepoPG) RequestDeliveryConfirmation(ctx context.Conte
 		if err != nil {
 			return err
 		}
-		if item.Mode != models.FulfilmentModeMerchantRider || item.Status != models.CommerceFulfilmentStatusOutForDelivery || item.ExpectedDeliveryAt == nil || input.Now.Before(*item.ExpectedDeliveryAt) {
+		if item.Mode != models.FulfilmentModeMerchantRider || item.Status != models.CommerceFulfilmentStatusOutForDelivery || input.Now.Before(commerceExpectedDeliveryAt(item)) {
 			return ErrCommerceFulfilmentState
 		}
 		deadline := input.Now.Add(commerceDeliveryConfirmationWindow)
@@ -1003,7 +1003,7 @@ func (r *CommerceFulfilmentRepoPG) CompleteFulfilment(ctx context.Context, input
 			return eventErr
 		}
 		if fulfilment.Status != models.CommerceFulfilmentStatusDelivered {
-			if fulfilment.Mode != models.FulfilmentModeMerchantRider || fulfilment.ExpectedDeliveryAt == nil || input.Now.Before(*fulfilment.ExpectedDeliveryAt) ||
+			if fulfilment.Mode != models.FulfilmentModeMerchantRider || input.Now.Before(commerceExpectedDeliveryAt(fulfilment)) ||
 				(fulfilment.Status != models.CommerceFulfilmentStatusOutForDelivery && fulfilment.Status != models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation && fulfilment.Status != models.CommerceFulfilmentStatusDeliveryIssue) {
 				return ErrCommerceFulfilmentState
 			}
@@ -1032,6 +1032,15 @@ func (r *CommerceFulfilmentRepoPG) CompleteFulfilment(ctx context.Context, input
 		return nil, mapCommerceFulfilmentWriteError("complete commerce fulfilment", err)
 	}
 	return r.GetFulfilment(ctx, input.OrganizationID, input.FulfilmentID)
+}
+
+func commerceExpectedDeliveryAt(fulfilment *models.CommerceFulfilment) time.Time {
+	if fulfilment.ExpectedDeliveryAt != nil {
+		return *fulfilment.ExpectedDeliveryAt
+	}
+	// Deliveries dispatched before the ETA field was introduced use the last
+	// fulfilment transition plus the standard 40-minute delivery window.
+	return fulfilment.UpdatedAt.Add(40 * time.Minute)
 }
 
 func completeCommerceDelivery(tx *gorm.DB, fulfilment *models.CommerceFulfilment, confirmationStatus, actorType string, actorUserID *uuid.UUID, reason, idempotencyKey, eventType string, notify bool, now time.Time) error {

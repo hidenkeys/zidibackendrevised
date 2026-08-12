@@ -118,6 +118,7 @@ func main() {
 			os.Getenv("UBER_DIRECT_TOKEN_URL"), os.Getenv("UBER_DIRECT_API_BASE_URL"), nil,
 		)), commerceCodeManager,
 	)
+	commercePaymentService.SetFulfilmentService(commerceFulfilmentService)
 	commerceStoreOrderService := services.NewCommerceStoreOrderService(commerceOrderService, commerceFulfilmentService)
 	commerceChannelRepo := repository.NewCommerceChannelRepoPG(db)
 	commerceChannelService := services.NewCommerceChannelService(
@@ -190,6 +191,16 @@ func main() {
 			for {
 				if _, err := commerceChannelDeliveryService.DispatchOnce(context.Background(), 25); err != nil {
 					log.Printf("dispatch commerce channel messages: %v", err)
+				}
+				<-ticker.C
+			}
+		}()
+		go func() {
+			ticker := time.NewTicker(time.Minute)
+			defer ticker.Stop()
+			for {
+				if _, err := commerceFulfilmentService.AutoCompleteUnansweredDeliveries(context.Background(), 100); err != nil {
+					log.Printf("auto-complete unanswered commerce deliveries: %v", err)
 				}
 				<-ticker.C
 			}

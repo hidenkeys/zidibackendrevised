@@ -501,6 +501,7 @@ func (r *CommercePaymentRepoPG) ApplyVerification(ctx context.Context, input Com
 			return err
 		}
 		result.Outcome = models.CommercePaymentStatusSucceeded
+		result.Session, _ = getCommercePaymentSession(tx, payment.OrganizationID, payment.ID)
 		return nil
 	})
 	if err != nil {

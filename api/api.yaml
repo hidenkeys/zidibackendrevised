@@ -3117,6 +3117,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /commerce/fulfilments/{fulfilment_id}/delivery-confirmation-requests:
+    post:
+      summary: Ask the customer to confirm delivery after the quoted ETA
+      operationId: RequestCommerceDeliveryConfirmation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommerceFulfilmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionCommerceFulfilmentRequest"
+      responses:
+        "200":
+          description: Delivery confirmation request queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfilment"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Delivery ETA has not elapsed or confirmation was already requested
+
   /commerce/fulfilments/{fulfilment_id}/complete:
     post:
       summary: Complete a delivered rider fulfilment
@@ -5698,12 +5728,15 @@ components:
     CommerceFulfilmentStatus:
       type: string
       enum:
+        - preparing
         - ready_for_pickup
         - awaiting_quote
         - awaiting_customer_confirmation
         - rider_requested
         - rider_assigned
         - out_for_delivery
+        - awaiting_delivery_confirmation
+        - delivery_issue
         - delivered
         - completed
         - cancelled
@@ -5938,6 +5971,22 @@ components:
         handed_over_by_user_id:
           type: string
           format: uuid
+          nullable: true
+        expected_delivery_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivery_confirmation_requested_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivery_confirmation_deadline_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivery_confirmation_status:
+          type: string
+          enum: [pending, received, not_received, manual, unanswered]
           nullable: true
         delivered_at:
           type: string

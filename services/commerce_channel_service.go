@@ -79,7 +79,9 @@ type commerceChannelPayment interface {
 }
 
 type commerceChannelFulfilment interface {
+	PreparePaidOrderForNotification(context.Context, uuid.UUID, uuid.UUID) (*models.CommerceFulfilment, error)
 	DecideDeliveryQuoteForCustomer(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID, DecideCommerceDeliveryQuoteInput) (*models.CommerceFulfilment, error)
+	DecideDeliveryConfirmationForCustomer(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string, string) (*models.CommerceFulfilment, error)
 	RevealVerificationCode(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (string, error)
 }
 
@@ -342,6 +344,19 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Delivery was declined. Your order is now ready for pickup. Your handover code is " + code + ". Share it only when you receive the order."}}, nil
 		}
 		return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Delivery quote accepted. The store will arrange your rider and keep you updated here."}}, nil
+	}
+	if decision, fulfilmentID, ok := parseCommerceDeliveryConfirmation(command); ok {
+		if s.fulfilments == nil {
+			return state, intent, conversationContext, nil, errors.New("commerce fulfilment service is unavailable")
+		}
+		if _, err := s.fulfilments.DecideDeliveryConfirmationForCustomer(ctx, configuration.OrganizationID, customer.ID, fulfilmentID, decision,
+			"wa-delivery-confirmation:"+decision+":"+fulfilmentID.String()); err != nil {
+			return state, intent, conversationContext, nil, err
+		}
+		if decision == models.CommerceDeliveryConfirmationReceived {
+			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Thank you. Your delivery has been confirmed and the order is complete."}}, nil
+		}
+		return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "We have recorded that your order has not arrived. The store will follow up with the rider."}}, nil
 	}
 
 	if isCommerceMenuCommand(command) {
@@ -908,6 +923,15 @@ func parseCommerceQuoteDecision(value string) (string, uuid.UUID, uuid.UUID, boo
 	fulfilmentID, fulfilmentErr := uuid.Parse(parts[2])
 	quoteID, quoteErr := uuid.Parse(parts[3])
 	return parts[1], fulfilmentID, quoteID, fulfilmentErr == nil && quoteErr == nil
+}
+
+func parseCommerceDeliveryConfirmation(value string) (string, uuid.UUID, bool) {
+	parts := strings.Split(strings.TrimSpace(strings.ToLower(value)), ":")
+	if len(parts) != 3 || parts[0] != "delivery" || (parts[1] != models.CommerceDeliveryConfirmationReceived && parts[1] != models.CommerceDeliveryConfirmationNotReceived) {
+		return "", uuid.Nil, false
+	}
+	fulfilmentID, err := uuid.Parse(parts[2])
+	return parts[1], fulfilmentID, err == nil
 }
 
 func isCommerceMenuCommand(value string) bool {

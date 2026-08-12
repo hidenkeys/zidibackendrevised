@@ -22,14 +22,21 @@ var (
 )
 
 const (
-	commerceVerificationMaxAttempts = 5
-	commerceVerificationLockTime    = 15 * time.Minute
+	commerceVerificationMaxAttempts    = 5
+	commerceVerificationLockTime       = 15 * time.Minute
+	commerceDeliveryConfirmationWindow = time.Hour
 )
 
 type CommerceStartFulfilmentInput struct {
 	Fulfilment     models.CommerceFulfilment
 	OrderStatus    string
 	ActorUserID    uuid.UUID
+	IdempotencyKey string
+	Now            time.Time
+}
+
+type CommercePreparePaidFulfilmentInput struct {
+	Fulfilment     models.CommerceFulfilment
 	IdempotencyKey string
 	Now            time.Time
 }
@@ -79,7 +86,17 @@ type CommerceFulfilmentTransitionInput struct {
 	Now            time.Time
 }
 
+type CommerceDeliveryConfirmationDecisionInput struct {
+	OrganizationID uuid.UUID
+	CustomerID     uuid.UUID
+	FulfilmentID   uuid.UUID
+	Decision       string
+	IdempotencyKey string
+	Now            time.Time
+}
+
 type CommerceFulfilmentRepository interface {
+	PreparePaidFulfilment(ctx context.Context, input CommercePreparePaidFulfilmentInput) (*models.CommerceFulfilment, bool, error)
 	StartFulfilment(ctx context.Context, input CommerceStartFulfilmentInput) (*models.CommerceFulfilment, bool, error)
 	GetFulfilmentByOrder(ctx context.Context, organizationID, orderID uuid.UUID) (*models.CommerceFulfilment, error)
 	ListFulfilmentsByOrderIDs(ctx context.Context, organizationID uuid.UUID, orderIDs []uuid.UUID) ([]models.CommerceFulfilment, error)
@@ -91,6 +108,9 @@ type CommerceFulfilmentRepository interface {
 	RecordArrival(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
 	VerifyHandover(ctx context.Context, input CommerceVerifyHandoverInput) (*models.CommerceFulfilment, error)
 	MarkDelivered(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
+	RequestDeliveryConfirmation(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
+	DecideDeliveryConfirmation(ctx context.Context, input CommerceDeliveryConfirmationDecisionInput) (*models.CommerceFulfilment, error)
+	AutoCompleteUnansweredDeliveries(ctx context.Context, now time.Time, limit int) (int, error)
 	CompleteFulfilment(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error)
 }
 
@@ -100,6 +120,43 @@ type CommerceFulfilmentRepoPG struct {
 
 func NewCommerceFulfilmentRepoPG(db *gorm.DB) *CommerceFulfilmentRepoPG {
 	return &CommerceFulfilmentRepoPG{db: db}
+}
+
+func (r *CommerceFulfilmentRepoPG) PreparePaidFulfilment(ctx context.Context, input CommercePreparePaidFulfilmentInput) (*models.CommerceFulfilment, bool, error) {
+	created := false
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var existing models.CommerceFulfilment
+		err := tx.Where("organization_id = ? AND order_id = ?", input.Fulfilment.OrganizationID, input.Fulfilment.OrderID).First(&existing).Error
+		if err == nil {
+			input.Fulfilment.ID = existing.ID
+			return nil
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		var order models.CommerceOrder
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("organization_id = ? AND id = ?", input.Fulfilment.OrganizationID, input.Fulfilment.OrderID).First(&order).Error; err != nil {
+			return err
+		}
+		if order.Status != models.CommerceOrderStatusPaid || order.StoreID != input.Fulfilment.StoreID || order.CustomerID != input.Fulfilment.CustomerID || order.FulfilmentMode != input.Fulfilment.Mode {
+			return ErrCommerceFulfilmentState
+		}
+		if err := tx.Create(&input.Fulfilment).Error; err != nil {
+			return err
+		}
+		if err := createCommerceFulfilmentEvent(tx, &input.Fulfilment, models.CommerceFulfilmentEventStarted, nil,
+			models.CommerceFulfilmentStatusPreparing, models.CommerceFulfilmentActorSystem, nil,
+			"payment confirmed and fulfilment security prepared", input.IdempotencyKey, nil, input.Now); err != nil {
+			return err
+		}
+		created = true
+		return nil
+	})
+	if err != nil {
+		return nil, false, mapCommerceFulfilmentWriteError("prepare paid commerce fulfilment", err)
+	}
+	item, err := r.GetFulfilment(ctx, input.Fulfilment.OrganizationID, input.Fulfilment.ID)
+	return item, created, err
 }
 
 func (r *CommerceFulfilmentRepoPG) StartFulfilment(ctx context.Context, input CommerceStartFulfilmentInput) (*models.CommerceFulfilment, bool, error) {
@@ -114,7 +171,7 @@ func (r *CommerceFulfilmentRepoPG) StartFulfilment(ctx context.Context, input Co
 				return ErrCommerceConflict
 			}
 			input.Fulfilment.ID = existing.ID
-			return nil
+			return activatePreparingCommerceFulfilment(tx, &existing, input)
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
@@ -138,7 +195,7 @@ func (r *CommerceFulfilmentRepoPG) StartFulfilment(ctx context.Context, input Co
 				return ErrCommerceConflict
 			}
 			input.Fulfilment.ID = existing.ID
-			return nil
+			return activatePreparingCommerceFulfilment(tx, &existing, input)
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
@@ -183,6 +240,36 @@ func (r *CommerceFulfilmentRepoPG) StartFulfilment(ctx context.Context, input Co
 	}
 	fulfilment, err := r.GetFulfilment(ctx, input.Fulfilment.OrganizationID, input.Fulfilment.ID)
 	return fulfilment, created, err
+}
+
+func activatePreparingCommerceFulfilment(tx *gorm.DB, existing *models.CommerceFulfilment, input CommerceStartFulfilmentInput) error {
+	if existing.Status != models.CommerceFulfilmentStatusPreparing {
+		return nil
+	}
+	var order models.CommerceOrder
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("organization_id = ? AND id = ?", existing.OrganizationID, existing.OrderID).First(&order).Error; err != nil {
+		return err
+	}
+	if order.Status != models.CommerceOrderStatusReady {
+		return ErrCommerceFulfilmentState
+	}
+	from := existing.Status
+	if err := updateCommerceFulfilmentStatus(tx, existing, input.Fulfilment.Status, input.Now, nil); err != nil {
+		return err
+	}
+	if err := transitionCommerceFulfilmentOrder(tx, &order, input.OrderStatus, commerceOrderEventForFulfilmentStart(existing.Mode),
+		"prepared order entered fulfilment", input.IdempotencyKey+":order", models.CommerceOrderActorUser, &input.ActorUserID, input.Now); err != nil {
+		return err
+	}
+	if err := createCommerceFulfilmentEvent(tx, existing, models.CommerceFulfilmentEventStarted, &from,
+		input.Fulfilment.Status, models.CommerceFulfilmentActorUser, &input.ActorUserID, "prepared order entered fulfilment", input.IdempotencyKey, nil, input.Now); err != nil {
+		return err
+	}
+	if existing.Mode != models.FulfilmentModeMerchantRider {
+		return createCommerceFulfilmentOutbox(tx, existing, models.CommerceOutboxTopicFulfilmentReady,
+			input.IdempotencyKey+":ready", map[string]interface{}{"mode": existing.Mode}, input.Now)
+	}
+	return nil
 }
 
 func (r *CommerceFulfilmentRepoPG) GetFulfilmentByOrder(ctx context.Context, organizationID, orderID uuid.UUID) (*models.CommerceFulfilment, error) {
@@ -428,26 +515,46 @@ func (r *CommerceFulfilmentRepoPG) AssignRider(ctx context.Context, input Commer
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
-		allowed := fulfilment.Mode == models.FulfilmentModeCustomerRider && fulfilment.Status == models.CommerceFulfilmentStatusReadyForPickup && input.Assignment.Source == models.CommerceRiderSourceCustomer
-		allowed = allowed || fulfilment.Mode == models.FulfilmentModeMerchantRider && fulfilment.Status == models.CommerceFulfilmentStatusRiderRequested && input.Assignment.Source == models.CommerceRiderSourceMerchant
-		if !allowed {
+		if fulfilment.Mode != models.FulfilmentModeMerchantRider || fulfilment.Status != models.CommerceFulfilmentStatusRiderRequested || input.Assignment.Source != models.CommerceRiderSourceMerchant {
 			return ErrCommerceFulfilmentState
 		}
+		var acceptedQuote models.CommerceDeliveryQuote
+		if err := tx.Where("organization_id = ? AND fulfilment_id = ? AND status = ?", input.Assignment.OrganizationID, input.Assignment.FulfilmentID, models.CommerceDeliveryQuoteStatusAccepted).
+			Order("accepted_at DESC").First(&acceptedQuote).Error; err != nil {
+			return ErrCommerceFulfilmentState
+		}
+		duration := 40 * time.Minute
+		if acceptedQuote.DurationSeconds != nil && *acceptedQuote.DurationSeconds > 0 {
+			duration = time.Duration(*acceptedQuote.DurationSeconds) * time.Second
+		}
+		expectedDeliveryAt := input.Now.Add(duration)
+		input.Assignment.Status = models.CommerceRiderStatusPickedUp
+		input.Assignment.ArrivedAt = &input.Now
+		input.Assignment.PickedUpAt = &input.Now
 		if err := tx.Create(&input.Assignment).Error; err != nil {
 			return err
 		}
 		from := fulfilment.Status
-		if err := updateCommerceFulfilmentStatus(tx, fulfilment, models.CommerceFulfilmentStatusRiderAssigned, input.Now, nil); err != nil {
+		if err := updateCommerceFulfilmentStatus(tx, fulfilment, models.CommerceFulfilmentStatusOutForDelivery, input.Now, map[string]interface{}{
+			"expected_delivery_at": expectedDeliveryAt,
+		}); err != nil {
 			return err
 		}
-		metadata := map[string]interface{}{"rider_assignment_id": input.Assignment.ID, "source": input.Assignment.Source}
+		metadata := map[string]interface{}{"rider_assignment_id": input.Assignment.ID, "source": input.Assignment.Source, "expected_delivery_at": expectedDeliveryAt}
 		if err := createCommerceFulfilmentEvent(tx, fulfilment, models.CommerceFulfilmentEventRiderAssigned, &from,
-			models.CommerceFulfilmentStatusRiderAssigned, models.CommerceFulfilmentActorUser, &input.ActorUserID,
-			"rider identity recorded before handover", input.IdempotencyKey, metadata, input.Now); err != nil {
+			models.CommerceFulfilmentStatusOutForDelivery, models.CommerceFulfilmentActorUser, &input.ActorUserID,
+			"rider details recorded and delivery dispatched", input.IdempotencyKey, metadata, input.Now); err != nil {
 			return err
 		}
-		if err := createCommerceOrderAuditEvent(tx, fulfilment, models.CommerceOrderEventRiderAssigned,
-			models.CommerceOrderStatusFulfilmentPending, models.CommerceOrderActorUser, &input.ActorUserID, "rider assigned", input.IdempotencyKey+":order", metadata, input.Now); err != nil {
+		var order models.CommerceOrder
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("organization_id = ? AND id = ?", fulfilment.OrganizationID, fulfilment.OrderID).First(&order).Error; err != nil {
+			return err
+		}
+		if order.Status != models.CommerceOrderStatusFulfilmentPending {
+			return ErrCommerceFulfilmentState
+		}
+		if err := transitionCommerceFulfilmentOrder(tx, &order, models.CommerceOrderStatusOutForDelivery, models.CommerceOrderEventOutForDelivery,
+			"rider dispatched with the order", input.IdempotencyKey+":order", models.CommerceOrderActorUser, &input.ActorUserID, input.Now); err != nil {
 			return err
 		}
 		return createCommerceFulfilmentOutbox(tx, fulfilment, models.CommerceOutboxTopicRiderAssigned,
@@ -477,7 +584,8 @@ func (r *CommerceFulfilmentRepoPG) QueueHandoverCodeReminder(ctx context.Context
 		if item.VerifiedAt != nil || !item.VerificationCodeExpiresAt.After(input.Now) || len(item.VerificationCodeCiphertext) == 0 {
 			return ErrCommerceFulfilmentState
 		}
-		if item.Status != models.CommerceFulfilmentStatusReadyForPickup && item.Status != models.CommerceFulfilmentStatusRiderAssigned {
+		legacyCustomerRider := item.Mode == models.FulfilmentModeCustomerRider && item.Status == models.CommerceFulfilmentStatusRiderAssigned
+		if item.Status != models.CommerceFulfilmentStatusReadyForPickup && !legacyCustomerRider {
 			return ErrCommerceFulfilmentState
 		}
 		if err := createCommerceFulfilmentEvent(tx, item, models.CommerceFulfilmentEventCodeReminder, &item.Status,
@@ -497,7 +605,7 @@ func (r *CommerceFulfilmentRepoPG) QueueHandoverCodeReminder(ctx context.Context
 func (r *CommerceFulfilmentRepoPG) RecordArrival(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if event, err := getCommerceFulfilmentEventByKey(tx, input.OrganizationID, input.FulfilmentID, input.IdempotencyKey); err == nil {
-			if event.EventType != models.CommerceFulfilmentEventCustomerArrived && event.EventType != models.CommerceFulfilmentEventRiderArrived {
+			if event.EventType != models.CommerceFulfilmentEventCustomerArrived && event.EventType != models.CommerceFulfilmentEventRiderArrived && event.EventType != models.CommerceFulfilmentEventDeliveryStarted {
 				return ErrCommerceConflict
 			}
 			return nil
@@ -509,7 +617,7 @@ func (r *CommerceFulfilmentRepoPG) RecordArrival(ctx context.Context, input Comm
 			return err
 		}
 		if event, eventErr := getCommerceFulfilmentEventByKey(tx, input.OrganizationID, input.FulfilmentID, input.IdempotencyKey); eventErr == nil {
-			if event.EventType != models.CommerceFulfilmentEventCustomerArrived && event.EventType != models.CommerceFulfilmentEventRiderArrived {
+			if event.EventType != models.CommerceFulfilmentEventCustomerArrived && event.EventType != models.CommerceFulfilmentEventRiderArrived && event.EventType != models.CommerceFulfilmentEventDeliveryStarted {
 				return ErrCommerceConflict
 			}
 			return nil
@@ -521,13 +629,13 @@ func (r *CommerceFulfilmentRepoPG) RecordArrival(ctx context.Context, input Comm
 			if item.Status != models.CommerceFulfilmentStatusReadyForPickup {
 				return ErrCommerceFulfilmentState
 			}
-		} else {
+		} else if item.Mode == models.FulfilmentModeMerchantRider {
 			if item.Status != models.CommerceFulfilmentStatusRiderAssigned {
 				return ErrCommerceFulfilmentState
 			}
 			var assignment models.CommerceRiderAssignment
 			err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-				Where("organization_id = ? AND fulfilment_id = ? AND status = ?", input.OrganizationID, input.FulfilmentID, models.CommerceRiderStatusAssigned).
+				Where("organization_id = ? AND fulfilment_id = ? AND status IN ?", input.OrganizationID, input.FulfilmentID, []string{models.CommerceRiderStatusAssigned, models.CommerceRiderStatusArrived}).
 				First(&assignment).Error
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrCommerceFulfilmentState
@@ -536,11 +644,37 @@ func (r *CommerceFulfilmentRepoPG) RecordArrival(ctx context.Context, input Comm
 				return err
 			}
 			if err := tx.Model(&assignment).Updates(map[string]interface{}{
-				"status": models.CommerceRiderStatusArrived, "arrived_at": input.Now, "updated_at": input.Now,
+				"status": models.CommerceRiderStatusPickedUp, "arrived_at": input.Now, "picked_up_at": input.Now, "updated_at": input.Now,
 			}).Error; err != nil {
 				return err
 			}
-			eventType = models.CommerceFulfilmentEventRiderArrived
+			duration := 40 * time.Minute
+			var quote models.CommerceDeliveryQuote
+			if err := tx.Where("organization_id = ? AND fulfilment_id = ? AND status = ?", input.OrganizationID, input.FulfilmentID, models.CommerceDeliveryQuoteStatusAccepted).
+				Order("accepted_at DESC").First(&quote).Error; err == nil && quote.DurationSeconds != nil && *quote.DurationSeconds > 0 {
+				duration = time.Duration(*quote.DurationSeconds) * time.Second
+			}
+			expectedDeliveryAt := input.Now.Add(duration)
+			from := item.Status
+			if err := updateCommerceFulfilmentStatus(tx, item, models.CommerceFulfilmentStatusOutForDelivery, input.Now, map[string]interface{}{"expected_delivery_at": expectedDeliveryAt}); err != nil {
+				return err
+			}
+			var order models.CommerceOrder
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("organization_id = ? AND id = ?", item.OrganizationID, item.OrderID).First(&order).Error; err != nil {
+				return err
+			}
+			if err := transitionCommerceFulfilmentOrder(tx, &order, models.CommerceOrderStatusOutForDelivery, models.CommerceOrderEventOutForDelivery,
+				"existing rider assignment dispatched", input.IdempotencyKey+":order", models.CommerceOrderActorUser, input.ActorUserID, input.Now); err != nil {
+				return err
+			}
+			metadata := map[string]interface{}{"expected_delivery_at": expectedDeliveryAt, "legacy_rider_assignment": true}
+			if err := createCommerceFulfilmentEvent(tx, item, models.CommerceFulfilmentEventDeliveryStarted, &from,
+				models.CommerceFulfilmentStatusOutForDelivery, input.ActorType, input.ActorUserID, input.Reason, input.IdempotencyKey, metadata, input.Now); err != nil {
+				return err
+			}
+			return createCommerceFulfilmentOutbox(tx, item, models.CommerceOutboxTopicOutForDelivery, input.IdempotencyKey+":notify", metadata, input.Now)
+		} else {
+			return ErrCommerceFulfilmentState
 		}
 		if err := tx.Model(item).Updates(map[string]interface{}{"version": gorm.Expr("version + 1"), "updated_at": input.Now}).Error; err != nil {
 			return err
@@ -592,22 +726,13 @@ func (r *CommerceFulfilmentRepoPG) VerifyHandover(ctx context.Context, input Com
 		if !fulfilment.VerificationCodeExpiresAt.After(input.Now) {
 			return ErrCommerceVerificationExpired
 		}
-		if fulfilment.Mode == models.FulfilmentModeCustomerPickup && fulfilment.Status != models.CommerceFulfilmentStatusReadyForPickup {
+		pickup := fulfilment.Mode == models.FulfilmentModeCustomerPickup || fulfilment.Mode == models.FulfilmentModeCustomerRider
+		legacyCustomerRider := fulfilment.Mode == models.FulfilmentModeCustomerRider && fulfilment.Status == models.CommerceFulfilmentStatusRiderAssigned
+		if pickup && fulfilment.Status != models.CommerceFulfilmentStatusReadyForPickup && !legacyCustomerRider {
 			return ErrCommerceFulfilmentState
 		}
-		if fulfilment.Mode != models.FulfilmentModeCustomerPickup && fulfilment.Status != models.CommerceFulfilmentStatusRiderAssigned {
+		if !pickup {
 			return ErrCommerceFulfilmentState
-		}
-		if fulfilment.Mode == models.FulfilmentModeCustomerPickup {
-			var arrivalCount int64
-			if err := tx.Model(&models.CommerceFulfilmentEvent{}).
-				Where("organization_id = ? AND fulfilment_id = ? AND event_type = ?", input.OrganizationID, input.FulfilmentID, models.CommerceFulfilmentEventCustomerArrived).
-				Count(&arrivalCount).Error; err != nil {
-				return err
-			}
-			if arrivalCount == 0 {
-				return ErrCommerceFulfilmentState
-			}
 		}
 
 		if !hmac.Equal(input.CandidateHash, fulfilment.VerificationCodeHash) {
@@ -638,25 +763,14 @@ func (r *CommerceFulfilmentRepoPG) VerifyHandover(ctx context.Context, input Com
 		orderStatus := models.CommerceOrderStatusOutForDelivery
 		fulfilmentStatus := models.CommerceFulfilmentStatusOutForDelivery
 		orderFrom := models.CommerceOrderStatusFulfilmentPending
-		if fulfilment.Mode == models.FulfilmentModeCustomerPickup {
+		if pickup {
 			orderStatus = models.CommerceOrderStatusCompleted
 			fulfilmentStatus = models.CommerceFulfilmentStatusCompleted
 			orderFrom = models.CommerceOrderStatusReadyForPickup
+			if legacyCustomerRider {
+				orderFrom = models.CommerceOrderStatusFulfilmentPending
+			}
 			fulfilmentUpdates["completed_at"] = input.Now
-		} else {
-			var assignment models.CommerceRiderAssignment
-			err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-				Where("organization_id = ? AND fulfilment_id = ? AND status = ?", input.OrganizationID, input.FulfilmentID, models.CommerceRiderStatusArrived).
-				First(&assignment).Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return ErrCommerceFulfilmentState
-			}
-			if err != nil {
-				return err
-			}
-			if err := tx.Model(&assignment).Updates(map[string]interface{}{"status": models.CommerceRiderStatusPickedUp, "picked_up_at": input.Now, "updated_at": input.Now}).Error; err != nil {
-				return err
-			}
 		}
 		if err := updateCommerceFulfilmentStatus(tx, fulfilment, fulfilmentStatus, input.Now, fulfilmentUpdates); err != nil {
 			return err
@@ -677,11 +791,7 @@ func (r *CommerceFulfilmentRepoPG) VerifyHandover(ctx context.Context, input Com
 			fulfilmentStatus, models.CommerceFulfilmentActorUser, &input.ActorUserID, "secure handover verification succeeded", input.IdempotencyKey, metadata, input.Now); err != nil {
 			return err
 		}
-		topic := models.CommerceOutboxTopicOutForDelivery
-		if fulfilment.Mode == models.FulfilmentModeCustomerPickup {
-			topic = models.CommerceOutboxTopicFulfilmentDelivered
-		}
-		return createCommerceFulfilmentOutbox(tx, fulfilment, topic, input.IdempotencyKey+":notify", metadata, input.Now)
+		return createCommerceFulfilmentOutbox(tx, fulfilment, models.CommerceOutboxTopicFulfilmentDelivered, input.IdempotencyKey+":notify", metadata, input.Now)
 	})
 	if err != nil {
 		return nil, mapCommerceFulfilmentWriteError("verify commerce fulfilment handover", err)
@@ -751,6 +861,125 @@ func (r *CommerceFulfilmentRepoPG) MarkDelivered(ctx context.Context, input Comm
 	return r.GetFulfilment(ctx, input.OrganizationID, input.FulfilmentID)
 }
 
+func (r *CommerceFulfilmentRepoPG) RequestDeliveryConfirmation(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if event, err := getCommerceFulfilmentEventByKey(tx, input.OrganizationID, input.FulfilmentID, input.IdempotencyKey); err == nil {
+			if event.EventType != models.CommerceFulfilmentEventDeliveryConfirmationRequested {
+				return ErrCommerceConflict
+			}
+			return nil
+		} else if !errors.Is(err, ErrCommerceNotFound) {
+			return err
+		}
+		item, err := lockCommerceFulfilment(tx, input.OrganizationID, input.FulfilmentID)
+		if err != nil {
+			return err
+		}
+		if item.Mode != models.FulfilmentModeMerchantRider || item.Status != models.CommerceFulfilmentStatusOutForDelivery || item.ExpectedDeliveryAt == nil || input.Now.Before(*item.ExpectedDeliveryAt) {
+			return ErrCommerceFulfilmentState
+		}
+		deadline := input.Now.Add(commerceDeliveryConfirmationWindow)
+		status := models.CommerceDeliveryConfirmationPending
+		from := item.Status
+		if err := updateCommerceFulfilmentStatus(tx, item, models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation, input.Now, map[string]interface{}{
+			"delivery_confirmation_requested_at": input.Now,
+			"delivery_confirmation_deadline_at":  deadline,
+			"delivery_confirmation_status":       status,
+		}); err != nil {
+			return err
+		}
+		metadata := map[string]interface{}{"deadline_at": deadline}
+		if err := createCommerceFulfilmentEvent(tx, item, models.CommerceFulfilmentEventDeliveryConfirmationRequested, &from,
+			models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation, input.ActorType, input.ActorUserID,
+			input.Reason, input.IdempotencyKey, metadata, input.Now); err != nil {
+			return err
+		}
+		return createCommerceFulfilmentOutbox(tx, item, models.CommerceOutboxTopicDeliveryConfirmationRequested,
+			input.IdempotencyKey+":notify", metadata, input.Now)
+	})
+	if err != nil {
+		return nil, mapCommerceFulfilmentWriteError("request delivery confirmation", err)
+	}
+	return r.GetFulfilment(ctx, input.OrganizationID, input.FulfilmentID)
+}
+
+func (r *CommerceFulfilmentRepoPG) DecideDeliveryConfirmation(ctx context.Context, input CommerceDeliveryConfirmationDecisionInput) (*models.CommerceFulfilment, error) {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if event, err := getCommerceFulfilmentEventByKey(tx, input.OrganizationID, input.FulfilmentID, input.IdempotencyKey); err == nil {
+			expected := models.CommerceFulfilmentEventDelivered
+			if input.Decision == models.CommerceDeliveryConfirmationNotReceived {
+				expected = models.CommerceFulfilmentEventDeliveryNotReceived
+			}
+			if event.EventType != expected {
+				return ErrCommerceConflict
+			}
+			return nil
+		} else if !errors.Is(err, ErrCommerceNotFound) {
+			return err
+		}
+		item, err := lockCommerceFulfilment(tx, input.OrganizationID, input.FulfilmentID)
+		if err != nil {
+			return err
+		}
+		if item.CustomerID != input.CustomerID || item.Mode != models.FulfilmentModeMerchantRider || item.Status != models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation {
+			return ErrCommerceFulfilmentState
+		}
+		if input.Decision == models.CommerceDeliveryConfirmationReceived {
+			return completeCommerceDelivery(tx, item, models.CommerceDeliveryConfirmationReceived, models.CommerceFulfilmentActorCustomer, nil,
+				"customer confirmed delivery on WhatsApp", input.IdempotencyKey, models.CommerceFulfilmentEventDelivered, false, input.Now)
+		}
+		from := item.Status
+		status := models.CommerceDeliveryConfirmationNotReceived
+		if err := updateCommerceFulfilmentStatus(tx, item, models.CommerceFulfilmentStatusDeliveryIssue, input.Now, map[string]interface{}{
+			"delivery_confirmation_status": status,
+		}); err != nil {
+			return err
+		}
+		return createCommerceFulfilmentEvent(tx, item, models.CommerceFulfilmentEventDeliveryNotReceived, &from,
+			models.CommerceFulfilmentStatusDeliveryIssue, models.CommerceFulfilmentActorCustomer, nil,
+			"customer reported that the delivery has not arrived", input.IdempotencyKey, nil, input.Now)
+	})
+	if err != nil {
+		return nil, mapCommerceFulfilmentWriteError("decide delivery confirmation", err)
+	}
+	return r.GetFulfilment(ctx, input.OrganizationID, input.FulfilmentID)
+}
+
+func (r *CommerceFulfilmentRepoPG) AutoCompleteUnansweredDeliveries(ctx context.Context, now time.Time, limit int) (int, error) {
+	if limit < 1 || limit > 500 {
+		limit = 100
+	}
+	var candidates []models.CommerceFulfilment
+	if err := r.db.WithContext(ctx).Select("id", "organization_id").
+		Where("status = ? AND delivery_confirmation_deadline_at IS NOT NULL AND delivery_confirmation_deadline_at <= ?", models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation, now).
+		Order("delivery_confirmation_deadline_at ASC").Limit(limit).Find(&candidates).Error; err != nil {
+		return 0, err
+	}
+	completed := 0
+	for _, candidate := range candidates {
+		err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			item, err := lockCommerceFulfilment(tx, candidate.OrganizationID, candidate.ID)
+			if err != nil {
+				return err
+			}
+			if item.Status != models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation || item.DeliveryConfirmationDeadlineAt == nil || item.DeliveryConfirmationDeadlineAt.After(now) {
+				return nil
+			}
+			key := "delivery-auto-complete:" + item.ID.String() + ":" + item.DeliveryConfirmationDeadlineAt.UTC().Format(time.RFC3339)
+			return completeCommerceDelivery(tx, item, models.CommerceDeliveryConfirmationUnanswered, models.CommerceFulfilmentActorSystem, nil,
+				"delivery auto-completed after the customer did not answer within one hour", key, models.CommerceFulfilmentEventDeliveryAutoCompleted, true, now)
+		})
+		if err != nil {
+			if errors.Is(err, ErrCommerceFulfilmentState) {
+				continue
+			}
+			return completed, mapCommerceFulfilmentWriteError("auto-complete unanswered delivery", err)
+		}
+		completed++
+	}
+	return completed, nil
+}
+
 func (r *CommerceFulfilmentRepoPG) CompleteFulfilment(ctx context.Context, input CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if event, err := getCommerceFulfilmentEventByKey(tx, input.OrganizationID, input.FulfilmentID, input.IdempotencyKey); err == nil {
@@ -774,7 +1003,12 @@ func (r *CommerceFulfilmentRepoPG) CompleteFulfilment(ctx context.Context, input
 			return eventErr
 		}
 		if fulfilment.Status != models.CommerceFulfilmentStatusDelivered {
-			return ErrCommerceFulfilmentState
+			if fulfilment.Mode != models.FulfilmentModeMerchantRider || fulfilment.ExpectedDeliveryAt == nil || input.Now.Before(*fulfilment.ExpectedDeliveryAt) ||
+				(fulfilment.Status != models.CommerceFulfilmentStatusOutForDelivery && fulfilment.Status != models.CommerceFulfilmentStatusAwaitingDeliveryConfirmation && fulfilment.Status != models.CommerceFulfilmentStatusDeliveryIssue) {
+				return ErrCommerceFulfilmentState
+			}
+			return completeCommerceDelivery(tx, fulfilment, models.CommerceDeliveryConfirmationManual, input.ActorType, input.ActorUserID,
+				input.Reason, input.IdempotencyKey, models.CommerceFulfilmentEventCompleted, true, input.Now)
 		}
 		from := fulfilment.Status
 		if err := updateCommerceFulfilmentStatus(tx, fulfilment, models.CommerceFulfilmentStatusCompleted, input.Now, map[string]interface{}{"completed_at": input.Now}); err != nil {
@@ -798,6 +1032,54 @@ func (r *CommerceFulfilmentRepoPG) CompleteFulfilment(ctx context.Context, input
 		return nil, mapCommerceFulfilmentWriteError("complete commerce fulfilment", err)
 	}
 	return r.GetFulfilment(ctx, input.OrganizationID, input.FulfilmentID)
+}
+
+func completeCommerceDelivery(tx *gorm.DB, fulfilment *models.CommerceFulfilment, confirmationStatus, actorType string, actorUserID *uuid.UUID, reason, idempotencyKey, eventType string, notify bool, now time.Time) error {
+	from := fulfilment.Status
+	if err := tx.Model(&models.CommerceRiderAssignment{}).
+		Where("organization_id = ? AND fulfilment_id = ? AND status IN ?", fulfilment.OrganizationID, fulfilment.ID,
+			[]string{models.CommerceRiderStatusAssigned, models.CommerceRiderStatusArrived, models.CommerceRiderStatusPickedUp}).
+		Updates(map[string]interface{}{"status": models.CommerceRiderStatusDelivered, "delivered_at": now, "updated_at": now}).Error; err != nil {
+		return err
+	}
+	if err := updateCommerceFulfilmentStatus(tx, fulfilment, models.CommerceFulfilmentStatusCompleted, now, map[string]interface{}{
+		"delivery_confirmation_status": confirmationStatus,
+		"delivered_at":                 now,
+		"completed_at":                 now,
+	}); err != nil {
+		return err
+	}
+	var order models.CommerceOrder
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("organization_id = ? AND id = ?", fulfilment.OrganizationID, fulfilment.OrderID).First(&order).Error; err != nil {
+		return err
+	}
+	if order.Status != models.CommerceOrderStatusOutForDelivery && order.Status != models.CommerceOrderStatusDelivered {
+		return ErrCommerceFulfilmentState
+	}
+	if err := transitionCommerceFulfilmentOrder(tx, &order, models.CommerceOrderStatusCompleted, models.CommerceOrderEventCompleted,
+		reason, idempotencyKey+":order", commerceOrderActorForFulfilmentActor(actorType), actorUserID, now); err != nil {
+		return err
+	}
+	metadata := map[string]interface{}{"delivery_confirmation_status": confirmationStatus}
+	if err := createCommerceFulfilmentEvent(tx, fulfilment, eventType, &from, models.CommerceFulfilmentStatusCompleted,
+		actorType, actorUserID, reason, idempotencyKey, metadata, now); err != nil {
+		return err
+	}
+	if !notify {
+		return nil
+	}
+	return createCommerceFulfilmentOutbox(tx, fulfilment, models.CommerceOutboxTopicFulfilmentDelivered, idempotencyKey+":notify", metadata, now)
+}
+
+func commerceOrderActorForFulfilmentActor(actorType string) string {
+	switch actorType {
+	case models.CommerceFulfilmentActorCustomer:
+		return models.CommerceOrderActorChannel
+	case models.CommerceFulfilmentActorSystem:
+		return models.CommerceOrderActorSystem
+	default:
+		return models.CommerceOrderActorUser
+	}
 }
 
 func commerceFulfilmentQuery(db *gorm.DB) *gorm.DB {
@@ -927,14 +1209,14 @@ func getCommerceFulfilmentEventByKey(tx *gorm.DB, organizationID, fulfilmentID u
 }
 
 func commerceOrderEventForFulfilmentStart(mode string) string {
-	if mode == models.FulfilmentModeCustomerPickup {
+	if mode == models.FulfilmentModeCustomerPickup || mode == models.FulfilmentModeCustomerRider {
 		return models.CommerceOrderEventReadyForPickup
 	}
 	return models.CommerceOrderEventFulfilmentPending
 }
 
 func commerceOrderEventForFulfilmentHandover(mode string) string {
-	if mode == models.FulfilmentModeCustomerPickup {
+	if mode == models.FulfilmentModeCustomerPickup || mode == models.FulfilmentModeCustomerRider {
 		return models.CommerceOrderEventCompleted
 	}
 	return models.CommerceOrderEventOutForDelivery

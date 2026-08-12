@@ -39,7 +39,16 @@ type CommercePaymentService struct {
 	providers       *payments.Registry
 	defaultProvider string
 	callbackURL     string
-	now             func() time.Time
+	fulfilment      interface {
+		PreparePaidOrderForNotification(context.Context, uuid.UUID, uuid.UUID) (*models.CommerceFulfilment, error)
+	}
+	now func() time.Time
+}
+
+func (s *CommercePaymentService) SetFulfilmentService(fulfilment interface {
+	PreparePaidOrderForNotification(context.Context, uuid.UUID, uuid.UUID) (*models.CommerceFulfilment, error)
+}) {
+	s.fulfilment = fulfilment
 }
 
 func NewCommercePaymentService(
@@ -249,6 +258,11 @@ func (s *CommercePaymentService) ProcessWebhook(ctx context.Context, providerNam
 	})
 	if err != nil {
 		return nil, err
+	}
+	if result.Outcome == models.CommercePaymentStatusSucceeded && result.Session != nil && s.fulfilment != nil {
+		if _, err := s.fulfilment.PreparePaidOrderForNotification(ctx, result.Session.Payment.OrganizationID, result.Session.Payment.OrderID); err != nil {
+			return nil, fmt.Errorf("prepare paid order fulfilment: %w", err)
+		}
 	}
 	return &CommercePaymentWebhookResult{Outcome: result.Outcome, Duplicate: receipt.Duplicate}, nil
 }

@@ -386,7 +386,8 @@ func (r *CommerceChannelRepoPG) ClaimCustomerOutboxEvents(ctx context.Context, l
 		models.CommerceOutboxTopicPaymentCustomer, models.CommerceOutboxTopicFulfilmentReady,
 		models.CommerceOutboxTopicDeliveryQuoteAvailable, models.CommerceOutboxTopicRiderAssigned,
 		models.CommerceOutboxTopicHandoverCodeReminder,
-		models.CommerceOutboxTopicOutForDelivery, models.CommerceOutboxTopicFulfilmentDelivered,
+		models.CommerceOutboxTopicOutForDelivery, models.CommerceOutboxTopicDeliveryConfirmationRequested,
+		models.CommerceOutboxTopicFulfilmentDelivered,
 	}
 	var items []models.CommerceOutboxEvent
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

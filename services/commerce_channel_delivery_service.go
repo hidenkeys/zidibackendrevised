@@ -116,10 +116,11 @@ func (s *CommerceChannelDeliveryService) DispatchOnce(ctx context.Context, limit
 
 func (s *CommerceChannelDeliveryService) notificationReply(ctx context.Context, event *models.CommerceOutboxEvent) (uuid.UUID, repository.CommerceChannelReply, *repository.CommerceEmailNotification, error) {
 	var payload struct {
-		CustomerID   uuid.UUID `json:"customer_id"`
-		OrderID      uuid.UUID `json:"order_id"`
-		FulfilmentID uuid.UUID `json:"fulfilment_id"`
-		QuoteID      uuid.UUID `json:"quote_id"`
+		CustomerID                 uuid.UUID `json:"customer_id"`
+		OrderID                    uuid.UUID `json:"order_id"`
+		FulfilmentID               uuid.UUID `json:"fulfilment_id"`
+		QuoteID                    uuid.UUID `json:"quote_id"`
+		DeliveryConfirmationStatus string    `json:"delivery_confirmation_status"`
 	}
 	if err := json.Unmarshal(event.Payload, &payload); err != nil || payload.CustomerID == uuid.Nil {
 		return uuid.Nil, repository.CommerceChannelReply{}, nil, errors.New("commerce notification payload has no customer")
@@ -135,7 +136,21 @@ func (s *CommerceChannelDeliveryService) notificationReply(ctx context.Context, 
 
 	switch event.Topic {
 	case models.CommerceOutboxTopicPaymentCustomer:
-		return payload.CustomerID, repository.CommerceChannelReply{Body: fmt.Sprintf("Payment confirmed for order %s. The store can now begin processing it.", order.OrderNumber)}, email, nil
+		item, err := s.fulfilment.PreparePaidOrderForNotification(ctx, event.OrganizationID, payload.OrderID)
+		if err != nil {
+			return uuid.Nil, repository.CommerceChannelReply{}, nil, err
+		}
+		body := fmt.Sprintf("Payment confirmed for order %s. The store is preparing it now.", order.OrderNumber)
+		if item != nil && (item.Mode == models.FulfilmentModeCustomerPickup || item.Mode == models.FulfilmentModeCustomerRider) {
+			code, revealErr := s.fulfilment.RevealVerificationCode(ctx, event.OrganizationID, payload.CustomerID, item.ID)
+			if revealErr != nil {
+				return uuid.Nil, repository.CommerceChannelReply{}, nil, revealErr
+			}
+			body += fmt.Sprintf(" Your pickup code is %s. Give it to store staff only when you or your rider collects the order.", code)
+		} else {
+			body += " The delivery fee and ETA will be sent for your approval when the order is prepared."
+		}
+		return payload.CustomerID, repository.CommerceChannelReply{Body: body}, email, nil
 	case models.CommerceOutboxTopicFulfilmentReady:
 		code, err := s.fulfilment.RevealVerificationCode(ctx, event.OrganizationID, payload.CustomerID, payload.FulfilmentID)
 		if err != nil {
@@ -179,8 +194,15 @@ func (s *CommerceChannelDeliveryService) notificationReply(ctx context.Context, 
 		}
 		for index := len(item.RiderAssignments) - 1; index >= 0; index-- {
 			assignment := item.RiderAssignments[index]
-			if assignment.Status == models.CommerceRiderStatusAssigned {
-				body := fmt.Sprintf("%s has been assigned to order %s. Rider phone: %s. Your handover code is %s. Share it only when you receive the order.", assignment.RiderName, order.OrderNumber, assignment.RiderPhone, code)
+			if assignment.Status == models.CommerceRiderStatusPickedUp || assignment.Status == models.CommerceRiderStatusAssigned {
+				body := fmt.Sprintf("Order %s is on the way with %s. Rider phone: %s. Delivery reference: %s.", order.OrderNumber, assignment.RiderName, assignment.RiderPhone, code)
+				if item.ExpectedDeliveryAt != nil {
+					minutes := int(item.ExpectedDeliveryAt.Sub(s.now().UTC()).Minutes())
+					if minutes < 1 {
+						minutes = 1
+					}
+					body += fmt.Sprintf(" Estimated arrival: about %d minutes.", minutes)
+				}
 				if assignment.TrackingURL != nil {
 					body += " Track: " + *assignment.TrackingURL
 				}
@@ -198,7 +220,22 @@ func (s *CommerceChannelDeliveryService) notificationReply(ctx context.Context, 
 		}, email, nil
 	case models.CommerceOutboxTopicOutForDelivery:
 		return payload.CustomerID, repository.CommerceChannelReply{Body: fmt.Sprintf("Order %s is now out for delivery.", order.OrderNumber)}, email, nil
+	case models.CommerceOutboxTopicDeliveryConfirmationRequested:
+		items := make([]string, 0, len(order.Items))
+		for _, item := range order.Items {
+			items = append(items, fmt.Sprintf("%dx %s", item.Quantity, item.ProductName))
+		}
+		return payload.CustomerID, repository.CommerceChannelReply{
+			Body: fmt.Sprintf("Has your order %s (%s) arrived?", order.OrderNumber, strings.Join(items, ", ")),
+			Options: []repository.CommerceChannelReplyOption{
+				{ID: "delivery:received:" + payload.FulfilmentID.String(), Title: "Yes, received"},
+				{ID: "delivery:not_received:" + payload.FulfilmentID.String(), Title: "Not yet"},
+			},
+		}, email, nil
 	case models.CommerceOutboxTopicFulfilmentDelivered:
+		if payload.DeliveryConfirmationStatus == models.CommerceDeliveryConfirmationUnanswered {
+			return payload.CustomerID, repository.CommerceChannelReply{Body: fmt.Sprintf("Order %s was closed after the delivery confirmation window elapsed without a response. Contact the store if there is a delivery issue.", order.OrderNumber)}, email, nil
+		}
 		return payload.CustomerID, repository.CommerceChannelReply{Body: fmt.Sprintf("Order %s has been delivered. Thank you.", order.OrderNumber)}, email, nil
 	default:
 		return uuid.Nil, repository.CommerceChannelReply{}, nil, fmt.Errorf("unsupported customer notification topic %q", event.Topic)
@@ -223,6 +260,8 @@ func commerceOrderEmail(order *models.CommerceOrder, topic string) *repository.C
 		status = "Handover code reminder"
 	case models.CommerceOutboxTopicOutForDelivery:
 		status = "Out for delivery"
+	case models.CommerceOutboxTopicDeliveryConfirmationRequested:
+		status = "Delivery confirmation requested"
 	case models.CommerceOutboxTopicFulfilmentDelivered:
 		status = "Order delivered"
 	}

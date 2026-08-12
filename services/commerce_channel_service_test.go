@@ -148,14 +148,21 @@ func (*commerceChannelPaymentStub) InitializePaymentForChannel(context.Context, 
 
 type commerceChannelFulfilmentStub struct{}
 
+func (*commerceChannelFulfilmentStub) PreparePaidOrderForNotification(_ context.Context, organizationID, orderID uuid.UUID) (*models.CommerceFulfilment, error) {
+	return &models.CommerceFulfilment{ID: uuid.New(), OrganizationID: organizationID, OrderID: orderID, Mode: models.FulfilmentModeCustomerPickup}, nil
+}
+
 func (*commerceChannelFulfilmentStub) DecideDeliveryQuoteForCustomer(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID, DecideCommerceDeliveryQuoteInput) (*models.CommerceFulfilment, error) {
+	return &models.CommerceFulfilment{}, nil
+}
+func (*commerceChannelFulfilmentStub) DecideDeliveryConfirmationForCustomer(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string, string) (*models.CommerceFulfilment, error) {
 	return &models.CommerceFulfilment{}, nil
 }
 func (*commerceChannelFulfilmentStub) RevealVerificationCode(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (string, error) {
 	return "123456", nil
 }
 
-func TestRiderAssignedNotificationIncludesCustomerHandoverCode(t *testing.T) {
+func TestRiderAssignedNotificationIncludesDeliveryReference(t *testing.T) {
 	organizationID, customerID, orderID, fulfilmentID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	orderRepo := seededCommerceOrderRepo(&models.CommerceOrder{
 		ID: orderID, OrganizationID: organizationID, CustomerID: customerID, OrderNumber: "ZC-100",
@@ -183,8 +190,8 @@ func TestRiderAssignedNotificationIncludesCustomerHandoverCode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if recipientID != customerID || !strings.Contains(reply.Body, "Your handover code is 123456") || !strings.Contains(reply.Body, "Share it only when you receive the order") {
-		t.Fatalf("rider notification did not securely deliver the handover code: recipient=%s body=%q", recipientID, reply.Body)
+	if recipientID != customerID || !strings.Contains(reply.Body, "Delivery reference: 123456") || !strings.Contains(reply.Body, "Test Rider") {
+		t.Fatalf("rider notification did not include the delivery reference and rider: recipient=%s body=%q", recipientID, reply.Body)
 	}
 }
 
@@ -205,6 +212,47 @@ func TestHandoverCodeReminderIncludesExistingProtectedCode(t *testing.T) {
 	}
 	if recipientID != customerID || !strings.Contains(reply.Body, "your handover code is 123456") {
 		t.Fatalf("handover reminder did not include the protected code: recipient=%s body=%q", recipientID, reply.Body)
+	}
+}
+
+func TestDeliveryConfirmationNotificationIncludesOrderAndDecisionButtons(t *testing.T) {
+	organizationID, customerID, orderID, fulfilmentID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	service := NewCommerceChannelDeliveryService(
+		&commerceChannelRepoStub{}, nil,
+		seededCommerceOrderRepo(&models.CommerceOrder{
+			ID: orderID, OrganizationID: organizationID, CustomerID: customerID, OrderNumber: "ZC-300",
+			Items: []models.CommerceOrderItem{{ProductName: "Original Milk Tea", Quantity: 2}},
+		}),
+		&commerceFulfilmentRepoStub{}, &commerceChannelFulfilmentStub{},
+	)
+	payload, err := json.Marshal(map[string]uuid.UUID{
+		"customer_id": customerID, "order_id": orderID, "fulfilment_id": fulfilmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, reply, _, err := service.notificationReply(context.Background(), &models.CommerceOutboxEvent{
+		OrganizationID: organizationID, Topic: models.CommerceOutboxTopicDeliveryConfirmationRequested, Payload: payload,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(reply.Body, "ZC-300") || !strings.Contains(reply.Body, "2x Original Milk Tea") || len(reply.Options) != 2 {
+		t.Fatalf("unexpected delivery confirmation reply: %#v", reply)
+	}
+	if reply.Options[0].ID != "delivery:received:"+fulfilmentID.String() || reply.Options[1].ID != "delivery:not_received:"+fulfilmentID.String() {
+		t.Fatalf("unexpected delivery confirmation buttons: %#v", reply.Options)
+	}
+}
+
+func TestParseCommerceDeliveryConfirmation(t *testing.T) {
+	fulfilmentID := uuid.New()
+	decision, parsedID, ok := parseCommerceDeliveryConfirmation("delivery:received:" + fulfilmentID.String())
+	if !ok || decision != models.CommerceDeliveryConfirmationReceived || parsedID != fulfilmentID {
+		t.Fatalf("valid confirmation was not parsed: decision=%q id=%s ok=%t", decision, parsedID, ok)
+	}
+	if _, _, ok := parseCommerceDeliveryConfirmation("delivery:maybe:" + fulfilmentID.String()); ok {
+		t.Fatal("unsupported delivery confirmation was accepted")
 	}
 }
 

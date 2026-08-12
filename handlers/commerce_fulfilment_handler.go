@@ -162,6 +162,24 @@ func (s Server) MarkCommerceFulfilmentDelivered(c *fiber.Ctx, fulfilmentID api.C
 	return s.transitionCommerceFulfilment(c, fulfilmentID, false)
 }
 
+func (s Server) RequestCommerceDeliveryConfirmation(c *fiber.Ctx, fulfilmentID api.CommerceFulfilmentId) error {
+	actor, err := commerceActor(c)
+	if err != nil {
+		return commerceError(c, err)
+	}
+	var request api.TransitionCommerceFulfilmentRequest
+	if err := c.BodyParser(&request); err != nil {
+		return commerceError(c, services.ErrCommerceValidation)
+	}
+	item, err := s.commerceFulfilmentService.RequestDeliveryConfirmation(c.UserContext(), actor, request.OrganizationId, fulfilmentID, services.TransitionCommerceFulfilmentInput{
+		Reason: optionalString(request.Reason), IdempotencyKey: request.IdempotencyKey,
+	})
+	if err != nil {
+		return commerceError(c, err)
+	}
+	return c.JSON(commerceFulfilmentResponse(item))
+}
+
 func (s Server) CompleteCommerceFulfilment(c *fiber.Ctx, fulfilmentID api.CommerceFulfilmentId) error {
 	return s.transitionCommerceFulfilment(c, fulfilmentID, true)
 }
@@ -233,7 +251,19 @@ func commerceFulfilmentResponse(item *models.CommerceFulfilment) api.CommerceFul
 		PickupAddress: item.PickupAddress, DestinationAddress: item.DestinationAddress,
 		VerificationCodeExpiresAt: item.VerificationCodeExpiresAt, VerifiedAt: item.VerifiedAt, VerifiedByUserId: item.VerifiedByUserID,
 		HandedOverAt: item.HandedOverAt, HandedOverByUserId: item.HandedOverByUserID,
-		DeliveredAt: item.DeliveredAt, CompletedAt: item.CompletedAt, Version: item.Version,
+		ExpectedDeliveryAt:              item.ExpectedDeliveryAt,
+		DeliveryConfirmationRequestedAt: item.DeliveryConfirmationRequestedAt,
+		DeliveryConfirmationDeadlineAt:  item.DeliveryConfirmationDeadlineAt,
+		DeliveryConfirmationStatus:      optionalCommerceDeliveryConfirmationStatus(item.DeliveryConfirmationStatus),
+		DeliveredAt:                     item.DeliveredAt, CompletedAt: item.CompletedAt, Version: item.Version,
 		Quotes: quotes, RiderAssignments: assignments, Events: events, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt,
 	}
+}
+
+func optionalCommerceDeliveryConfirmationStatus(value *string) *api.CommerceFulfilmentDeliveryConfirmationStatus {
+	if value == nil {
+		return nil
+	}
+	status := api.CommerceFulfilmentDeliveryConfirmationStatus(*value)
+	return &status
 }

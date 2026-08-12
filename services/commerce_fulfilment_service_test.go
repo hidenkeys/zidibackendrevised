@@ -25,6 +25,11 @@ type commerceFulfilmentRepoStub struct {
 	operationErr  error
 }
 
+func (s *commerceFulfilmentRepoStub) PreparePaidFulfilment(_ context.Context, input repository.CommercePreparePaidFulfilmentInput) (*models.CommerceFulfilment, bool, error) {
+	s.item = cloneCommerceFulfilment(&input.Fulfilment)
+	return cloneCommerceFulfilment(s.item), true, s.operationErr
+}
+
 func (s *commerceFulfilmentRepoStub) StartFulfilment(_ context.Context, input repository.CommerceStartFulfilmentInput) (*models.CommerceFulfilment, bool, error) {
 	s.startInput = input
 	s.item = cloneCommerceFulfilment(&input.Fulfilment)
@@ -88,6 +93,18 @@ func (s *commerceFulfilmentRepoStub) VerifyHandover(_ context.Context, input rep
 
 func (s *commerceFulfilmentRepoStub) MarkDelivered(context.Context, repository.CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
 	return cloneCommerceFulfilment(s.item), s.operationErr
+}
+
+func (s *commerceFulfilmentRepoStub) RequestDeliveryConfirmation(context.Context, repository.CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {
+	return cloneCommerceFulfilment(s.item), s.operationErr
+}
+
+func (s *commerceFulfilmentRepoStub) DecideDeliveryConfirmation(context.Context, repository.CommerceDeliveryConfirmationDecisionInput) (*models.CommerceFulfilment, error) {
+	return cloneCommerceFulfilment(s.item), s.operationErr
+}
+
+func (s *commerceFulfilmentRepoStub) AutoCompleteUnansweredDeliveries(context.Context, time.Time, int) (int, error) {
+	return 0, s.operationErr
 }
 
 func (s *commerceFulfilmentRepoStub) CompleteFulfilment(context.Context, repository.CommerceFulfilmentTransitionInput) (*models.CommerceFulfilment, error) {

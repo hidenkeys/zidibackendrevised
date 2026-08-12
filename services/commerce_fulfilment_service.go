@@ -78,6 +78,50 @@ func NewCommerceFulfilmentService(repo repository.CommerceFulfilmentRepository, 
 	return &CommerceFulfilmentService{repo: repo, orderRepo: orderRepo, foundationRepo: foundationRepo, providers: providers, codes: codes}
 }
 
+// PreparePaidOrderForNotification creates the protected pickup/delivery reference
+// as soon as payment is confirmed. Store preparation activates the same aggregate.
+func (s *CommerceFulfilmentService) PreparePaidOrderForNotification(ctx context.Context, organizationID, orderID uuid.UUID) (*models.CommerceFulfilment, error) {
+	if organizationID == uuid.Nil || orderID == uuid.Nil || s.codes == nil {
+		return nil, ErrCommerceForbidden
+	}
+	order, err := s.orderRepo.GetOrder(ctx, organizationID, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order.Status != models.CommerceOrderStatusPaid {
+		existing, lookupErr := s.repo.GetFulfilmentByOrder(ctx, organizationID, orderID)
+		if lookupErr == nil {
+			return existing, nil
+		}
+		return nil, repository.ErrCommerceFulfilmentState
+	}
+	store, err := s.foundationRepo.GetStore(ctx, organizationID, order.StoreID, nil)
+	if err != nil {
+		return nil, err
+	}
+	destination, err := validateCommerceDestination(order.FulfilmentMode, optionalCommerceStringValue(order.DestinationAddress), order.DestinationLatitude, order.DestinationLongitude)
+	if err != nil {
+		return nil, err
+	}
+	protectedCode, err := s.codes.Generate()
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now().UTC()
+	item := models.CommerceFulfilment{
+		ID: uuid.New(), OrganizationID: organizationID, OrderID: order.ID, StoreID: order.StoreID, CustomerID: order.CustomerID,
+		Mode: order.FulfilmentMode, Status: models.CommerceFulfilmentStatusPreparing, PickupAddress: formatCommerceStoreAddress(store),
+		PickupLatitude: store.Latitude, PickupLongitude: store.Longitude, DestinationAddress: destination,
+		DestinationLatitude: order.DestinationLatitude, DestinationLongitude: order.DestinationLongitude,
+		VerificationCodeHash: protectedCode.Hash, VerificationCodeCiphertext: protectedCode.Ciphertext,
+		VerificationCodeExpiresAt: now.Add(commerceFulfilmentCodeLifetime), Version: 1,
+	}
+	prepared, _, err := s.repo.PreparePaidFulfilment(ctx, repository.CommercePreparePaidFulfilmentInput{
+		Fulfilment: item, IdempotencyKey: "payment-fulfilment:" + order.ID.String(), Now: now,
+	})
+	return prepared, err
+}
+
 func (s *CommerceFulfilmentService) StartFulfilment(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, orderID uuid.UUID, input StartCommerceFulfilmentInput) (*models.CommerceFulfilment, bool, error) {
 	organizationID, err := s.authorize(ctx, actor, requestedOrganizationID, orderID, uuid.Nil)
 	if err != nil {
@@ -117,9 +161,6 @@ func (s *CommerceFulfilmentService) StartFulfilment(ctx context.Context, actor C
 	now := time.Now().UTC()
 	status := models.CommerceFulfilmentStatusReadyForPickup
 	orderStatus := models.CommerceOrderStatusReadyForPickup
-	if order.FulfilmentMode == models.FulfilmentModeCustomerRider {
-		orderStatus = models.CommerceOrderStatusFulfilmentPending
-	}
 	if order.FulfilmentMode == models.FulfilmentModeMerchantRider {
 		status = models.CommerceFulfilmentStatusAwaitingQuote
 		orderStatus = models.CommerceOrderStatusFulfilmentPending
@@ -365,14 +406,11 @@ func (s *CommerceFulfilmentService) AssignRider(ctx context.Context, actor Comme
 	}
 	source := strings.ToLower(strings.TrimSpace(input.Source))
 	expectedSource := models.CommerceRiderSourceMerchant
-	if item.Mode == models.FulfilmentModeCustomerRider {
-		expectedSource = models.CommerceRiderSourceCustomer
-	}
 	riderName := strings.TrimSpace(input.RiderName)
 	riderPhone := strings.TrimSpace(input.RiderPhone)
 	provider := strings.ToLower(strings.TrimSpace(input.Provider))
 	providerAssignmentID := strings.TrimSpace(input.ProviderAssignmentID)
-	if source != expectedSource || riderName == "" || len(riderName) > 200 || !validCommerceRiderPhone(riderPhone) || len(riderPhone) > 40 {
+	if item.Mode != models.FulfilmentModeMerchantRider || source != expectedSource || riderName == "" || len(riderName) > 200 || !validCommerceRiderPhone(riderPhone) || len(riderPhone) > 40 {
 		return nil, fmt.Errorf("%w: rider source, name, and phone are required and must match the fulfilment mode", ErrCommerceValidation)
 	}
 	if len(provider) > 50 || len(providerAssignmentID) > 200 {
@@ -473,6 +511,45 @@ func (s *CommerceFulfilmentService) MarkDelivered(ctx context.Context, actor Com
 		OrganizationID: organizationID, FulfilmentID: fulfilmentID, ActorType: models.CommerceFulfilmentActorUser,
 		ActorUserID: &actorUserID, Reason: commerceFulfilmentReason(input.Reason, "delivery confirmed"), IdempotencyKey: key, Now: time.Now().UTC(),
 	})
+}
+
+func (s *CommerceFulfilmentService) RequestDeliveryConfirmation(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, fulfilmentID uuid.UUID, input TransitionCommerceFulfilmentInput) (*models.CommerceFulfilment, error) {
+	organizationID, _, err := s.authorizeFulfilment(ctx, actor, requestedOrganizationID, fulfilmentID)
+	if err != nil {
+		return nil, err
+	}
+	key, err := validateCommerceFulfilmentKey(fulfilmentID, input.IdempotencyKey)
+	if err != nil {
+		return nil, err
+	}
+	actorUserID := actor.UserID
+	return s.repo.RequestDeliveryConfirmation(ctx, repository.CommerceFulfilmentTransitionInput{
+		OrganizationID: organizationID, FulfilmentID: fulfilmentID, ActorType: models.CommerceFulfilmentActorUser,
+		ActorUserID: &actorUserID, Reason: commerceFulfilmentReason(input.Reason, "store asked the customer to confirm delivery"),
+		IdempotencyKey: key, Now: time.Now().UTC(),
+	})
+}
+
+func (s *CommerceFulfilmentService) DecideDeliveryConfirmationForCustomer(ctx context.Context, organizationID, customerID, fulfilmentID uuid.UUID, decision, idempotencyKey string) (*models.CommerceFulfilment, error) {
+	if organizationID == uuid.Nil || customerID == uuid.Nil || fulfilmentID == uuid.Nil {
+		return nil, ErrCommerceForbidden
+	}
+	decision = strings.ToLower(strings.TrimSpace(decision))
+	if decision != models.CommerceDeliveryConfirmationReceived && decision != models.CommerceDeliveryConfirmationNotReceived {
+		return nil, fmt.Errorf("%w: delivery confirmation must be received or not received", ErrCommerceValidation)
+	}
+	key, err := validateCommerceFulfilmentKey(fulfilmentID, idempotencyKey)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.DecideDeliveryConfirmation(ctx, repository.CommerceDeliveryConfirmationDecisionInput{
+		OrganizationID: organizationID, CustomerID: customerID, FulfilmentID: fulfilmentID,
+		Decision: decision, IdempotencyKey: key, Now: time.Now().UTC(),
+	})
+}
+
+func (s *CommerceFulfilmentService) AutoCompleteUnansweredDeliveries(ctx context.Context, limit int) (int, error) {
+	return s.repo.AutoCompleteUnansweredDeliveries(ctx, time.Now().UTC(), limit)
 }
 
 func (s *CommerceFulfilmentService) CompleteFulfilment(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, fulfilmentID uuid.UUID, input TransitionCommerceFulfilmentInput) (*models.CommerceFulfilment, error) {
@@ -627,6 +704,13 @@ func optionalCommerceFulfilmentString(value string) *string {
 		return nil
 	}
 	return &value
+}
+
+func optionalCommerceStringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func commerceFulfilmentReason(value, fallback string) string {

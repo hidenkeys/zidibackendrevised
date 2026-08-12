@@ -218,3 +218,39 @@ func TestCommerceChannelMigrationPreservesIdentityAndDeliveryInvariants(t *testi
 		}
 	}
 }
+
+func TestCommerceDeliveryConfirmationMigrationIsAdditiveAndIndexed(t *testing.T) {
+	items, err := load()
+	if err != nil {
+		t.Fatalf("load migrations: %v", err)
+	}
+	var phaseNineSQL string
+	for _, item := range items {
+		if item.Version == 9 {
+			phaseNineSQL = strings.ToLower(item.SQL)
+			break
+		}
+	}
+	if phaseNineSQL == "" {
+		t.Fatal("delivery confirmation migration is missing")
+	}
+	for _, required := range []string{
+		"add column if not exists expected_delivery_at timestamptz",
+		"add column if not exists delivery_confirmation_requested_at timestamptz",
+		"add column if not exists delivery_confirmation_deadline_at timestamptz",
+		"add column if not exists delivery_confirmation_status text",
+		"awaiting_delivery_confirmation",
+		"delivery_issue",
+		"idx_commerce_delivery_confirmation_deadline",
+		"where status = 'awaiting_delivery_confirmation'",
+	} {
+		if !strings.Contains(phaseNineSQL, required) {
+			t.Fatalf("delivery confirmation migration is missing invariant %q", required)
+		}
+	}
+	for _, dataMutation := range []string{"update commerce_orders", "update commerce_fulfilments", "delete from", "truncate table"} {
+		if strings.Contains(phaseNineSQL, dataMutation) {
+			t.Fatalf("delivery confirmation migration unexpectedly mutates production data with %q", dataMutation)
+		}
+	}
+}

@@ -2,10 +2,14 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/models"
 	"github.com/hidenkeys/zidibackend/repository"
+	"github.com/hidenkeys/zidibackend/utils"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -18,6 +22,10 @@ func NewUserService(userRepo repository.UserRepository) *UserService {
 }
 
 func (us *UserService) CreateUser(ctx context.Context, req api.User) (*api.User, error) {
+	return us.CreateUserWithStoreAssignment(ctx, req, nil)
+}
+
+func (us *UserService) CreateUserWithStoreAssignment(ctx context.Context, req api.User, storeID *uuid.UUID) (*api.User, error) {
 	orgId, err := uuid.Parse(req.OrganizationId.String())
 	if err != nil {
 		return nil, err
@@ -34,8 +42,23 @@ func (us *UserService) CreateUser(ctx context.Context, req api.User) (*api.User,
 		Role:           string(req.Role),
 	}
 
-	// Save user to repository
-	user, err := us.userRepo.Create(newUser)
+	var user *models.User
+	role := strings.ToLower(strings.TrimSpace(newUser.Role))
+	if role == utils.RoleStoreStaff {
+		if storeID == nil || *storeID == uuid.Nil {
+			return nil, fmt.Errorf("store_id is required for store_staff users")
+		}
+		newUser.Role = utils.RoleStoreStaff
+		user, err = us.userRepo.CreateWithStoreAssignment(ctx, newUser, &models.CommerceStaffStoreAssignment{
+			ID:             uuid.New(),
+			OrganizationID: orgId,
+			StoreID:        *storeID,
+			Role:           utils.RoleStoreStaff,
+			Status:         models.CommerceStatusActive,
+		})
+	} else {
+		user, err = us.userRepo.Create(newUser)
+	}
 	if err != nil {
 		return nil, err
 	}

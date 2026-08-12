@@ -2,11 +2,18 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/api"
+	"github.com/hidenkeys/zidibackend/middleware"
+	"github.com/hidenkeys/zidibackend/repository"
+	"github.com/hidenkeys/zidibackend/utils"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 func (s Server) GetUsersByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID, params api.GetUsersByOrganizationParams) error {
@@ -85,6 +92,21 @@ func (s Server) CreateUser(c *fiber.Ctx) error {
 			Message:   "Invalid request body",
 		})
 	}
+	claims, ok := middleware.CurrentUser(c)
+	if !ok || (!utils.IsPlatformRole(claims.Role) && !utils.IsMerchantAdminRole(claims.Role)) {
+		return c.Status(http.StatusForbidden).JSON(api.Error{ErrorCode: "403", Message: "Access denied"})
+	}
+	role := strings.ToLower(strings.TrimSpace(reqBody.Role))
+	if role != utils.RoleUser && role != utils.RoleLegacyMerchantAdmin && role != utils.RoleStoreStaff {
+		return c.Status(http.StatusBadRequest).JSON(api.Error{ErrorCode: "400", Message: "Role must be user, admin, or store_staff"})
+	}
+	if !utils.IsPlatformRole(claims.Role) && reqBody.OrganizationId.String() != claims.OrganizationID {
+		return c.Status(http.StatusForbidden).JSON(api.Error{ErrorCode: "403", Message: "Cannot create a user for another organization"})
+	}
+	if role == utils.RoleStoreStaff && (reqBody.StoreId == nil || *reqBody.StoreId == uuid.Nil) {
+		return c.Status(http.StatusBadRequest).JSON(api.Error{ErrorCode: "400", Message: "A store is required for store staff"})
+	}
+	reqBody.Role = role
 
 	// Validate passwords match
 	if reqBody.Password != reqBody.ConfirmPassword {
@@ -123,8 +145,14 @@ func (s Server) CreateUser(c *fiber.Ctx) error {
 	}
 
 	// Call user service to save user
-	response, err := s.usrService.CreateUser(context.Background(), newUser)
+	response, err := s.usrService.CreateUserWithStoreAssignment(c.UserContext(), newUser, reqBody.StoreId)
 	if err != nil {
+		if errors.Is(err, repository.ErrCommerceNotFound) {
+			return c.Status(http.StatusBadRequest).JSON(api.Error{
+				ErrorCode: "400",
+				Message:   "The selected store is unavailable or does not belong to this organization",
+			})
+		}
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
 			Message:   err.Error(),
@@ -136,7 +164,18 @@ func (s Server) CreateUser(c *fiber.Ctx) error {
 }
 
 func (s Server) DeleteUser(c *fiber.Ctx, userId openapi_types.UUID) error {
-	err := s.usrService.DeleteUser(context.Background(), userId)
+	claims, ok := middleware.CurrentUser(c)
+	if !ok || (!utils.IsPlatformRole(claims.Role) && !utils.IsMerchantAdminRole(claims.Role)) {
+		return c.Status(http.StatusForbidden).JSON(api.Error{ErrorCode: "403", Message: "Access denied"})
+	}
+	existing, err := s.usrService.GetUserByID(c.UserContext(), userId)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(api.Error{ErrorCode: "404", Message: "User not found"})
+	}
+	if !utils.IsPlatformRole(claims.Role) && existing.OrganizationId.String() != claims.OrganizationID {
+		return c.Status(http.StatusForbidden).JSON(api.Error{ErrorCode: "403", Message: "Cannot delete a user from another organization"})
+	}
+	err = s.usrService.DeleteUser(c.UserContext(), userId)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
@@ -160,6 +199,10 @@ func (s Server) GetUserById(c *fiber.Ctx, userId openapi_types.UUID) error {
 }
 
 func (s Server) UpdateUser(c *fiber.Ctx, userId openapi_types.UUID) error {
+	claims, ok := middleware.CurrentUser(c)
+	if !ok || (!utils.IsPlatformRole(claims.Role) && !utils.IsMerchantAdminRole(claims.Role)) {
+		return c.Status(http.StatusForbidden).JSON(api.Error{ErrorCode: "403", Message: "Access denied"})
+	}
 	user := new(api.User)
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(api.Error{
@@ -167,7 +210,19 @@ func (s Server) UpdateUser(c *fiber.Ctx, userId openapi_types.UUID) error {
 			Message:   "Invalid request body",
 		})
 	}
-	response, err := s.usrService.UpdateUser(context.Background(), userId, *user)
+	existing, err := s.usrService.GetUserByID(c.UserContext(), userId)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(api.Error{ErrorCode: "404", Message: "User not found"})
+	}
+	if !utils.IsPlatformRole(claims.Role) && existing.OrganizationId.String() != claims.OrganizationID {
+		return c.Status(http.StatusForbidden).JSON(api.Error{ErrorCode: "403", Message: "Cannot update a user from another organization"})
+	}
+	requestedRole := strings.ToLower(strings.TrimSpace(user.Role))
+	if requestedRole != strings.ToLower(strings.TrimSpace(existing.Role)) {
+		return c.Status(http.StatusBadRequest).JSON(api.Error{ErrorCode: "400", Message: "User roles cannot be changed from the edit form"})
+	}
+	user.OrganizationId = existing.OrganizationId
+	response, err := s.usrService.UpdateUser(c.UserContext(), userId, *user)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

@@ -1,6 +1,11 @@
 package repository
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/models"
 	"gorm.io/gorm"
@@ -16,6 +21,27 @@ func NewUserRepoPG(db *gorm.DB) UserRepository {
 
 func (r *UserRepoPG) Create(user *models.User) (*models.User, error) {
 	err := r.db.Create(user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *UserRepoPG) CreateWithStoreAssignment(ctx context.Context, user *models.User, assignment *models.CommerceStaffStoreAssignment) (*models.User, error) {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var store models.CommerceStore
+		if err := tx.Where("id = ? AND organization_id = ? AND status = ?", assignment.StoreID, assignment.OrganizationID, models.CommerceStatusActive).First(&store).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrCommerceNotFound
+			}
+			return fmt.Errorf("find store for staff assignment: %w", err)
+		}
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+		assignment.UserID = user.ID
+		return tx.Create(assignment).Error
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -48,11 +74,22 @@ func (r *UserRepoPG) UpdateByID(id uuid.UUID, user *models.User) (*models.User, 
 }
 
 func (r *UserRepoPG) DeleteByID(id uuid.UUID) error {
-	err := r.db.Where("id = ?", id).Delete(&models.User{}).Error
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		if err := tx.Model(&models.CommerceStaffStoreAssignment{}).
+			Where("user_id = ? AND deleted_at IS NULL", id).
+			Updates(map[string]interface{}{
+				"status":     models.CommerceStatusInactive,
+				"deleted_at": now,
+				"updated_at": now,
+			}).Error; err != nil {
+			return fmt.Errorf("deactivate staff store assignments: %w", err)
+		}
+		if err := tx.Delete(&models.User{}, "id = ?", id).Error; err != nil {
+			return fmt.Errorf("delete user: %w", err)
+		}
+		return nil
+	})
 }
 
 // ✅ Updated GetAll with Pagination

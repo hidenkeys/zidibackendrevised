@@ -220,6 +220,7 @@ func main() {
 		return server.GetPublicCommerceWhatsAppLink(c, c.Params("merchant_slug"))
 	})
 	protectedGroup := apiGroup.Group("", userAuth)
+	protectedGroup.Use(middleware.StoreStaffScope())
 	api.RegisterHandlers(protectedGroup, server)
 
 	if !localDemoMode {

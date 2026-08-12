@@ -1,12 +1,15 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/models"
 )
 
 type UserRepository interface {
 	Create(user *models.User) (*models.User, error)
+	CreateWithStoreAssignment(ctx context.Context, user *models.User, assignment *models.CommerceStaffStoreAssignment) (*models.User, error)
 	GetAll(limit, offset int) ([]models.User, int64, error)
 	GetByID(id uuid.UUID) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)

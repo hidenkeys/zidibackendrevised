@@ -3862,6 +3862,10 @@ components:
         organization_id:
           type: string
           format: uuid
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
     Customer:
       type: object
       required:

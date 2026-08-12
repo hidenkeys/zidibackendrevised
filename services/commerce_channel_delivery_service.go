@@ -173,10 +173,14 @@ func (s *CommerceChannelDeliveryService) notificationReply(ctx context.Context, 
 		if err != nil {
 			return uuid.Nil, repository.CommerceChannelReply{}, nil, err
 		}
+		code, err := s.fulfilment.RevealVerificationCode(ctx, event.OrganizationID, payload.CustomerID, payload.FulfilmentID)
+		if err != nil {
+			return uuid.Nil, repository.CommerceChannelReply{}, nil, err
+		}
 		for index := len(item.RiderAssignments) - 1; index >= 0; index-- {
 			assignment := item.RiderAssignments[index]
 			if assignment.Status == models.CommerceRiderStatusAssigned {
-				body := fmt.Sprintf("%s has been assigned to order %s. Rider phone: %s.", assignment.RiderName, order.OrderNumber, assignment.RiderPhone)
+				body := fmt.Sprintf("%s has been assigned to order %s. Rider phone: %s. Your handover code is %s. Share it only when you receive the order.", assignment.RiderName, order.OrderNumber, assignment.RiderPhone, code)
 				if assignment.TrackingURL != nil {
 					body += " Track: " + *assignment.TrackingURL
 				}

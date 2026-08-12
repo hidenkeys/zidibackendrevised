@@ -155,6 +155,39 @@ func (*commerceChannelFulfilmentStub) RevealVerificationCode(context.Context, uu
 	return "123456", nil
 }
 
+func TestRiderAssignedNotificationIncludesCustomerHandoverCode(t *testing.T) {
+	organizationID, customerID, orderID, fulfilmentID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	orderRepo := seededCommerceOrderRepo(&models.CommerceOrder{
+		ID: orderID, OrganizationID: organizationID, CustomerID: customerID, OrderNumber: "ZC-100",
+	})
+	fulfilmentRepo := &commerceFulfilmentRepoStub{item: &models.CommerceFulfilment{
+		ID: fulfilmentID, OrganizationID: organizationID, CustomerID: customerID, OrderID: orderID,
+		Status: models.CommerceFulfilmentStatusRiderAssigned,
+		RiderAssignments: []models.CommerceRiderAssignment{{
+			RiderName: "Test Rider", RiderPhone: "+2348112223333", Status: models.CommerceRiderStatusAssigned,
+		}},
+	}}
+	service := NewCommerceChannelDeliveryService(
+		&commerceChannelRepoStub{}, nil, orderRepo, fulfilmentRepo, &commerceChannelFulfilmentStub{},
+	)
+	payload, err := json.Marshal(map[string]uuid.UUID{
+		"customer_id": customerID, "order_id": orderID, "fulfilment_id": fulfilmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recipientID, reply, _, err := service.notificationReply(context.Background(), &models.CommerceOutboxEvent{
+		OrganizationID: organizationID, Topic: models.CommerceOutboxTopicRiderAssigned, Payload: payload,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if recipientID != customerID || !strings.Contains(reply.Body, "Your handover code is 123456") || !strings.Contains(reply.Body, "Share it only when you receive the order") {
+		t.Fatalf("rider notification did not securely deliver the handover code: recipient=%s body=%q", recipientID, reply.Body)
+	}
+}
+
 func TestCommerceWhatsAppOrderFlowUsesCoreServicesAndPersistsState(t *testing.T) {
 	organizationID, customerID, storeID, categoryID, variantID, cartID, orderID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	openMinute, closeMinute := 0, 1440

@@ -13,6 +13,7 @@ import (
 var ErrCommerceStoreOrderState = errors.New("order cannot be prepared from its current state")
 
 var commerceOperationalOrderStatuses = []string{
+	models.CommerceOrderStatusPendingPayment,
 	models.CommerceOrderStatusPaid,
 	models.CommerceOrderStatusProcessing,
 	models.CommerceOrderStatusReady,

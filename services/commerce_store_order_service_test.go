@@ -164,19 +164,22 @@ func TestCommerceStoreOrderMarkPreparedRejectsInvalidState(t *testing.T) {
 	}
 }
 
-func TestCommerceStoreOrderListUsesOperationalStatuses(t *testing.T) {
+func TestCommerceStoreOrderListIncludesPendingPaymentOrders(t *testing.T) {
 	organizationID := uuid.New()
 	orderOperations := &commerceStoreOrderOperationsStub{order: &models.CommerceOrder{
-		ID: uuid.New(), OrganizationID: organizationID, StoreID: uuid.New(), Status: models.CommerceOrderStatusPaid,
+		ID: uuid.New(), OrganizationID: organizationID, StoreID: uuid.New(), Status: models.CommerceOrderStatusPendingPayment,
 	}}
 	service := NewCommerceStoreOrderService(orderOperations, &commerceStoreFulfilmentOperationsStub{orders: orderOperations})
 	storeID := orderOperations.order.StoreID
 
 	views, total, err := service.ListOperationalOrders(context.Background(), CommerceActor{UserID: uuid.New(), OrganizationID: organizationID, Role: utils.RoleStoreStaff}, nil, CommerceStoreOrderListInput{StoreID: &storeID, Limit: 25})
 	if err != nil || total != 1 || len(views) != 1 {
-		t.Fatalf("list operational orders: total=%d views=%d err=%v", total, len(views), err)
+		t.Fatalf("list store orders: total=%d views=%d err=%v", total, len(views), err)
 	}
 	if !reflect.DeepEqual(orderOperations.listInput.Statuses, commerceOperationalOrderStatuses) || orderOperations.listInput.StoreID == nil || *orderOperations.listInput.StoreID != storeID {
-		t.Fatalf("unexpected operational filter: %+v", orderOperations.listInput)
+		t.Fatalf("unexpected store order filter: %+v", orderOperations.listInput)
+	}
+	if len(orderOperations.listInput.Statuses) == 0 || orderOperations.listInput.Statuses[0] != models.CommerceOrderStatusPendingPayment {
+		t.Fatalf("pending payment orders should be visible to store staff: %+v", orderOperations.listInput.Statuses)
 	}
 }

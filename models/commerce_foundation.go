@@ -81,6 +81,11 @@ type CommerceStoreFulfilmentMode struct {
 	StoreID        uuid.UUID      `gorm:"type:uuid;not null;index"`
 	Mode           string         `gorm:"not null"`
 	Enabled        bool           `gorm:"not null"`
+	CustomerPays   bool           `gorm:"not null"`
+	PricingMode    string         `gorm:"not null"`
+	FixedFeeMinor  *int64         `gorm:"type:bigint"`
+	QuoteProvider  *string        `gorm:"type:text"`
+	Disclaimer     string         `gorm:"not null"`
 	CreatedAt      time.Time      `gorm:"not null"`
 	UpdatedAt      time.Time      `gorm:"not null"`
 	DeletedAt      gorm.DeletedAt `gorm:"index"`

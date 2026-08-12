@@ -51,6 +51,22 @@ func (s *commerceCustomerRepoStub) GetCustomer(_ context.Context, organizationID
 	return cloneCommerceCustomer(customer), nil
 }
 
+func (s *commerceCustomerRepoStub) UpdateCustomerProfile(_ context.Context, organizationID, customerID uuid.UUID, displayName string, email *string) (*models.CommerceCustomer, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	customer := s.customers[customerID]
+	if customer == nil || customer.OrganizationID != organizationID {
+		return nil, repository.ErrCommerceNotFound
+	}
+	if displayName != "" {
+		customer.DisplayName = displayName
+	}
+	if email != nil {
+		customer.Email = email
+	}
+	return cloneCommerceCustomer(customer), nil
+}
+
 type commerceCartRepoStub struct {
 	mu       sync.Mutex
 	carts    map[uuid.UUID]*models.CommerceCart

@@ -69,8 +69,13 @@ type CommerceStoreHourInput struct {
 }
 
 type CommerceStoreFulfilmentModeInput struct {
-	Mode    string
-	Enabled bool
+	Mode          string
+	Enabled       bool
+	CustomerPays  bool
+	PricingMode   string
+	FixedFeeMinor *int64
+	QuoteProvider string
+	Disclaimer    string
 }
 
 type CreateCommerceStaffAssignmentInput struct {
@@ -205,9 +210,9 @@ func (s *CommerceFoundationService) CreateStore(ctx context.Context, actor Comme
 	modes := make([]models.CommerceStoreFulfilmentMode, 0, len(input.FulfilmentModes))
 	for _, item := range input.FulfilmentModes {
 		modes = append(modes, models.CommerceStoreFulfilmentMode{
-			ID:      uuid.New(),
-			Mode:    strings.ToLower(strings.TrimSpace(item.Mode)),
-			Enabled: item.Enabled,
+			ID: uuid.New(), Mode: strings.ToLower(strings.TrimSpace(item.Mode)), Enabled: item.Enabled,
+			CustomerPays: item.CustomerPays, PricingMode: normalizedCommercePricingMode(item.PricingMode),
+			FixedFeeMinor: item.FixedFeeMinor, QuoteProvider: optionalFoundationString(item.QuoteProvider), Disclaimer: strings.TrimSpace(item.Disclaimer),
 		})
 	}
 	if err := s.repo.CreateStore(ctx, store, hours, modes); err != nil {
@@ -425,6 +430,19 @@ func validateStore(input CreateCommerceStoreInput) error {
 			return fmt.Errorf("%w: duplicate fulfilment mode", ErrCommerceValidation)
 		}
 		modes[mode] = struct{}{}
+		pricingMode := normalizedCommercePricingMode(item.PricingMode)
+		if pricingMode != "none" && pricingMode != "fixed" && pricingMode != "manual" && pricingMode != "provider" {
+			return fmt.Errorf("%w: unsupported delivery pricing mode", ErrCommerceValidation)
+		}
+		if pricingMode == "fixed" && (item.FixedFeeMinor == nil || *item.FixedFeeMinor < 0) {
+			return fmt.Errorf("%w: fixed delivery pricing requires a non-negative fee", ErrCommerceValidation)
+		}
+		if pricingMode == "provider" && strings.TrimSpace(item.QuoteProvider) == "" {
+			return fmt.Errorf("%w: provider delivery pricing requires a quote provider", ErrCommerceValidation)
+		}
+		if len(strings.TrimSpace(item.QuoteProvider)) > 50 || len(strings.TrimSpace(item.Disclaimer)) > 500 {
+			return fmt.Errorf("%w: delivery configuration is too long", ErrCommerceValidation)
+		}
 	}
 	return nil
 }
@@ -442,9 +460,27 @@ func commerceStoreRelations(organizationID, storeID uuid.UUID, hourInputs []Comm
 		modes = append(modes, models.CommerceStoreFulfilmentMode{
 			ID: uuid.New(), OrganizationID: organizationID, StoreID: storeID,
 			Mode: strings.ToLower(strings.TrimSpace(item.Mode)), Enabled: item.Enabled,
+			CustomerPays: item.CustomerPays, PricingMode: normalizedCommercePricingMode(item.PricingMode),
+			FixedFeeMinor: item.FixedFeeMinor, QuoteProvider: optionalFoundationString(item.QuoteProvider), Disclaimer: strings.TrimSpace(item.Disclaimer),
 		})
 	}
 	return hours, modes
+}
+
+func normalizedCommercePricingMode(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return "none"
+	}
+	return value
+}
+
+func optionalFoundationString(value string) *string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	return &value
 }
 
 func isCommerceActiveStatus(status string) bool {

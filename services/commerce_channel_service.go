@@ -63,6 +63,7 @@ type UpdateCommerceComplaintInput struct {
 
 type commerceChannelCustomerCart interface {
 	ResolveCustomerForChannel(context.Context, uuid.UUID, ResolveCommerceCustomerInput) (*models.CommerceCustomer, bool, error)
+	UpdateCustomerForChannel(context.Context, uuid.UUID, uuid.UUID, string, string) (*models.CommerceCustomer, error)
 	CreateCartForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (*CommerceCartView, bool, error)
 	SetCartItemForChannel(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID, int) (*CommerceCartView, error)
 }
@@ -333,7 +334,14 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		}); err != nil {
 			return state, intent, conversationContext, nil, err
 		}
-		return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "The delivery quote was " + decision + "."}}, nil
+		if decision == models.CommerceDeliveryQuoteStatusRejected {
+			code, revealErr := s.fulfilments.RevealVerificationCode(ctx, configuration.OrganizationID, customer.ID, fulfilmentID)
+			if revealErr != nil {
+				return state, intent, conversationContext, nil, revealErr
+			}
+			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Delivery was declined. Your order is now ready for pickup. Your handover code is " + code + ". Share it only when you receive the order."}}, nil
+		}
+		return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Delivery quote accepted. The store will arrange your rider and keep you updated here."}}, nil
 	}
 
 	if isCommerceMenuCommand(command) {
@@ -410,7 +418,7 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		}
 		conversationContext.OptionKind = "product"
 		conversationContext.OptionIDs = commerceVariantIDs(products)
-		return models.CommerceConversationStateProduct, intent, conversationContext, []repository.CommerceChannelReply{commerceProductListReply(products)}, nil
+		return models.CommerceConversationStateProduct, intent, conversationContext, commerceProductListReplies(products), nil
 	case models.CommerceConversationStateProduct:
 		variantID, ok := selectCommerceOption(command, "product", conversationContext)
 		if !ok {
@@ -459,9 +467,14 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		}
 		conversationContext.FulfilmentMode = mode
 		if mode == models.FulfilmentModeMerchantRider {
-			return models.CommerceConversationStateDeliveryAddress, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter the full delivery address."}}, nil
+			store, err := s.foundationRepo.GetStore(ctx, configuration.OrganizationID, *conversationContext.StoreID, nil)
+			if err != nil {
+				return state, intent, conversationContext, nil, err
+			}
+			disclaimer := commerceDeliveryDisclaimer(store)
+			return models.CommerceConversationStateDeliveryAddress, intent, conversationContext, []repository.CommerceChannelReply{{Body: disclaimer + "\n\nEnter the full delivery address."}}, nil
 		}
-		return s.checkoutAndPayment(ctx, configuration, customer, conversation.ID, intent, conversationContext)
+		return s.collectCustomerDetailsOrCheckout(ctx, configuration, customer, conversation.ID, intent, conversationContext)
 	case models.CommerceConversationStateDeliveryAddress:
 		if len(text) < 5 || len(text) > 500 {
 			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter a full delivery address between 5 and 500 characters."}}, nil
@@ -469,12 +482,28 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		conversationContext.DestinationAddress = text
 		conversationContext.DestinationLatitude = input.Latitude
 		conversationContext.DestinationLongitude = input.Longitude
-		return s.checkoutAndPayment(ctx, configuration, customer, conversation.ID, intent, conversationContext)
+		return s.collectCustomerDetailsOrCheckout(ctx, configuration, customer, conversation.ID, intent, conversationContext)
+	case models.CommerceConversationStateCustomerName:
+		if len(text) < 2 || len(text) > 200 {
+			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter the customer name for this order (2 to 200 characters)."}}, nil
+		}
+		customer, err := s.customers.UpdateCustomerForChannel(ctx, configuration.OrganizationID, customer.ID, text, "")
+		if err != nil {
+			return state, intent, conversationContext, nil, err
+		}
+		return s.collectCustomerDetailsOrCheckout(ctx, configuration, customer, conversation.ID, intent, conversationContext)
 	case models.CommerceConversationStatePaymentEmail:
-		if !validCommerceChannelEmail(text) || conversationContext.OrderID == nil {
+		if !validCommerceChannelEmail(text) {
 			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter a valid email address for the payment receipt."}}, nil
 		}
-		return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, *conversationContext.OrderID, text, intent, conversationContext)
+		customer, err := s.customers.UpdateCustomerForChannel(ctx, configuration.OrganizationID, customer.ID, "", text)
+		if err != nil {
+			return state, intent, conversationContext, nil, err
+		}
+		if conversationContext.OrderID != nil {
+			return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, *conversationContext.OrderID, text, intent, conversationContext)
+		}
+		return s.checkoutAndPayment(ctx, configuration, customer, conversation.ID, intent, conversationContext)
 	case models.CommerceConversationStateOrderID:
 		order, err := s.orders.GetOrderForChannel(ctx, configuration.OrganizationID, customer.ID, text)
 		if errors.Is(err, repository.ErrCommerceNotFound) {
@@ -559,12 +588,26 @@ func (s *CommerceChannelService) checkoutAndPayment(ctx context.Context, configu
 		}
 	}
 	conversationContext.OrderID = &order.ID
-	if customer.Email == nil || strings.TrimSpace(*customer.Email) == "" {
-		return models.CommerceConversationStatePaymentEmail, intent, conversationContext, []repository.CommerceChannelReply{{
-			Body: fmt.Sprintf("Order %s is ready for payment. Enter an email address for the receipt.", order.OrderNumber),
-		}}, nil
-	}
 	return s.initializeChannelPayment(ctx, configuration.OrganizationID, customer.ID, order.ID, *customer.Email, intent, conversationContext)
+}
+
+func (s *CommerceChannelService) collectCustomerDetailsOrCheckout(ctx context.Context, configuration *models.CommerceChannelConfiguration, customer *models.CommerceCustomer, conversationID uuid.UUID, intent string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
+	if strings.TrimSpace(customer.DisplayName) == "" || strings.EqualFold(strings.TrimSpace(customer.DisplayName), normalizeChannelIdentifier(conversationPhone(customer))) {
+		return models.CommerceConversationStateCustomerName, intent, conversationContext, []repository.CommerceChannelReply{{Body: "What name should we put on the order?"}}, nil
+	}
+	if customer.Email == nil || strings.TrimSpace(*customer.Email) == "" {
+		return models.CommerceConversationStatePaymentEmail, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter an email address for your order confirmation and receipt."}}, nil
+	}
+	return s.checkoutAndPayment(ctx, configuration, customer, conversationID, intent, conversationContext)
+}
+
+func conversationPhone(customer *models.CommerceCustomer) string {
+	for _, identity := range customer.Identities {
+		if identity.Channel == models.CommerceIdentityChannelWhatsApp || identity.Channel == models.CommerceIdentityChannelPhone {
+			return identity.NormalizedIdentifier
+		}
+	}
+	return ""
 }
 
 func (s *CommerceChannelService) initializeChannelPayment(ctx context.Context, organizationID, customerID, orderID uuid.UUID, payerEmail, intent string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
@@ -731,6 +774,24 @@ func commerceProductListReply(entries []repository.CommerceStoreCatalogueEntry) 
 	return repository.CommerceChannelReply{Body: strings.Join(lines, "\n"), Options: commerceUUIDOptions("product", commerceVariantIDs(entries), func(index int) string { return entries[index].ProductName })}
 }
 
+func commerceProductListReplies(entries []repository.CommerceStoreCatalogueEntry) []repository.CommerceChannelReply {
+	replies := make([]repository.CommerceChannelReply, 0, minCommerceChannelInt(len(entries), 10)+1)
+	for index, entry := range entries {
+		if index >= 10 || entry.PrimaryImageURL == nil || strings.TrimSpace(*entry.PrimaryImageURL) == "" {
+			continue
+		}
+		name := entry.ProductName
+		if entry.VariantName != "" && !strings.EqualFold(entry.VariantName, "default") {
+			name += " - " + entry.VariantName
+		}
+		replies = append(replies, repository.CommerceChannelReply{
+			Body:     fmt.Sprintf("%d. %s - %s %s", index+1, name, entry.ProductCurrency, formatCommerceMinor(entry.EffectivePriceMinor)),
+			ImageURL: strings.TrimSpace(*entry.PrimaryImageURL),
+		})
+	}
+	return append(replies, commerceProductListReply(entries))
+}
+
 func commerceUUIDOptions(kind string, ids []uuid.UUID, title func(int) string) []repository.CommerceChannelReplyOption {
 	if len(ids) > 3 {
 		return nil
@@ -761,6 +822,7 @@ func commerceCartActions() []repository.CommerceChannelReplyOption {
 
 func commerceFulfilmentReply(store *models.CommerceStore) repository.CommerceChannelReply {
 	options := make([]repository.CommerceChannelReplyOption, 0, 3)
+	lines := []string{"Choose how to receive the order."}
 	for _, mode := range store.FulfilmentModes {
 		if !mode.Enabled {
 			continue
@@ -769,12 +831,29 @@ func commerceFulfilmentReply(store *models.CommerceStore) repository.CommerceCha
 		case models.FulfilmentModeCustomerPickup:
 			options = append(options, repository.CommerceChannelReplyOption{ID: "fulfilment:pickup", Title: "Pickup"})
 		case models.FulfilmentModeCustomerRider:
-			options = append(options, repository.CommerceChannelReplyOption{ID: "fulfilment:own_rider", Title: "My rider"})
+			options = append(options, repository.CommerceChannelReplyOption{ID: "fulfilment:own_rider", Title: "Send my rider"})
 		case models.FulfilmentModeMerchantRider:
-			options = append(options, repository.CommerceChannelReplyOption{ID: "fulfilment:delivery", Title: "Store delivery"})
+			options = append(options, repository.CommerceChannelReplyOption{ID: "fulfilment:delivery", Title: "Delivery"})
+			if disclaimer := strings.TrimSpace(mode.Disclaimer); disclaimer != "" {
+				lines = append(lines, "Delivery: "+disclaimer)
+			}
 		}
 	}
-	return repository.CommerceChannelReply{Body: "Choose how to receive the order.", Options: options}
+	return repository.CommerceChannelReply{Body: strings.Join(lines, "\n"), Options: options}
+}
+
+func commerceDeliveryDisclaimer(store *models.CommerceStore) string {
+	for _, mode := range store.FulfilmentModes {
+		if mode.Mode == models.FulfilmentModeMerchantRider && mode.Enabled {
+			if value := strings.TrimSpace(mode.Disclaimer); value != "" {
+				return value
+			}
+			if mode.CustomerPays {
+				return "Delivery is arranged separately. You will pay the delivery fee after accepting the estimate."
+			}
+		}
+	}
+	return "Enter the delivery address so the store can arrange delivery."
 }
 
 func selectCommerceOption(value, kind string, conversationContext commerceConversationContext) (uuid.UUID, bool) {

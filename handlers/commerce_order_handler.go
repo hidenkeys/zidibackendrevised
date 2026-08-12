@@ -9,6 +9,7 @@ import (
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/models"
 	"github.com/hidenkeys/zidibackend/services"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 func (s Server) CheckoutCommerceCart(c *fiber.Ctx) error {
@@ -154,6 +155,9 @@ func commerceOrderResponse(order *models.CommerceOrder) api.CommerceOrder {
 		CustomerId:           order.CustomerID,
 		StoreId:              order.StoreID,
 		OrderNumber:          order.OrderNumber,
+		CustomerName:         order.CustomerName,
+		CustomerPhone:        order.CustomerPhone,
+		CustomerEmail:        commerceEmailResponse(order.CustomerEmail),
 		FulfilmentMode:       api.CommerceOrderFulfilmentMode(order.FulfilmentMode),
 		DestinationAddress:   order.DestinationAddress,
 		DestinationLatitude:  order.DestinationLatitude,
@@ -171,4 +175,12 @@ func commerceOrderResponse(order *models.CommerceOrder) api.CommerceOrder {
 		CreatedAt:            order.CreatedAt,
 		UpdatedAt:            order.UpdatedAt,
 	}
+}
+
+func commerceEmailResponse(value *string) *openapi_types.Email {
+	if value == nil {
+		return nil
+	}
+	email := openapi_types.Email(*value)
+	return &email
 }

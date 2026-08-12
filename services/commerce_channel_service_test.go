@@ -70,10 +70,19 @@ func (s *commerceChannelRepoStub) UpdateComplaint(context.Context, uuid.UUID, uu
 func (s *commerceChannelRepoStub) ClaimCustomerOutboxEvents(context.Context, int, time.Time) ([]models.CommerceOutboxEvent, error) {
 	return nil, nil
 }
-func (s *commerceChannelRepoStub) QueueOutboxNotification(context.Context, *models.CommerceOutboxEvent, uuid.UUID, repository.CommerceChannelReply, time.Time) error {
+func (s *commerceChannelRepoStub) QueueOutboxNotification(context.Context, *models.CommerceOutboxEvent, uuid.UUID, repository.CommerceChannelReply, *repository.CommerceEmailNotification, time.Time) error {
 	return nil
 }
 func (s *commerceChannelRepoStub) MarkOutboxEventFailed(context.Context, uuid.UUID, string, time.Time) error {
+	return nil
+}
+func (s *commerceChannelRepoStub) ClaimEmailMessages(context.Context, int, time.Time) ([]models.CommerceEmailMessage, error) {
+	return nil, nil
+}
+func (s *commerceChannelRepoStub) MarkEmailMessageSent(context.Context, uuid.UUID, time.Time) error {
+	return nil
+}
+func (s *commerceChannelRepoStub) MarkEmailMessageFailed(context.Context, uuid.UUID, string, time.Time) error {
 	return nil
 }
 
@@ -83,6 +92,13 @@ type commerceChannelCustomerStub struct {
 
 func (s *commerceChannelCustomerStub) ResolveCustomerForChannel(context.Context, uuid.UUID, ResolveCommerceCustomerInput) (*models.CommerceCustomer, bool, error) {
 	return nil, false, nil
+}
+func (s *commerceChannelCustomerStub) UpdateCustomerForChannel(_ context.Context, organizationID, customerID uuid.UUID, displayName, email string) (*models.CommerceCustomer, error) {
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: displayName}
+	if email != "" {
+		customer.Email = &email
+	}
+	return customer, nil
 }
 func (s *commerceChannelCustomerStub) CreateCartForChannel(_ context.Context, organizationID, customerID, storeID uuid.UUID) (*CommerceCartView, bool, error) {
 	return &CommerceCartView{Cart: &models.CommerceCart{ID: s.cartID, OrganizationID: organizationID, CustomerID: customerID, StoreID: storeID, Currency: "NGN"}}, true, nil
@@ -157,7 +173,7 @@ func TestCommerceWhatsAppOrderFlowUsesCoreServicesAndPersistsState(t *testing.T)
 	service.now = func() time.Time { return time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC) }
 	configuration := &models.CommerceChannelConfiguration{ID: uuid.New(), OrganizationID: organizationID, WelcomeMessage: "Welcome"}
 	email := "customer@example.com"
-	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, Email: &email}
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Test Customer", Email: &email}
 	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStateIntent, Context: json.RawMessage(`{}`)}
 
 	steps := []CommerceChannelInbound{

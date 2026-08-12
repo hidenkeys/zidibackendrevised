@@ -3,13 +3,16 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hidenkeys/zidibackend/media"
 	"github.com/hidenkeys/zidibackend/models"
 	"github.com/hidenkeys/zidibackend/repository"
 	"github.com/hidenkeys/zidibackend/utils"
@@ -60,6 +63,7 @@ type UpdateCommerceProductInput struct {
 	Description string
 	Currency    string
 	Status      string
+	Images      []CommerceProductImageInput
 }
 
 type UpdateCommerceProductVariantInput struct {
@@ -84,10 +88,35 @@ type AdjustCommerceInventoryInput struct {
 type CommerceCatalogueService struct {
 	repo           repository.CommerceCatalogueRepository
 	foundationRepo repository.CommerceFoundationRepository
+	imageUploader  media.ImageUploader
 }
 
 func NewCommerceCatalogueService(repo repository.CommerceCatalogueRepository, foundationRepo repository.CommerceFoundationRepository) *CommerceCatalogueService {
 	return &CommerceCatalogueService{repo: repo, foundationRepo: foundationRepo}
+}
+
+func (s *CommerceCatalogueService) ConfigureImageUploader(uploader media.ImageUploader) {
+	s.imageUploader = uploader
+}
+
+func (s *CommerceCatalogueService) UploadProductImage(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, fileName string, content []byte) (*media.ImageUpload, error) {
+	if !canManageMerchant(actor.Role) {
+		return nil, ErrCommerceForbidden
+	}
+	if _, err := resolveCommerceTenant(actor, requestedOrganizationID); err != nil {
+		return nil, err
+	}
+	if len(content) == 0 || len(content) > 5*1024*1024 {
+		return nil, fmt.Errorf("%w: product image must be between 1 byte and 5 MB", ErrCommerceValidation)
+	}
+	contentType := http.DetectContentType(content)
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/webp" {
+		return nil, fmt.Errorf("%w: product image must be JPEG, PNG, or WebP", ErrCommerceValidation)
+	}
+	if s.imageUploader == nil {
+		return nil, errors.New("commerce image uploader is not configured")
+	}
+	return s.imageUploader.UploadImage(ctx, strings.TrimSpace(fileName), contentType, content)
 }
 
 func (s *CommerceCatalogueService) CreateCategory(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, input CreateCommerceCategoryInput) (*models.CommerceCategory, error) {
@@ -258,6 +287,9 @@ func (s *CommerceCatalogueService) UpdateProduct(ctx context.Context, actor Comm
 	if !isCommerceActiveStatus(status) {
 		return nil, fmt.Errorf("%w: status must be active or inactive", ErrCommerceValidation)
 	}
+	if err := validateCommerceProductImages(input.Images); err != nil {
+		return nil, err
+	}
 	product, err := s.repo.GetProduct(ctx, organizationID, productID)
 	if err != nil {
 		return nil, err
@@ -268,6 +300,13 @@ func (s *CommerceCatalogueService) UpdateProduct(ctx context.Context, actor Comm
 	product.Description = strings.TrimSpace(input.Description)
 	product.Currency = strings.ToUpper(strings.TrimSpace(input.Currency))
 	product.Status = status
+	product.Images = make([]models.CommerceProductImage, 0, len(input.Images))
+	for _, item := range input.Images {
+		product.Images = append(product.Images, models.CommerceProductImage{
+			ID: uuid.New(), OrganizationID: organizationID, ProductID: product.ID,
+			URL: strings.TrimSpace(item.URL), AltText: strings.TrimSpace(item.AltText), SortOrder: item.SortOrder,
+		})
+	}
 	if err := s.repo.UpdateProduct(ctx, product); err != nil {
 		return nil, err
 	}
@@ -479,11 +518,15 @@ func validateProduct(input CreateCommerceProductInput) error {
 	if defaultCount != 1 {
 		return fmt.Errorf("%w: exactly one default variant is required", ErrCommerceValidation)
 	}
-	imageURLs := make(map[string]struct{}, len(input.Images))
-	for _, item := range input.Images {
+	return validateCommerceProductImages(input.Images)
+}
+
+func validateCommerceProductImages(images []CommerceProductImageInput) error {
+	imageURLs := make(map[string]struct{}, len(images))
+	for _, item := range images {
 		parsed, err := url.ParseRequestURI(strings.TrimSpace(item.URL))
-		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" || item.SortOrder < 0 {
-			return fmt.Errorf("%w: each image requires a valid HTTP URL and non-negative sort order", ErrCommerceValidation)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || item.SortOrder < 0 {
+			return fmt.Errorf("%w: each image requires a public HTTPS URL and non-negative sort order", ErrCommerceValidation)
 		}
 		if _, exists := imageURLs[parsed.String()]; exists {
 			return fmt.Errorf("%w: duplicate product image URL", ErrCommerceValidation)

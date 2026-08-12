@@ -56,6 +56,9 @@ type CommerceOrder struct {
 	StoreID              uuid.UUID            `gorm:"type:uuid;not null;index"`
 	OrderNumber          string               `gorm:"not null"`
 	CheckoutKey          string               `gorm:"not null"`
+	CustomerName         string               `gorm:"not null"`
+	CustomerPhone        string               `gorm:"not null"`
+	CustomerEmail        *string              `gorm:"type:text"`
 	FulfilmentMode       string               `gorm:"not null"`
 	DestinationAddress   *string              `gorm:"type:text"`
 	DestinationLatitude  *float64             `gorm:"type:numeric(10,7)"`

@@ -23,6 +23,7 @@ type WhatsAppOutboundMessage struct {
 	To            string
 	Body          string
 	Buttons       []WhatsAppButton
+	ImageURL      string
 }
 
 type WhatsAppSender interface {
@@ -65,7 +66,15 @@ func (c *MetaWhatsAppClient) Send(ctx context.Context, message WhatsAppOutboundM
 
 	payload := metaMessagePayload{MessagingProduct: "whatsapp", To: strings.TrimSpace(message.To), Type: "text"}
 	payload.Text = &metaText{Body: strings.TrimSpace(message.Body)}
-	if len(message.Buttons) > 0 {
+	if strings.TrimSpace(message.ImageURL) != "" {
+		parsed, err := url.ParseRequestURI(strings.TrimSpace(message.ImageURL))
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+			return "", errors.New("WhatsApp image URL must be a public HTTPS URL")
+		}
+		payload.Type = "image"
+		payload.Text = nil
+		payload.Image = &metaImage{Link: parsed.String(), Caption: strings.TrimSpace(message.Body)}
+	} else if len(message.Buttons) > 0 {
 		payload.Type = "interactive"
 		payload.Text = nil
 		payload.Interactive = &metaInteractive{Type: "button", Body: metaInteractiveBody{Text: strings.TrimSpace(message.Body)}}
@@ -119,6 +128,12 @@ type metaMessagePayload struct {
 	Type             string           `json:"type"`
 	Text             *metaText        `json:"text,omitempty"`
 	Interactive      *metaInteractive `json:"interactive,omitempty"`
+	Image            *metaImage       `json:"image,omitempty"`
+}
+
+type metaImage struct {
+	Link    string `json:"link"`
+	Caption string `json:"caption,omitempty"`
 }
 
 type metaText struct {

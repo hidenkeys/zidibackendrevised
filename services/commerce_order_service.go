@@ -25,6 +25,7 @@ type CommerceOrderListInput struct {
 	CustomerID *uuid.UUID
 	Status     *string
 	Statuses   []string
+	Search     string
 	Limit      int
 	Offset     int
 }
@@ -119,6 +120,9 @@ func (s *CommerceOrderService) checkoutCart(ctx context.Context, organizationID 
 		CartID:           cart.ID,
 		OrderNumber:      commerceOrderNumber(now, orderID),
 		CheckoutKey:      checkoutKey,
+		CustomerName:     customer.DisplayName,
+		CustomerPhone:    commerceCustomerPhone(customer),
+		CustomerEmail:    customer.Email,
 		FulfilmentMode:   fulfilmentMode,
 		PaymentExpiresAt: now.Add(commercePaymentReservationLifetime),
 		ActorType:        actorType,
@@ -216,8 +220,17 @@ func (s *CommerceOrderService) ListOrders(ctx context.Context, actor CommerceAct
 	}
 	limit, offset := commercePagination(input.Limit, input.Offset)
 	return s.repo.ListOrders(ctx, organizationID, storeScope(actor), repository.CommerceOrderListFilter{
-		StoreID: input.StoreID, CustomerID: input.CustomerID, Status: input.Status, Statuses: statuses, Limit: limit, Offset: offset,
+		StoreID: input.StoreID, CustomerID: input.CustomerID, Status: input.Status, Statuses: statuses, Search: input.Search, Limit: limit, Offset: offset,
 	})
+}
+
+func commerceCustomerPhone(customer *models.CommerceCustomer) string {
+	for _, identity := range customer.Identities {
+		if identity.Channel == models.CommerceIdentityChannelWhatsApp || identity.Channel == models.CommerceIdentityChannelPhone {
+			return identity.DisplayIdentifier
+		}
+	}
+	return ""
 }
 
 func (s *CommerceOrderService) TransitionOrder(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, orderID uuid.UUID, input TransitionCommerceOrderInput) (*models.CommerceOrder, error) {

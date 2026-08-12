@@ -59,3 +59,24 @@ func TestMetaWhatsAppClientReturnsProviderErrorWithoutTokenData(t *testing.T) {
 		t.Fatalf("unexpected provider error: %v", err)
 	}
 }
+
+func TestMetaWhatsAppClientSendsImageMessage(t *testing.T) {
+	httpClient := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		var payload map[string]interface{}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode image request: %v", err)
+		}
+		image, ok := payload["image"].(map[string]interface{})
+		if payload["type"] != "image" || !ok || image["link"] != "https://cdn.example.com/lemon-tea.jpg" {
+			t.Fatalf("unexpected image payload: %#v", payload)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(bytes.NewBufferString(`{"messages":[{"id":"wamid.image"}]}`))}, nil
+	})}
+	client := NewMetaWhatsAppClient("token", "v23.0", "https://graph.test", httpClient)
+	messageID, err := client.Send(context.Background(), WhatsAppOutboundMessage{
+		PhoneNumberID: "phone-id", To: "2348000000000", Body: "Lemon Tea", ImageURL: "https://cdn.example.com/lemon-tea.jpg",
+	})
+	if err != nil || messageID != "wamid.image" {
+		t.Fatalf("send image: id=%s err=%v", messageID, err)
+	}
+}

@@ -2022,6 +2022,38 @@ paths:
         "409":
           description: Product slug already exists
 
+  /commerce/product-images/upload:
+    post:
+      summary: Upload a product image to the configured media provider
+      operationId: UploadCommerceProductImage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                organization_id:
+                  type: string
+                  format: uuid
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Product image uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceProductImageUpload"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "403":
+          description: Commerce access denied
+
   /commerce/products/{product_id}/variants/{variant_id}:
     patch:
       summary: Update a commerce product variant and its base price
@@ -2576,6 +2608,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: search
+          in: query
+          required: false
+          description: Search by order number, order ID, customer name, or phone number
+          schema:
+            type: string
+            maxLength: 120
         - name: limit
           in: query
           required: false
@@ -4108,6 +4147,10 @@ components:
         status:
           type: string
           enum: [active, inactive]
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceProductImageInput"
 
     UpdateCommerceProductVariantRequest:
       type: object
@@ -4147,6 +4190,24 @@ components:
         sort_order:
           type: integer
           minimum: 0
+
+    CommerceProductImageUpload:
+      type: object
+      required: [url, public_id, width, height, format]
+      properties:
+        url:
+          type: string
+          format: uri
+        public_id:
+          type: string
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        format:
+          type: string
 
     CommerceProduct:
       type: object
@@ -4715,6 +4776,26 @@ components:
           enum: [customer_pickup, customer_rider, merchant_rider]
         enabled:
           type: boolean
+        customer_pays:
+          type: boolean
+          default: false
+        pricing_mode:
+          type: string
+          enum: [none, fixed, manual, provider]
+          default: none
+        fixed_fee_minor:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        quote_provider:
+          type: string
+          maxLength: 50
+          nullable: true
+        disclaimer:
+          type: string
+          maxLength: 500
+          default: ""
 
     CommerceStore:
       type: object
@@ -5258,6 +5339,8 @@ components:
         - customer_id
         - store_id
         - order_number
+        - customer_name
+        - customer_phone
         - fulfilment_mode
         - status
         - currency
@@ -5289,6 +5372,14 @@ components:
           format: uuid
         order_number:
           type: string
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        customer_email:
+          type: string
+          format: email
+          nullable: true
         fulfilment_mode:
           type: string
           enum: [customer_pickup, customer_rider, merchant_rider]

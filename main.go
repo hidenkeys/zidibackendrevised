@@ -16,6 +16,7 @@ import (
 	"github.com/hidenkeys/zidibackend/config"
 	commercefulfilment "github.com/hidenkeys/zidibackend/fulfilment"
 	"github.com/hidenkeys/zidibackend/handlers"
+	"github.com/hidenkeys/zidibackend/media"
 	"github.com/hidenkeys/zidibackend/messaging"
 	"github.com/hidenkeys/zidibackend/middleware"
 	"github.com/hidenkeys/zidibackend/payments"
@@ -87,6 +88,10 @@ func main() {
 	commerceFoundationService := services.NewCommerceFoundationService(commerceFoundationRepo)
 	commerceCatalogueRepo := repository.NewCommerceCatalogueRepoPG(db)
 	commerceCatalogueService := services.NewCommerceCatalogueService(commerceCatalogueRepo, commerceFoundationRepo)
+	commerceCatalogueService.ConfigureImageUploader(media.NewCloudinaryImageUploader(
+		os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"),
+		os.Getenv("CLOUDINARY_UPLOAD_FOLDER"), os.Getenv("CLOUDINARY_API_URL"), nil,
+	))
 	commerceCustomerCartRepo := repository.NewCommerceCustomerCartRepoPG(db)
 	commerceCustomerCartService := services.NewCommerceCustomerCartService(commerceCustomerCartRepo, commerceCustomerCartRepo, commerceCatalogueRepo, commerceFoundationRepo)
 	commerceOrderRepo := repository.NewCommerceOrderRepoPG(db)
@@ -108,7 +113,10 @@ func main() {
 	}
 	commerceFulfilmentService := services.NewCommerceFulfilmentService(
 		commerceFulfilmentRepo, commerceOrderRepo, commerceFoundationRepo,
-		commercefulfilment.NewRegistry(), commerceCodeManager,
+		commercefulfilment.NewRegistry(commercefulfilment.NewUberDirectProvider(
+			os.Getenv("UBER_DIRECT_CLIENT_ID"), os.Getenv("UBER_DIRECT_CLIENT_SECRET"), os.Getenv("UBER_DIRECT_CUSTOMER_ID"),
+			os.Getenv("UBER_DIRECT_TOKEN_URL"), os.Getenv("UBER_DIRECT_API_BASE_URL"), nil,
+		)), commerceCodeManager,
 	)
 	commerceStoreOrderService := services.NewCommerceStoreOrderService(commerceOrderService, commerceFulfilmentService)
 	commerceChannelRepo := repository.NewCommerceChannelRepoPG(db)
@@ -121,11 +129,16 @@ func main() {
 	)
 	commerceChannelDeliveryService := services.NewCommerceChannelDeliveryService(
 		commerceChannelRepo, commerceWhatsAppSender, commerceOrderRepo, commerceFulfilmentRepo, commerceFulfilmentService,
+		messaging.NewConfiguredEmailSender(
+			os.Getenv("BREVO_API_KEY"), os.Getenv("BREVO_SENDER_EMAIL"), os.Getenv("BREVO_SENDER_NAME"),
+			os.Getenv("ZOHO_SMTP_FROM"), os.Getenv("ZOHO_SMTP_PASSWORD"), os.Getenv("COMMERCE_SMTP_HOST"), os.Getenv("COMMERCE_SMTP_ADDRESS"),
+		),
 	)
 	server := handlers.NewServer(db, balanceService, transactionService, orgService, userService, campaignService, customerService, questionService, responseService, paymentService, orderService, commerceFoundationService, commerceCatalogueService, commerceCustomerCartService, commerceOrderService, commercePaymentService, commerceFulfilmentService, commerceStoreOrderService, commerceChannelService)
 
 	app := fiber.New(fiber.Config{
 		ProxyHeader: "X-Forwarded-For",
+		BodyLimit:   6 * 1024 * 1024,
 	})
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{

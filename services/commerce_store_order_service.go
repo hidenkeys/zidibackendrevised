@@ -24,6 +24,7 @@ var commerceOperationalOrderStatuses = []string{
 
 type CommerceStoreOrderListInput struct {
 	StoreID *uuid.UUID
+	Search  string
 	Limit   int
 	Offset  int
 }
@@ -62,6 +63,7 @@ func (s *CommerceStoreOrderService) ListOperationalOrders(ctx context.Context, a
 	orders, total, err := s.orders.ListOrders(ctx, actor, requestedOrganizationID, CommerceOrderListInput{
 		StoreID:  input.StoreID,
 		Statuses: commerceOperationalOrderStatuses,
+		Search:   input.Search,
 		Limit:    input.Limit,
 		Offset:   input.Offset,
 	})

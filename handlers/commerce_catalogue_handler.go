@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -119,6 +121,49 @@ func (s Server) CreateCommerceProduct(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).JSON(commerceProductResponse(product))
 }
 
+func (s Server) UploadCommerceProductImage(c *fiber.Ctx) error {
+	actor, err := commerceActor(c)
+	if err != nil {
+		return commerceError(c, err)
+	}
+	organizationID, err := optionalCommerceOrganizationID(c.FormValue("organization_id"))
+	if err != nil {
+		return commerceError(c, services.ErrCommerceValidation)
+	}
+	fileHeader, err := c.FormFile("file")
+	if err != nil || fileHeader.Size < 1 || fileHeader.Size > 5*1024*1024 {
+		return commerceError(c, services.ErrCommerceValidation)
+	}
+	file, err := fileHeader.Open()
+	if err != nil {
+		return commerceError(c, services.ErrCommerceValidation)
+	}
+	defer file.Close()
+	content, err := io.ReadAll(io.LimitReader(file, 5*1024*1024+1))
+	if err != nil || len(content) > 5*1024*1024 {
+		return commerceError(c, services.ErrCommerceValidation)
+	}
+	result, err := s.commerceCatalogueService.UploadProductImage(c.UserContext(), actor, organizationID, fileHeader.Filename, content)
+	if err != nil {
+		return commerceError(c, err)
+	}
+	return c.Status(http.StatusCreated).JSON(api.CommerceProductImageUpload{
+		Url: result.URL, PublicId: result.PublicID, Width: result.Width, Height: result.Height, Format: strings.ToLower(result.Format),
+	})
+}
+
+func optionalCommerceOrganizationID(value string) (*uuid.UUID, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	parsed, err := uuid.Parse(value)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
+}
+
 func (s Server) ListCommerceProducts(c *fiber.Ctx, params api.ListCommerceProductsParams) error {
 	actor, err := commerceActor(c)
 	if err != nil {
@@ -172,9 +217,16 @@ func (s Server) UpdateCommerceProduct(c *fiber.Ctx, productID uuid.UUID) error {
 	if err := c.BodyParser(&request); err != nil {
 		return commerceError(c, services.ErrCommerceValidation)
 	}
+	images := make([]services.CommerceProductImageInput, 0)
+	if request.Images != nil {
+		images = make([]services.CommerceProductImageInput, 0, len(*request.Images))
+		for _, item := range *request.Images {
+			images = append(images, services.CommerceProductImageInput{URL: item.Url, AltText: optionalString(item.AltText), SortOrder: item.SortOrder})
+		}
+	}
 	product, err := s.commerceCatalogueService.UpdateProduct(c.UserContext(), actor, request.OrganizationId, productID, services.UpdateCommerceProductInput{
 		CategoryID: request.CategoryId, Name: request.Name, Slug: request.Slug,
-		Description: optionalString(request.Description), Currency: request.Currency, Status: string(request.Status),
+		Description: optionalString(request.Description), Currency: request.Currency, Status: string(request.Status), Images: images,
 	})
 	if err != nil {
 		return commerceError(c, err)

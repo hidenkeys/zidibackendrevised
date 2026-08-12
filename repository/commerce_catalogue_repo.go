@@ -179,6 +179,15 @@ func (r *CommerceCatalogueRepoPG) UpdateProduct(ctx context.Context, product *mo
 		if result.RowsAffected == 0 {
 			return ErrCommerceNotFound
 		}
+		if err := tx.Where("organization_id = ? AND product_id = ?", product.OrganizationID, product.ID).
+			Delete(&models.CommerceProductImage{}).Error; err != nil {
+			return err
+		}
+		if len(product.Images) > 0 {
+			if err := tx.Create(&product.Images).Error; err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 	if err != nil {

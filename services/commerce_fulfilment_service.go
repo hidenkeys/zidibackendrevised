@@ -132,9 +132,50 @@ func (s *CommerceFulfilmentService) StartFulfilment(ctx context.Context, actor C
 		VerificationCodeHash: protectedCode.Hash, VerificationCodeCiphertext: protectedCode.Ciphertext,
 		VerificationCodeExpiresAt: now.Add(commerceFulfilmentCodeLifetime), Version: 1,
 	}
-	return s.repo.StartFulfilment(ctx, repository.CommerceStartFulfilmentInput{
+	started, created, err := s.repo.StartFulfilment(ctx, repository.CommerceStartFulfilmentInput{
 		Fulfilment: item, OrderStatus: orderStatus, ActorUserID: actor.UserID, IdempotencyKey: key, Now: now,
 	})
+	if err != nil || started.Mode != models.FulfilmentModeMerchantRider || started.Status != models.CommerceFulfilmentStatusAwaitingQuote {
+		return started, created, err
+	}
+	mode := commerceStoreFulfilmentMode(store, models.FulfilmentModeMerchantRider)
+	if mode == nil {
+		return started, created, nil
+	}
+	quoteInput := CreateCommerceDeliveryQuoteInput{IdempotencyKey: "configured-quote:" + started.ID.String()}
+	switch mode.PricingMode {
+	case "fixed":
+		quoteInput.Source = models.CommerceDeliveryQuoteSourceManual
+		quoteInput.EstimatedFeeMinor = mode.FixedFeeMinor
+	case "provider":
+		quoteInput.Source = models.CommerceDeliveryQuoteSourceProvider
+		if mode.QuoteProvider != nil {
+			quoteInput.Provider = *mode.QuoteProvider
+		}
+	default:
+		return started, created, nil
+	}
+	quoted, quoteErr := s.CreateDeliveryQuote(ctx, actor, requestedOrganizationID, started.ID, quoteInput)
+	if quoteErr != nil {
+		// A provider outage falls back to the ticket's manual quote control.
+		if mode.PricingMode == "provider" {
+			return started, created, nil
+		}
+		return nil, created, quoteErr
+	}
+	return quoted, created, nil
+}
+
+func commerceStoreFulfilmentMode(store *models.CommerceStore, mode string) *models.CommerceStoreFulfilmentMode {
+	if store == nil {
+		return nil
+	}
+	for index := range store.FulfilmentModes {
+		if store.FulfilmentModes[index].Mode == mode && store.FulfilmentModes[index].Enabled {
+			return &store.FulfilmentModes[index]
+		}
+	}
+	return nil
 }
 
 func (s *CommerceFulfilmentService) GetOrderFulfilment(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, orderID uuid.UUID) (*models.CommerceFulfilment, error) {

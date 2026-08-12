@@ -27,6 +27,9 @@ type CommerceCheckoutInput struct {
 	CartID           uuid.UUID
 	OrderNumber      string
 	CheckoutKey      string
+	CustomerName     string
+	CustomerPhone    string
+	CustomerEmail    *string
 	FulfilmentMode   string
 	PaymentExpiresAt time.Time
 	ActorType        string
@@ -51,6 +54,7 @@ type CommerceOrderListFilter struct {
 	CustomerID *uuid.UUID
 	Status     *string
 	Statuses   []string
+	Search     string
 	Limit      int
 	Offset     int
 }
@@ -163,6 +167,9 @@ func (r *CommerceOrderRepoPG) CheckoutCart(ctx context.Context, input CommerceCh
 			StoreID:          cart.StoreID,
 			OrderNumber:      input.OrderNumber,
 			CheckoutKey:      input.CheckoutKey,
+			CustomerName:     input.CustomerName,
+			CustomerPhone:    input.CustomerPhone,
+			CustomerEmail:    input.CustomerEmail,
 			FulfilmentMode:   input.FulfilmentMode,
 			Status:           models.CommerceOrderStatusPendingPayment,
 			Currency:         cart.Currency,
@@ -368,6 +375,15 @@ func (r *CommerceOrderRepoPG) ListOrders(ctx context.Context, organizationID uui
 	}
 	if len(filter.Statuses) > 0 {
 		query = query.Where("commerce_orders.status IN ?", filter.Statuses)
+	}
+	if search := strings.TrimSpace(filter.Search); search != "" {
+		like := "%" + strings.ToLower(search) + "%"
+		query = query.Where(`
+			LOWER(commerce_orders.order_number) LIKE ?
+			OR LOWER(CAST(commerce_orders.id AS TEXT)) LIKE ?
+			OR LOWER(commerce_orders.customer_name) LIKE ?
+			OR LOWER(commerce_orders.customer_phone) LIKE ?
+		`, like, like, like, like)
 	}
 	var total int64
 	if err := query.Count(&total).Error; err != nil {

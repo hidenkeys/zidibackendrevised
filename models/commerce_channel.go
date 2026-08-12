@@ -18,6 +18,7 @@ const (
 	CommerceConversationStateProduct              = "product"
 	CommerceConversationStateQuantity             = "quantity"
 	CommerceConversationStateCart                 = "cart"
+	CommerceConversationStateCustomerName         = "customer_name"
 	CommerceConversationStateFulfilment           = "fulfilment"
 	CommerceConversationStateDeliveryAddress      = "delivery_address"
 	CommerceConversationStatePaymentEmail         = "payment_email"

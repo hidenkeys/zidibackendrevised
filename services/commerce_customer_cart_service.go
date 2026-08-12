@@ -108,6 +108,24 @@ func (s *CommerceCustomerCartService) GetCustomer(ctx context.Context, actor Com
 	return s.customerRepo.GetCustomer(ctx, organizationID, customerID)
 }
 
+func (s *CommerceCustomerCartService) UpdateCustomerForChannel(ctx context.Context, organizationID, customerID uuid.UUID, displayName, emailValue string) (*models.CommerceCustomer, error) {
+	if organizationID == uuid.Nil || customerID == uuid.Nil {
+		return nil, ErrCommerceForbidden
+	}
+	email, err := normalizeCommerceCustomerEmail(emailValue)
+	if err != nil {
+		return nil, err
+	}
+	if email == nil && strings.TrimSpace(emailValue) != "" {
+		return nil, fmt.Errorf("%w: a valid email is required", ErrCommerceValidation)
+	}
+	displayName = strings.TrimSpace(displayName)
+	if len(displayName) > 200 {
+		return nil, fmt.Errorf("%w: display name is too long", ErrCommerceValidation)
+	}
+	return s.customerRepo.UpdateCustomerProfile(ctx, organizationID, customerID, displayName, email)
+}
+
 func (s *CommerceCustomerCartService) CreateCart(ctx context.Context, actor CommerceActor, requestedOrganizationID *uuid.UUID, input CreateCommerceCartInput) (*CommerceCartView, bool, error) {
 	if !canAccessCommerce(actor.Role) {
 		return nil, false, ErrCommerceForbidden

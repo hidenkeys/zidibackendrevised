@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ const commerceCartMaxQuantity = 100
 type CommerceCustomerRepository interface {
 	ResolveCustomerIdentity(ctx context.Context, customer *models.CommerceCustomer, identity *models.CommerceCustomerIdentity) (*models.CommerceCustomer, bool, error)
 	GetCustomer(ctx context.Context, organizationID, customerID uuid.UUID) (*models.CommerceCustomer, error)
+	UpdateCustomerProfile(ctx context.Context, organizationID, customerID uuid.UUID, displayName string, email *string) (*models.CommerceCustomer, error)
 }
 
 type CommerceCartRepository interface {
@@ -100,6 +102,26 @@ func (r *CommerceCustomerCartRepoPG) GetCustomer(ctx context.Context, organizati
 		return nil, fmt.Errorf("get commerce customer: %w", err)
 	}
 	return &customer, nil
+}
+
+func (r *CommerceCustomerCartRepoPG) UpdateCustomerProfile(ctx context.Context, organizationID, customerID uuid.UUID, displayName string, email *string) (*models.CommerceCustomer, error) {
+	updates := map[string]interface{}{"updated_at": time.Now().UTC()}
+	if value := strings.TrimSpace(displayName); value != "" {
+		updates["display_name"] = value
+	}
+	if email != nil {
+		updates["email"] = *email
+	}
+	result := r.db.WithContext(ctx).Model(&models.CommerceCustomer{}).
+		Where("organization_id = ? AND id = ? AND deleted_at IS NULL", organizationID, customerID).
+		Updates(updates)
+	if result.Error != nil {
+		return nil, fmt.Errorf("update commerce customer profile: %w", result.Error)
+	}
+	if result.RowsAffected != 1 {
+		return nil, ErrCommerceNotFound
+	}
+	return r.GetCustomer(ctx, organizationID, customerID)
 }
 
 func (r *CommerceCustomerCartRepoPG) GetOrCreateActiveCart(ctx context.Context, cart *models.CommerceCart) (*models.CommerceCart, bool, error) {

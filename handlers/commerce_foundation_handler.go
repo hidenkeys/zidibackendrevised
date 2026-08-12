@@ -93,8 +93,9 @@ func (s Server) CreateCommerceStore(c *fiber.Ctx) error {
 		modes = make([]services.CommerceStoreFulfilmentModeInput, 0, len(*request.FulfilmentModes))
 		for _, item := range *request.FulfilmentModes {
 			modes = append(modes, services.CommerceStoreFulfilmentModeInput{
-				Mode:    string(item.Mode),
-				Enabled: item.Enabled,
+				Mode: string(item.Mode), Enabled: item.Enabled, CustomerPays: optionalBoolValue(item.CustomerPays),
+				PricingMode: optionalCommercePricingMode(item.PricingMode), FixedFeeMinor: item.FixedFeeMinor,
+				QuoteProvider: optionalString(item.QuoteProvider), Disclaimer: optionalString(item.Disclaimer),
 			})
 		}
 	}
@@ -251,9 +252,9 @@ func commerceStoreResponse(store *models.CommerceStore) api.CommerceStore {
 	modes := make([]api.CommerceStoreFulfilmentMode, 0, len(store.FulfilmentModes))
 	for _, item := range store.FulfilmentModes {
 		modes = append(modes, api.CommerceStoreFulfilmentMode{
-			Id:      item.ID,
-			Mode:    api.CommerceStoreFulfilmentModeMode(item.Mode),
-			Enabled: item.Enabled,
+			Id: item.ID, Mode: api.CommerceStoreFulfilmentModeMode(item.Mode), Enabled: item.Enabled,
+			CustomerPays: &item.CustomerPays, PricingMode: commercePricingModeResponse(item.PricingMode),
+			FixedFeeMinor: item.FixedFeeMinor, QuoteProvider: item.QuoteProvider, Disclaimer: &item.Disclaimer,
 		})
 	}
 	return api.CommerceStore{
@@ -309,9 +310,27 @@ func commerceStoreModeInputs(items *[]api.CommerceStoreFulfilmentModeInput) []se
 	}
 	result := make([]services.CommerceStoreFulfilmentModeInput, 0, len(*items))
 	for _, item := range *items {
-		result = append(result, services.CommerceStoreFulfilmentModeInput{Mode: string(item.Mode), Enabled: item.Enabled})
+		result = append(result, services.CommerceStoreFulfilmentModeInput{
+			Mode: string(item.Mode), Enabled: item.Enabled, CustomerPays: optionalBoolValue(item.CustomerPays),
+			PricingMode: optionalCommercePricingMode(item.PricingMode), FixedFeeMinor: item.FixedFeeMinor,
+			QuoteProvider: optionalString(item.QuoteProvider), Disclaimer: optionalString(item.Disclaimer),
+		})
 	}
 	return result
+}
+
+func optionalBoolValue(value *bool) bool { return value != nil && *value }
+
+func optionalCommercePricingMode(value *api.CommerceStoreFulfilmentModeInputPricingMode) string {
+	if value == nil {
+		return "none"
+	}
+	return string(*value)
+}
+
+func commercePricingModeResponse(value string) *api.CommerceStoreFulfilmentModePricingMode {
+	mode := api.CommerceStoreFulfilmentModePricingMode(value)
+	return &mode
 }
 
 func commerceError(c *fiber.Ctx, err error) error {

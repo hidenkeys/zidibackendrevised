@@ -156,6 +156,36 @@ func TestCommerceMerchantAdminUpdatesCategory(t *testing.T) {
 	}
 }
 
+func TestCommerceMerchantAdminUpdatesProductImages(t *testing.T) {
+	organizationID := uuid.New()
+	productID := uuid.New()
+	repo := &commerceCatalogueRepoStub{}
+	service := NewCommerceCatalogueService(repo, &commerceFoundationRepoStub{})
+	actor := CommerceActor{UserID: uuid.New(), OrganizationID: organizationID, Role: utils.RoleMerchantAdmin}
+
+	product, err := service.UpdateProduct(context.Background(), actor, nil, productID, UpdateCommerceProductInput{
+		CategoryID: uuid.New(), Name: "Lemon Tea", Slug: "lemon-tea", Currency: "NGN", Status: models.CommerceStatusActive,
+		Images: []CommerceProductImageInput{{URL: "https://cdn.example.com/lemon-tea.jpg", AltText: "Lemon Tea", SortOrder: 0}},
+	})
+	if err != nil {
+		t.Fatalf("update product: %v", err)
+	}
+	if len(product.Images) != 1 || product.Images[0].URL != "https://cdn.example.com/lemon-tea.jpg" || repo.productCreated == nil || len(repo.productCreated.Images) != 1 {
+		t.Fatalf("updated product images were not persisted: %#v", product.Images)
+	}
+}
+
+func TestCommerceProductImageMustUseHTTPS(t *testing.T) {
+	service := NewCommerceCatalogueService(&commerceCatalogueRepoStub{}, &commerceFoundationRepoStub{})
+	_, err := service.UpdateProduct(context.Background(), CommerceActor{UserID: uuid.New(), OrganizationID: uuid.New(), Role: utils.RoleMerchantAdmin}, nil, uuid.New(), UpdateCommerceProductInput{
+		CategoryID: uuid.New(), Name: "Lemon Tea", Slug: "lemon-tea", Currency: "NGN", Status: models.CommerceStatusActive,
+		Images: []CommerceProductImageInput{{URL: "http://example.com/lemon-tea.jpg", SortOrder: 0}},
+	})
+	if !errors.Is(err, ErrCommerceValidation) {
+		t.Fatalf("expected validation error for non-HTTPS image, got %v", err)
+	}
+}
+
 func TestCommerceMerchantAdminUpdatesVariantBasePrice(t *testing.T) {
 	organizationID, productID, variantID := uuid.New(), uuid.New(), uuid.New()
 	repo := &commerceCatalogueRepoStub{variant: &models.CommerceProductVariant{

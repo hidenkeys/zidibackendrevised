@@ -158,9 +158,11 @@ func (r *CommerceFulfilmentRepoPG) StartFulfilment(ctx context.Context, input Co
 			input.Fulfilment.Status, models.CommerceFulfilmentActorUser, &input.ActorUserID, "order is ready for fulfilment", input.IdempotencyKey, nil, input.Now); err != nil {
 			return err
 		}
-		if err := createCommerceFulfilmentOutbox(tx, &input.Fulfilment, models.CommerceOutboxTopicFulfilmentReady,
-			input.IdempotencyKey+":ready", map[string]interface{}{"mode": input.Fulfilment.Mode}, input.Now); err != nil {
-			return err
+		if input.Fulfilment.Mode != models.FulfilmentModeMerchantRider {
+			if err := createCommerceFulfilmentOutbox(tx, &input.Fulfilment, models.CommerceOutboxTopicFulfilmentReady,
+				input.IdempotencyKey+":ready", map[string]interface{}{"mode": input.Fulfilment.Mode}, input.Now); err != nil {
+				return err
+			}
 		}
 		created = true
 		return nil
@@ -329,7 +331,7 @@ func (r *CommerceFulfilmentRepoPG) DecideDeliveryQuote(ctx context.Context, inpu
 		}
 
 		from := fulfilment.Status
-		target := models.CommerceFulfilmentStatusAwaitingQuote
+		target := models.CommerceFulfilmentStatusReadyForPickup
 		eventType := models.CommerceFulfilmentEventQuoteRejected
 		quoteUpdates := map[string]interface{}{"status": models.CommerceDeliveryQuoteStatusRejected, "rejected_at": input.Now, "updated_at": input.Now}
 		if input.Decision == models.CommerceDeliveryQuoteStatusAccepted {
@@ -356,7 +358,33 @@ func (r *CommerceFulfilmentRepoPG) DecideDeliveryQuote(ctx context.Context, inpu
 			return createCommerceOrderAuditEvent(tx, fulfilment, models.CommerceOrderEventRiderRequested,
 				models.CommerceOrderStatusFulfilmentPending, orderActorType, input.ActorUserID, "customer accepted delivery estimate", input.IdempotencyKey+":order", metadata, input.Now)
 		}
-		return nil
+		orderActorType := models.CommerceOrderActorUser
+		if input.ActorType == models.CommerceFulfilmentActorCustomer {
+			orderActorType = models.CommerceOrderActorChannel
+		}
+		var order models.CommerceOrder
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("organization_id = ? AND id = ?", fulfilment.OrganizationID, fulfilment.OrderID).First(&order).Error; err != nil {
+			return err
+		}
+		if order.Status != models.CommerceOrderStatusFulfilmentPending {
+			return ErrCommerceFulfilmentState
+		}
+		if err := tx.Model(&order).Updates(map[string]interface{}{
+			"fulfilment_mode": models.FulfilmentModeCustomerPickup,
+			"status":          models.CommerceOrderStatusReadyForPickup,
+			"version":         gorm.Expr("version + 1"), "updated_at": input.Now,
+		}).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(fulfilment).Updates(map[string]interface{}{
+			"mode": models.FulfilmentModeCustomerPickup, "destination_address": nil,
+			"destination_latitude": nil, "destination_longitude": nil, "updated_at": input.Now,
+		}).Error; err != nil {
+			return err
+		}
+		return createCommerceOrderAuditEvent(tx, fulfilment, models.CommerceOrderEventReadyForPickup,
+			models.CommerceOrderStatusReadyForPickup, orderActorType, input.ActorUserID, "customer declined delivery and switched to pickup", input.IdempotencyKey+":order", metadata, input.Now)
 	})
 	if err != nil {
 		return nil, mapCommerceFulfilmentWriteError("decide commerce delivery quote", err)

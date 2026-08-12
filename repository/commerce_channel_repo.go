@@ -36,8 +36,16 @@ type CommerceChannelReplyOption struct {
 }
 
 type CommerceChannelReply struct {
-	Body    string
-	Options []CommerceChannelReplyOption
+	Body     string
+	Options  []CommerceChannelReplyOption
+	ImageURL string
+}
+
+type CommerceEmailNotification struct {
+	OrderID   uuid.UUID
+	Recipient string
+	Subject   string
+	HTMLBody  string
 }
 
 type CommerceConversationCompletion struct {
@@ -87,8 +95,11 @@ type CommerceChannelRepository interface {
 	ListComplaints(ctx context.Context, organizationID uuid.UUID, filter CommerceComplaintFilter) ([]models.CommerceComplaint, int64, error)
 	UpdateComplaint(ctx context.Context, organizationID, complaintID uuid.UUID, update CommerceComplaintUpdate) (*models.CommerceComplaint, error)
 	ClaimCustomerOutboxEvents(ctx context.Context, limit int, now time.Time) ([]models.CommerceOutboxEvent, error)
-	QueueOutboxNotification(ctx context.Context, event *models.CommerceOutboxEvent, customerID uuid.UUID, reply CommerceChannelReply, now time.Time) error
+	QueueOutboxNotification(ctx context.Context, event *models.CommerceOutboxEvent, customerID uuid.UUID, reply CommerceChannelReply, email *CommerceEmailNotification, now time.Time) error
 	MarkOutboxEventFailed(ctx context.Context, eventID uuid.UUID, reason string, retryAt time.Time) error
+	ClaimEmailMessages(ctx context.Context, limit int, now time.Time) ([]models.CommerceEmailMessage, error)
+	MarkEmailMessageSent(ctx context.Context, messageID uuid.UUID, now time.Time) error
+	MarkEmailMessageFailed(ctx context.Context, messageID uuid.UUID, reason string, retryAt time.Time) error
 }
 
 type CommerceChannelRepoPG struct{ db *gorm.DB }
@@ -400,7 +411,7 @@ func (r *CommerceChannelRepoPG) ClaimCustomerOutboxEvents(ctx context.Context, l
 	return items, err
 }
 
-func (r *CommerceChannelRepoPG) QueueOutboxNotification(ctx context.Context, event *models.CommerceOutboxEvent, customerID uuid.UUID, reply CommerceChannelReply, now time.Time) error {
+func (r *CommerceChannelRepoPG) QueueOutboxNotification(ctx context.Context, event *models.CommerceOutboxEvent, customerID uuid.UUID, reply CommerceChannelReply, email *CommerceEmailNotification, now time.Time) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var configuration models.CommerceChannelConfiguration
 		if err := tx.Where("organization_id = ? AND channel = ? AND status = ?", event.OrganizationID, models.CommerceChannelWhatsApp, models.CommerceStatusActive).First(&configuration).Error; err != nil {
@@ -438,6 +449,17 @@ func (r *CommerceChannelRepoPG) QueueOutboxNotification(ctx context.Context, eve
 		if err := tx.Create(&message).Error; err != nil {
 			return err
 		}
+		if email != nil && strings.TrimSpace(email.Recipient) != "" {
+			emailMessage := models.CommerceEmailMessage{
+				ID: uuid.New(), OrganizationID: event.OrganizationID, CustomerID: customerID,
+				OrderID: email.OrderID, OutboxEventID: event.ID, Recipient: strings.TrimSpace(email.Recipient),
+				Subject: strings.TrimSpace(email.Subject), HTMLBody: email.HTMLBody,
+				Status: models.CommerceEmailStatusPending, AvailableAt: now,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&emailMessage).Error; err != nil {
+				return err
+			}
+		}
 		result := tx.Model(&models.CommerceOutboxEvent{}).Where("id = ? AND status = ?", event.ID, models.CommerceOutboxStatusProcessing).Updates(map[string]interface{}{
 			"status": models.CommerceOutboxStatusDelivered, "processed_at": now, "locked_at": nil, "last_error": nil, "updated_at": now,
 		})
@@ -449,6 +471,51 @@ func (r *CommerceChannelRepoPG) QueueOutboxNotification(ctx context.Context, eve
 		}
 		return nil
 	})
+}
+
+func (r *CommerceChannelRepoPG) ClaimEmailMessages(ctx context.Context, limit int, now time.Time) ([]models.CommerceEmailMessage, error) {
+	var items []models.CommerceEmailMessage
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		staleBefore := now.Add(-2 * time.Minute)
+		if err := tx.Model(&models.CommerceEmailMessage{}).
+			Where("status = ? AND locked_at < ?", models.CommerceEmailStatusProcessing, staleBefore).
+			Updates(map[string]interface{}{"status": models.CommerceEmailStatusFailed, "locked_at": nil, "available_at": now, "last_error": "stale email lease recovered", "updated_at": now}).Error; err != nil {
+			return err
+		}
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+			Where("status IN ? AND available_at <= ? AND attempts < 8", []string{models.CommerceEmailStatusPending, models.CommerceEmailStatusFailed}, now).
+			Order("created_at ASC").Limit(limit).Find(&items).Error; err != nil {
+			return err
+		}
+		for index := range items {
+			if err := tx.Model(&models.CommerceEmailMessage{}).Where("id = ?", items[index].ID).
+				Updates(map[string]interface{}{"status": models.CommerceEmailStatusProcessing, "attempts": gorm.Expr("attempts + 1"), "locked_at": now, "updated_at": now}).Error; err != nil {
+				return err
+			}
+			items[index].Attempts++
+		}
+		return nil
+	})
+	return items, err
+}
+
+func (r *CommerceChannelRepoPG) MarkEmailMessageSent(ctx context.Context, messageID uuid.UUID, now time.Time) error {
+	result := r.db.WithContext(ctx).Model(&models.CommerceEmailMessage{}).
+		Where("id = ? AND status = ?", messageID, models.CommerceEmailStatusProcessing).
+		Updates(map[string]interface{}{"status": models.CommerceEmailStatusSent, "sent_at": now, "locked_at": nil, "last_error": nil, "updated_at": now})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return ErrCommerceConflict
+	}
+	return nil
+}
+
+func (r *CommerceChannelRepoPG) MarkEmailMessageFailed(ctx context.Context, messageID uuid.UUID, reason string, retryAt time.Time) error {
+	return r.db.WithContext(ctx).Model(&models.CommerceEmailMessage{}).
+		Where("id = ? AND status = ?", messageID, models.CommerceEmailStatusProcessing).
+		Updates(map[string]interface{}{"status": models.CommerceEmailStatusFailed, "available_at": retryAt, "locked_at": nil, "last_error": truncateCommerceChannelError(reason), "updated_at": time.Now().UTC()}).Error
 }
 
 func (r *CommerceChannelRepoPG) MarkOutboxEventFailed(ctx context.Context, eventID uuid.UUID, reason string, retryAt time.Time) error {
@@ -471,7 +538,10 @@ func commerceChannelConfigurationResult(item *models.CommerceChannelConfiguratio
 func commerceReplyPayload(reply CommerceChannelReply) (json.RawMessage, string, error) {
 	messageType := "text"
 	payload := map[string]interface{}{}
-	if len(reply.Options) > 0 {
+	if strings.TrimSpace(reply.ImageURL) != "" {
+		messageType = "image"
+		payload["image_url"] = strings.TrimSpace(reply.ImageURL)
+	} else if len(reply.Options) > 0 {
 		messageType = "interactive"
 		payload["buttons"] = reply.Options
 	}

@@ -31,6 +31,7 @@ func (s Server) ListCommerceStoreOrders(c *fiber.Ctx, params api.ListCommerceSto
 
 	views, total, err := s.commerceStoreOrderService.ListOperationalOrders(c.UserContext(), actor, params.OrganizationId, services.CommerceStoreOrderListInput{
 		StoreID: params.StoreId,
+		Search:  optionalString(params.Search),
 		Limit:   limit,
 		Offset:  offset,
 	})

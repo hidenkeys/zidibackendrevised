@@ -376,6 +376,120 @@ func TestCommerceWhatsAppAIOrderStartBuildsCartFromNaturalLanguage(t *testing.T)
 	}
 }
 
+func TestCommerceWhatsAppAIOrderStartCollectsMissingQuantityAfterSelectingVariant(t *testing.T) {
+	organizationID, customerID, storeID, categoryID, variantID, cartID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	openMinute, closeMinute := 0, 1440
+	store := models.CommerceStore{
+		ID: storeID, OrganizationID: organizationID, Name: "Jara Mall", Address: "Ikeja", Timezone: "Africa/Lagos", Status: models.CommerceStatusActive,
+		Hours: []models.CommerceStoreHour{{DayOfWeek: int(time.Monday), OpenMinute: &openMinute, CloseMinute: &closeMinute}},
+	}
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{},
+		&commerceFoundationRepoStub{listStores: []models.CommerceStore{store}},
+		&commerceCatalogueRepoStub{storeCatalogue: []repository.CommerceStoreCatalogueEntry{{
+			StoreID: storeID, CategoryID: categoryID, CategoryName: "Milkshakes",
+			ProductName: "Blueberry Smoothie", ProductCurrency: "NGN", VariantID: variantID,
+			VariantName: "Regular", EffectivePriceMinor: 360000, Enabled: true, AvailableQuantity: 10,
+		}}},
+		&commerceChannelCustomerStub{cartID: cartID},
+		&commerceChannelOrderStub{},
+		&commerceChannelPaymentStub{},
+		&commerceChannelFulfilmentStub{},
+	)
+	service.SetAIProvider(&commerceAIProviderStub{output: &CommerceAIOrderInterpretation{
+		Intent: "place_order", Confidence: 0.91,
+		Items: []CommerceAIInterpretedItem{{ProductQuery: "milkshake", Quantity: 0}},
+	}})
+	service.now = func() time.Time { return time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC) }
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Customer"}
+	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStateIntent, Context: json.RawMessage(`{}`)}
+
+	state, intent, contextValue, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		customer,
+		conversation,
+		CommerceChannelInbound{Text: "so i will like to place an order for milkshakes"},
+	)
+	if err != nil {
+		t.Fatalf("AI missing quantity prompt failed: %v", err)
+	}
+	if state != models.CommerceConversationStateQuantity || intent != models.CommerceConversationIntentOrder || contextValue.StoreID == nil || contextValue.VariantID == nil || len(replies) != 1 {
+		t.Fatalf("missing quantity did not retain selected item context: state=%s intent=%s context=%+v replies=%+v", state, intent, contextValue, replies)
+	}
+
+	encoded, _ := json.Marshal(contextValue)
+	conversation.State, conversation.CurrentIntent, conversation.Context = state, optionalChannelString(intent), encoded
+	state, intent, contextValue, replies, err = service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		customer,
+		conversation,
+		CommerceChannelInbound{Text: "2"},
+	)
+	if err != nil {
+		t.Fatalf("quantity follow-up failed: %v", err)
+	}
+	if state != models.CommerceConversationStateCart || intent != models.CommerceConversationIntentOrder || contextValue.CartID == nil || len(replies) != 1 {
+		t.Fatalf("quantity follow-up did not build cart: state=%s intent=%s context=%+v replies=%+v", state, intent, contextValue, replies)
+	}
+	if !strings.Contains(replies[0].Body, "x2") {
+		t.Fatalf("cart reply does not include quantity: %q", replies[0].Body)
+	}
+}
+
+func TestCommerceWhatsAppAIOrderStartAsksProductBeforeQuantityForCategoryOnlyRequest(t *testing.T) {
+	organizationID, customerID, storeID, categoryID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	firstVariantID, secondVariantID := uuid.New(), uuid.New()
+	openMinute, closeMinute := 0, 1440
+	store := models.CommerceStore{
+		ID: storeID, OrganizationID: organizationID, Name: "Jara Mall", Address: "Ikeja", Timezone: "Africa/Lagos", Status: models.CommerceStatusActive,
+		Hours: []models.CommerceStoreHour{{DayOfWeek: int(time.Monday), OpenMinute: &openMinute, CloseMinute: &closeMinute}},
+	}
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{},
+		&commerceFoundationRepoStub{listStores: []models.CommerceStore{store}},
+		&commerceCatalogueRepoStub{storeCatalogue: []repository.CommerceStoreCatalogueEntry{
+			{
+				StoreID: storeID, CategoryID: categoryID, CategoryName: "Milkshakes",
+				ProductName: "Blueberry Smoothie", ProductCurrency: "NGN", VariantID: firstVariantID,
+				VariantName: "Regular", EffectivePriceMinor: 360000, Enabled: true, AvailableQuantity: 10,
+			},
+			{
+				StoreID: storeID, CategoryID: categoryID, CategoryName: "Milkshakes",
+				ProductName: "Strawberry Smoothie", ProductCurrency: "NGN", VariantID: secondVariantID,
+				VariantName: "Regular", EffectivePriceMinor: 360000, Enabled: true, AvailableQuantity: 10,
+			},
+		}},
+		&commerceChannelCustomerStub{},
+		&commerceChannelOrderStub{},
+		&commerceChannelPaymentStub{},
+		&commerceChannelFulfilmentStub{},
+	)
+	service.SetAIProvider(&commerceAIProviderStub{output: &CommerceAIOrderInterpretation{
+		Intent: "place_order", Confidence: 0.91,
+		Items: []CommerceAIInterpretedItem{{ProductQuery: "milkshakes", Quantity: 0}},
+	}})
+	service.now = func() time.Time { return time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC) }
+
+	state, intent, contextValue, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		&models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Customer"},
+		&models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStateIntent, Context: json.RawMessage(`{}`)},
+		CommerceChannelInbound{Text: "so i will like to place an order for milkshakes"},
+	)
+	if err != nil {
+		t.Fatalf("AI category-only prompt failed: %v", err)
+	}
+	if state != models.CommerceConversationStateProduct || intent != models.CommerceConversationIntentOrder || contextValue.OptionKind != "product" || len(contextValue.OptionIDs) != 2 {
+		t.Fatalf("category-only request did not ask product first: state=%s intent=%s context=%+v replies=%+v", state, intent, contextValue, replies)
+	}
+	if len(replies) == 0 || !strings.Contains(replies[len(replies)-1].Body, "Choose a product") {
+		t.Fatalf("product selection prompt missing: replies=%+v", replies)
+	}
+}
+
 func TestCommerceWhatsAppAIOrderStartFallsBackWhenUncertain(t *testing.T) {
 	organizationID, customerID := uuid.New(), uuid.New()
 	service := NewCommerceChannelService(
@@ -552,7 +666,7 @@ func TestCommerceWhatsAppOrderPromptRestartsStaleQuantitySession(t *testing.T) {
 		&models.CommerceChannelConfiguration{OrganizationID: organizationID},
 		&models.CommerceCustomer{ID: customerID, OrganizationID: organizationID},
 		conversation,
-		CommerceChannelInbound{Text: "Hi Zidi, I would like to place an order from Bing Chun Nigeria."},
+		CommerceChannelInbound{Text: "hi zidi"},
 	)
 	if err != nil {
 		t.Fatalf("restart prompt failed: %v", err)

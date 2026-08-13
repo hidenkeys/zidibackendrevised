@@ -489,7 +489,13 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		return models.CommerceConversationStateQuantity, intent, conversationContext, []repository.CommerceChannelReply{{Body: "How many would you like? Enter a quantity from 1 to 100."}}, nil
 	case models.CommerceConversationStateQuantity:
 		quantity, err := strconv.Atoi(command)
-		if err != nil || quantity < 1 || quantity > commerceCartMaxQuantity || conversationContext.StoreID == nil || conversationContext.VariantID == nil {
+		if conversationContext.StoreID == nil || conversationContext.VariantID == nil {
+			return models.CommerceConversationStateLocation, models.CommerceConversationIntentOrder, commerceConversationContext{}, []repository.CommerceChannelReply{{
+				Body:    "I need to confirm the store and product again before quantity. Share your WhatsApp location to use the nearest open store, or choose List stores.",
+				Options: []repository.CommerceChannelReplyOption{{ID: "stores:list", Title: "List stores"}},
+			}}, nil
+		}
+		if err != nil || quantity < 1 || quantity > commerceCartMaxQuantity {
 			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter a quantity from 1 to 100."}}, nil
 		}
 		cart, _, err := s.customers.CreateCartForChannel(ctx, configuration.OrganizationID, customer.ID, *conversationContext.StoreID)
@@ -675,12 +681,13 @@ func (s *CommerceChannelService) tryAIOrderStart(ctx context.Context, configurat
 		return "", "", conversationContext, nil, false, nil
 	}
 	item := interpretation.Items[0]
-	if item.Quantity < 1 || item.Quantity > commerceCartMaxQuantity {
-		return models.CommerceConversationStateQuantity, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{{Body: "How many would you like? Enter a quantity from 1 to 100."}}, true, nil
+	matchItem := item
+	if matchItem.Quantity < 1 || matchItem.Quantity > commerceCartMaxQuantity {
+		matchItem.Quantity = 1
 	}
 	matchesByStore := make([]storeCatalogue, 0)
 	for _, catalogue := range catalogues {
-		matches := commerceAIMatchCatalogueEntries(catalogue.entries, item)
+		matches := commerceAIMatchCatalogueEntries(catalogue.entries, matchItem)
 		if len(matches) > 0 {
 			matchesByStore = append(matchesByStore, storeCatalogue{store: catalogue.store, entries: matches})
 		}
@@ -704,6 +711,10 @@ func (s *CommerceChannelService) tryAIOrderStart(ctx context.Context, configurat
 		conversationContext.OptionKind = "product"
 		conversationContext.OptionIDs = commerceVariantIDs(selected.entries)
 		return models.CommerceConversationStateProduct, models.CommerceConversationIntentOrder, conversationContext, commerceProductListReplies(selected.entries), true, nil
+	}
+	conversationContext.VariantID = &selected.entries[0].VariantID
+	if item.Quantity < 1 || item.Quantity > commerceCartMaxQuantity {
+		return models.CommerceConversationStateQuantity, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{{Body: "How many would you like? Enter a quantity from 1 to 100."}}, true, nil
 	}
 	cart, _, err := s.customers.CreateCartForChannel(ctx, configuration.OrganizationID, customer.ID, selected.store.ID)
 	if err != nil {
@@ -1185,6 +1196,9 @@ func isCommerceRestartOrderCommand(value string) bool {
 	case "hi", "hello", "hey", "start", "order", "shop", "intent:order":
 		return true
 	default:
+		if normalized == "hi zidi" || normalized == "hello zidi" || normalized == "hey zidi" {
+			return true
+		}
 		return strings.Contains(normalized, "would like to place an order") ||
 			strings.Contains(normalized, "place an order from")
 	}

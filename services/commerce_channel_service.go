@@ -314,6 +314,7 @@ type commerceConversationContext struct {
 	DestinationLongitude *float64    `json:"destination_longitude,omitempty"`
 	OptionKind           string      `json:"option_kind,omitempty"`
 	OptionIDs            []uuid.UUID `json:"option_ids,omitempty"`
+	PendingQuantity      int         `json:"pending_quantity,omitempty"`
 	PaymentEmail         string      `json:"payment_email,omitempty"`
 }
 
@@ -439,6 +440,10 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 			conversationContext.StoreID = &stores[0].ID
 			return s.categoryStep(ctx, configuration.OrganizationID, conversationContext, "We selected "+stores[0].Name+", the nearest available store.")
 		}
+		if storeID, ok := selectCommerceStoreByText(command, stores, nil); ok {
+			conversationContext.StoreID = &storeID
+			return s.categoryStep(ctx, configuration.OrganizationID, conversationContext, "We selected "+commerceStoreName(stores, storeID)+".")
+		}
 		if command == "stores:list" || command == "list" || command == "list stores" {
 			conversationContext.OptionKind = "store"
 			conversationContext.OptionIDs = commerceStoreIDs(stores)
@@ -447,12 +452,15 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Share a location or reply List stores."}}, nil
 	case models.CommerceConversationStateStore:
 		storeID, ok := selectCommerceOption(command, "store", conversationContext)
-		if !ok {
-			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Choose a store using its number."}}, nil
-		}
 		stores, err := s.availableStores(ctx, configuration.OrganizationID, nil, nil)
 		if err != nil {
 			return state, intent, conversationContext, nil, err
+		}
+		if !ok {
+			storeID, ok = selectCommerceStoreByText(command, stores, conversationContext.OptionIDs)
+		}
+		if !ok {
+			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Choose a store using its number or name."}}, nil
 		}
 		if !commerceStoreIncluded(stores, storeID) {
 			return models.CommerceConversationStateLocation, intent, commerceConversationContext{}, []repository.CommerceChannelReply{{Body: "That store is closed or unavailable now. Share a location or choose List stores again."}}, nil
@@ -460,13 +468,25 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		conversationContext.StoreID = &storeID
 		return s.categoryStep(ctx, configuration.OrganizationID, conversationContext, "")
 	case models.CommerceConversationStateCategory:
-		categoryID, ok := selectCommerceOption(command, "category", conversationContext)
-		if !ok || conversationContext.StoreID == nil {
+		if conversationContext.StoreID == nil {
 			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Choose a category using its number."}}, nil
 		}
 		entries, err := s.availableCatalogue(ctx, configuration.OrganizationID, *conversationContext.StoreID)
 		if err != nil {
 			return state, intent, conversationContext, nil, err
+		}
+		if isCommerceCategoryListCommand(command) {
+			return s.categoryStep(ctx, configuration.OrganizationID, conversationContext, "")
+		}
+		categoryID, ok := selectCommerceOption(command, "category", conversationContext)
+		if !ok {
+			categoryID, ok = selectCommerceCategoryByText(command, entries, conversationContext.OptionIDs)
+		}
+		if !ok {
+			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Choose a category using its number or name."}}, nil
+		}
+		if quantity := commerceQuantityFromText(command); quantity > 0 {
+			conversationContext.PendingQuantity = quantity
 		}
 		products := make([]repository.CommerceStoreCatalogueEntry, 0)
 		for _, entry := range entries {
@@ -482,10 +502,26 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		return models.CommerceConversationStateProduct, intent, conversationContext, commerceProductListReplies(products), nil
 	case models.CommerceConversationStateProduct:
 		variantID, ok := selectCommerceOption(command, "product", conversationContext)
+		products := []repository.CommerceStoreCatalogueEntry{}
+		if conversationContext.StoreID != nil {
+			entries, err := s.availableCatalogue(ctx, configuration.OrganizationID, *conversationContext.StoreID)
+			if err != nil {
+				return state, intent, conversationContext, nil, err
+			}
+			products = commerceCatalogueEntriesByVariants(entries, conversationContext.OptionIDs)
+		}
 		if !ok {
-			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Choose a product using its number."}}, nil
+			variantID, ok = selectCommerceProductByText(command, products, conversationContext.OptionIDs)
+		}
+		if !ok {
+			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Choose a product using its number or name."}}, nil
 		}
 		conversationContext.VariantID = &variantID
+		if conversationContext.PendingQuantity > 0 {
+			quantity := conversationContext.PendingQuantity
+			conversationContext.PendingQuantity = 0
+			return s.addSelectedVariantToCart(ctx, configuration.OrganizationID, customer.ID, intent, conversationContext, quantity)
+		}
 		return models.CommerceConversationStateQuantity, intent, conversationContext, []repository.CommerceChannelReply{{Body: "How many would you like? Enter a quantity from 1 to 100."}}, nil
 	case models.CommerceConversationStateQuantity:
 		quantity, err := strconv.Atoi(command)
@@ -498,20 +534,7 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		if err != nil || quantity < 1 || quantity > commerceCartMaxQuantity {
 			return state, intent, conversationContext, []repository.CommerceChannelReply{{Body: "Enter a quantity from 1 to 100."}}, nil
 		}
-		cart, _, err := s.customers.CreateCartForChannel(ctx, configuration.OrganizationID, customer.ID, *conversationContext.StoreID)
-		if err != nil {
-			return state, intent, conversationContext, nil, err
-		}
-		cart, err = s.customers.SetCartItemForChannel(ctx, configuration.OrganizationID, customer.ID, cart.Cart.ID, *conversationContext.VariantID, quantity)
-		if err != nil {
-			if errors.Is(err, ErrCommerceCartItemUnavailable) {
-				return s.categoryStep(ctx, configuration.OrganizationID, conversationContext, "That product is no longer available in the requested quantity.")
-			}
-			return state, intent, conversationContext, nil, err
-		}
-		conversationContext.CartID = &cart.Cart.ID
-		conversationContext.VariantID = nil
-		return models.CommerceConversationStateCart, intent, conversationContext, []repository.CommerceChannelReply{commerceCartReply(cart)}, nil
+		return s.addSelectedVariantToCart(ctx, configuration.OrganizationID, customer.ID, intent, conversationContext, quantity)
 	case models.CommerceConversationStateCart:
 		if command == "cart:add" || command == "add" || command == "add more" {
 			return s.categoryStep(ctx, configuration.OrganizationID, conversationContext, "")
@@ -637,6 +660,30 @@ func (s *CommerceChannelService) categoryStep(ctx context.Context, organizationI
 	conversationContext.OptionKind = "category"
 	conversationContext.OptionIDs = categoryOrder
 	return models.CommerceConversationStateCategory, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{commerceCategoryListReply(categoryOrder, categoryNames, prefix)}, nil
+}
+
+func (s *CommerceChannelService) addSelectedVariantToCart(ctx context.Context, organizationID, customerID uuid.UUID, intent string, conversationContext commerceConversationContext, quantity int) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
+	if conversationContext.StoreID == nil || conversationContext.VariantID == nil {
+		return models.CommerceConversationStateLocation, models.CommerceConversationIntentOrder, commerceConversationContext{}, []repository.CommerceChannelReply{{
+			Body:    "I need to confirm the store and product again before quantity. Share your WhatsApp location to use the nearest open store, or choose List stores.",
+			Options: []repository.CommerceChannelReplyOption{{ID: "stores:list", Title: "List stores"}},
+		}}, nil
+	}
+	cart, _, err := s.customers.CreateCartForChannel(ctx, organizationID, customerID, *conversationContext.StoreID)
+	if err != nil {
+		return models.CommerceConversationStateQuantity, intent, conversationContext, nil, err
+	}
+	cart, err = s.customers.SetCartItemForChannel(ctx, organizationID, customerID, cart.Cart.ID, *conversationContext.VariantID, quantity)
+	if err != nil {
+		if errors.Is(err, ErrCommerceCartItemUnavailable) {
+			return s.categoryStep(ctx, organizationID, conversationContext, "That product is no longer available in the requested quantity.")
+		}
+		return models.CommerceConversationStateQuantity, intent, conversationContext, nil, err
+	}
+	conversationContext.CartID = &cart.Cart.ID
+	conversationContext.VariantID = nil
+	conversationContext.PendingQuantity = 0
+	return models.CommerceConversationStateCart, intent, conversationContext, []repository.CommerceChannelReply{commerceCartReply(cart)}, nil
 }
 
 func (s *CommerceChannelService) tryAIOrderStart(ctx context.Context, configuration *models.CommerceChannelConfiguration, customer *models.CommerceCustomer, command, text string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, bool, error) {
@@ -982,12 +1029,15 @@ func commerceAINormalize(value string) string {
 	value = strings.ToLower(value)
 	replacer := strings.NewReplacer("-", " ", "_", " ", "/", " ", ".", " ", ",", " ", "(", " ", ")", " ")
 	value = replacer.Replace(value)
-	aliases := map[string]string{
-		"big": "large", "bigger": "large", "milk shake": "milkshake", "shakes": "milkshake",
-		"boba": "pearls", "bobba": "pearls", "normal": "regular", "standard": "regular",
+	aliases := []struct {
+		from string
+		to   string
+	}{
+		{"milk shakes", "milkshake"}, {"milkshakes", "milkshake"}, {"milk shake", "milkshake"}, {"shakes", "milkshake"},
+		{"big", "large"}, {"bigger", "large"}, {"boba", "pearls"}, {"bobba", "pearls"}, {"normal", "regular"}, {"standard", "regular"},
 	}
-	for from, to := range aliases {
-		value = strings.ReplaceAll(value, from, to)
+	for _, alias := range aliases {
+		value = strings.ReplaceAll(value, alias.from, alias.to)
 	}
 	return strings.Join(strings.Fields(value), " ")
 }
@@ -1131,6 +1181,149 @@ func selectCommerceOption(value, kind string, conversationContext commerceConver
 		return uuid.Nil, false
 	}
 	return conversationContext.OptionIDs[index-1], true
+}
+
+func selectCommerceStoreByText(value string, stores []models.CommerceStore, allowed []uuid.UUID) (uuid.UUID, bool) {
+	normalized := commerceAINormalize(value)
+	if normalized == "" {
+		return uuid.Nil, false
+	}
+	bestID := uuid.Nil
+	bestScore := 0
+	for _, store := range stores {
+		if len(allowed) > 0 && !commerceUUIDIncluded(allowed, store.ID) {
+			continue
+		}
+		name := commerceAINormalize(store.Name + " " + store.Address)
+		score := commerceTextMatchScore(normalized, name)
+		if score > bestScore {
+			bestID, bestScore = store.ID, score
+		}
+	}
+	return bestID, bestScore >= 2
+}
+
+func selectCommerceCategoryByText(value string, entries []repository.CommerceStoreCatalogueEntry, allowed []uuid.UUID) (uuid.UUID, bool) {
+	normalized := commerceAINormalize(value)
+	if normalized == "" {
+		return uuid.Nil, false
+	}
+	bestID := uuid.Nil
+	bestScore := 0
+	seen := make(map[uuid.UUID]string)
+	for _, entry := range entries {
+		if len(allowed) > 0 && !commerceUUIDIncluded(allowed, entry.CategoryID) {
+			continue
+		}
+		if _, exists := seen[entry.CategoryID]; exists {
+			continue
+		}
+		seen[entry.CategoryID] = entry.CategoryName
+		score := commerceTextMatchScore(normalized, commerceAINormalize(entry.CategoryName))
+		if score > bestScore {
+			bestID, bestScore = entry.CategoryID, score
+		}
+	}
+	return bestID, bestScore >= 2
+}
+
+func selectCommerceProductByText(value string, entries []repository.CommerceStoreCatalogueEntry, allowed []uuid.UUID) (uuid.UUID, bool) {
+	normalized := commerceAINormalize(value)
+	if normalized == "" {
+		return uuid.Nil, false
+	}
+	bestID := uuid.Nil
+	bestScore := 0
+	for _, entry := range entries {
+		if len(allowed) > 0 && !commerceUUIDIncluded(allowed, entry.VariantID) {
+			continue
+		}
+		name := commerceAINormalize(entry.ProductName + " " + entry.VariantName + " " + entry.CategoryName)
+		score := commerceTextMatchScore(normalized, name)
+		if score > bestScore {
+			bestID, bestScore = entry.VariantID, score
+		}
+	}
+	return bestID, bestScore >= 2
+}
+
+func commerceCatalogueEntriesByVariants(entries []repository.CommerceStoreCatalogueEntry, variantIDs []uuid.UUID) []repository.CommerceStoreCatalogueEntry {
+	filtered := make([]repository.CommerceStoreCatalogueEntry, 0, len(variantIDs))
+	for _, variantID := range variantIDs {
+		for _, entry := range entries {
+			if entry.VariantID == variantID {
+				filtered = append(filtered, entry)
+				break
+			}
+		}
+	}
+	return filtered
+}
+
+func commerceTextMatchScore(query, target string) int {
+	if query == "" || target == "" {
+		return 0
+	}
+	score := 0
+	if strings.Contains(target, query) || strings.Contains(query, target) {
+		score += 6
+	}
+	for _, token := range strings.Fields(query) {
+		if len(token) < 2 || commerceIgnoredSelectionToken(token) {
+			continue
+		}
+		if strings.Contains(target, token) {
+			score += 2
+		}
+	}
+	return score
+}
+
+func commerceIgnoredSelectionToken(token string) bool {
+	switch token {
+	case "i", "me", "my", "the", "a", "an", "to", "for", "from", "order", "want", "like", "will", "just", "store", "choose", "open", "category", "categories", "what", "are":
+		return true
+	default:
+		return false
+	}
+}
+
+func commerceQuantityFromText(value string) int {
+	for _, token := range strings.Fields(commerceAINormalize(value)) {
+		quantity, err := strconv.Atoi(token)
+		if err == nil && quantity >= 1 && quantity <= commerceCartMaxQuantity {
+			return quantity
+		}
+	}
+	return 0
+}
+
+func isCommerceCategoryListCommand(value string) bool {
+	normalized := commerceAINormalize(value)
+	switch normalized {
+	case "categories", "category", "what are the categories", "show categories", "list categories":
+		return true
+	default:
+		return false
+	}
+}
+
+func commerceUUIDIncluded(ids []uuid.UUID, id uuid.UUID) bool {
+	for _, candidate := range ids {
+		if candidate == id {
+			return true
+		}
+	}
+	return false
+}
+
+func commerceStoreName(stores []models.CommerceStore, id uuid.UUID) string {
+	for _, store := range stores {
+		if store.ID == id {
+			return store.Name
+		}
+	}
+	return "that store"
 }
 
 func parseCommerceIntent(value string) string {

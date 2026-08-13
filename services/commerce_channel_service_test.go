@@ -331,6 +331,67 @@ func TestCommerceWhatsAppOrderFlowUsesCoreServicesAndPersistsState(t *testing.T)
 	}
 }
 
+func TestCommerceWhatsAppGuidedFlowAcceptsStoreAndCategoryText(t *testing.T) {
+	organizationID, customerID := uuid.New(), uuid.New()
+	jaraStoreID, lekkiStoreID, milkshakeCategoryID := uuid.New(), uuid.New(), uuid.New()
+	smoothieVariantID, strawberryVariantID, cartID := uuid.New(), uuid.New(), uuid.New()
+	openMinute, closeMinute := 0, 1440
+	jaraStore := models.CommerceStore{
+		ID: jaraStoreID, OrganizationID: organizationID, Name: "Bingchun Jara Mall", Address: "Jara Mall, Ikeja", Timezone: "Africa/Lagos", Status: models.CommerceStatusActive,
+		Hours: []models.CommerceStoreHour{{DayOfWeek: int(time.Monday), OpenMinute: &openMinute, CloseMinute: &closeMinute}},
+	}
+	lekkiStore := models.CommerceStore{
+		ID: lekkiStoreID, OrganizationID: organizationID, Name: "Bing Chun Lekki", Address: "Olive Mall, Lekki", Timezone: "Africa/Lagos", Status: models.CommerceStatusActive,
+		Hours: []models.CommerceStoreHour{{DayOfWeek: int(time.Monday), OpenMinute: &openMinute, CloseMinute: &closeMinute}},
+	}
+	catalogue := []repository.CommerceStoreCatalogueEntry{
+		{
+			StoreID: jaraStoreID, CategoryID: milkshakeCategoryID, CategoryName: "Milkshakes",
+			ProductName: "Blueberry Smoothie", ProductCurrency: "NGN", VariantID: smoothieVariantID,
+			VariantName: "Regular", EffectivePriceMinor: 360000, Enabled: true, AvailableQuantity: 10,
+		},
+		{
+			StoreID: jaraStoreID, CategoryID: milkshakeCategoryID, CategoryName: "Milkshakes",
+			ProductName: "Strawberry Smoothie", ProductCurrency: "NGN", VariantID: strawberryVariantID,
+			VariantName: "Regular", EffectivePriceMinor: 360000, Enabled: true, AvailableQuantity: 10,
+		},
+	}
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{},
+		&commerceFoundationRepoStub{listStores: []models.CommerceStore{jaraStore, lekkiStore}},
+		&commerceCatalogueRepoStub{storeCatalogue: catalogue},
+		&commerceChannelCustomerStub{cartID: cartID},
+		&commerceChannelOrderStub{},
+		&commerceChannelPaymentStub{},
+		&commerceChannelFulfilmentStub{},
+	)
+	service.now = func() time.Time { return time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC) }
+	configuration := &models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"}
+	customer := &models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Customer"}
+	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStateLocation, CurrentIntent: optionalChannelString(models.CommerceConversationIntentOrder), Context: json.RawMessage(`{}`)}
+
+	steps := []CommerceChannelInbound{
+		{Text: "I think i will just order from the ikeja store"},
+		{Text: "what are the categories"},
+		{Text: "I would like to order 2 milkshakes"},
+		{Text: "Blueberry Smoothie"},
+	}
+	for _, step := range steps {
+		state, intent, contextValue, replies, err := service.processInbound(context.Background(), configuration, customer, conversation, step)
+		if err != nil {
+			t.Fatalf("process %q in state %s: %v", step.Text, conversation.State, err)
+		}
+		encoded, _ := json.Marshal(contextValue)
+		conversation.State, conversation.Context, conversation.CurrentIntent = state, encoded, optionalChannelString(intent)
+		if len(replies) == 0 {
+			t.Fatalf("%q produced no reply", step.Text)
+		}
+	}
+	if conversation.State != models.CommerceConversationStateCart {
+		t.Fatalf("guided text flow did not reach cart: state=%s context=%s", conversation.State, conversation.Context)
+	}
+}
+
 func TestCommerceWhatsAppAIOrderStartBuildsCartFromNaturalLanguage(t *testing.T) {
 	organizationID, customerID, storeID, categoryID, variantID, cartID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	openMinute, closeMinute := 0, 1440

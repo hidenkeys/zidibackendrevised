@@ -183,6 +183,18 @@ func (*commerceChannelFulfilmentStub) RevealVerificationCode(context.Context, uu
 	return "123456", nil
 }
 
+type commerceAIProviderStub struct {
+	output *CommerceAIOrderInterpretation
+	err    error
+}
+
+func (s *commerceAIProviderStub) InterpretOrder(context.Context, CommerceAIOrderInterpretationInput) (*CommerceAIOrderInterpretation, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.output, nil
+}
+
 func TestRiderAssignedNotificationIncludesDeliveryReference(t *testing.T) {
 	organizationID, customerID, orderID, fulfilmentID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	orderRepo := seededCommerceOrderRepo(&models.CommerceOrder{
@@ -316,6 +328,82 @@ func TestCommerceWhatsAppOrderFlowUsesCoreServicesAndPersistsState(t *testing.T)
 	}
 	if conversation.State != models.CommerceConversationStateIntent || !strings.Contains(string(conversation.Context), "{}") {
 		t.Fatalf("checkout did not complete back to the intent menu: state=%s context=%s", conversation.State, conversation.Context)
+	}
+}
+
+func TestCommerceWhatsAppAIOrderStartBuildsCartFromNaturalLanguage(t *testing.T) {
+	organizationID, customerID, storeID, categoryID, variantID, cartID := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	openMinute, closeMinute := 0, 1440
+	store := models.CommerceStore{
+		ID: storeID, OrganizationID: organizationID, Name: "Jara Mall", Address: "Ikeja", Timezone: "Africa/Lagos", Status: models.CommerceStatusActive,
+		Hours: []models.CommerceStoreHour{{DayOfWeek: int(time.Monday), OpenMinute: &openMinute, CloseMinute: &closeMinute}},
+	}
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{},
+		&commerceFoundationRepoStub{listStores: []models.CommerceStore{store}},
+		&commerceCatalogueRepoStub{storeCatalogue: []repository.CommerceStoreCatalogueEntry{{
+			StoreID: storeID, CategoryID: categoryID, CategoryName: "Milkshakes",
+			ProductName: "Vanilla Milkshake", ProductCurrency: "NGN", VariantID: variantID,
+			VariantName: "Large", EffectivePriceMinor: 360000, Enabled: true, AvailableQuantity: 10,
+		}}},
+		&commerceChannelCustomerStub{cartID: cartID},
+		&commerceChannelOrderStub{},
+		&commerceChannelPaymentStub{},
+		&commerceChannelFulfilmentStub{},
+	)
+	service.SetAIProvider(&commerceAIProviderStub{output: &CommerceAIOrderInterpretation{
+		Intent: "place_order", Confidence: 0.91,
+		Items: []CommerceAIInterpretedItem{{ProductQuery: "milkshake", VariantQuery: "big", Quantity: 5}},
+	}})
+	service.now = func() time.Time { return time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC) }
+	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStateIntent, Context: json.RawMessage(`{}`)}
+
+	state, intent, contextValue, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		&models.CommerceCustomer{ID: customerID, OrganizationID: organizationID, DisplayName: "Customer"},
+		conversation,
+		CommerceChannelInbound{Text: "I want 5 big milkshakes"},
+	)
+	if err != nil {
+		t.Fatalf("AI order start failed: %v", err)
+	}
+	if state != models.CommerceConversationStateCart || intent != models.CommerceConversationIntentOrder || contextValue.CartID == nil || len(replies) != 1 {
+		t.Fatalf("natural order was not converted to cart: state=%s intent=%s context=%+v replies=%+v", state, intent, contextValue, replies)
+	}
+	if !strings.Contains(replies[0].Body, "x5") || !strings.Contains(replies[0].Body, "Cart:") {
+		t.Fatalf("cart reply does not include extracted product and quantity: %q", replies[0].Body)
+	}
+}
+
+func TestCommerceWhatsAppAIOrderStartFallsBackWhenUncertain(t *testing.T) {
+	organizationID, customerID := uuid.New(), uuid.New()
+	service := NewCommerceChannelService(
+		&commerceChannelRepoStub{},
+		&commerceFoundationRepoStub{listStores: []models.CommerceStore{{ID: uuid.New(), OrganizationID: organizationID, Status: models.CommerceStatusActive}}},
+		&commerceCatalogueRepoStub{storeCatalogue: []repository.CommerceStoreCatalogueEntry{{Enabled: true, AvailableQuantity: 10}}},
+		&commerceChannelCustomerStub{},
+		&commerceChannelOrderStub{},
+		&commerceChannelPaymentStub{},
+		&commerceChannelFulfilmentStub{},
+	)
+	service.SetAIProvider(&commerceAIProviderStub{output: &CommerceAIOrderInterpretation{
+		Intent: "unknown", Confidence: 0.2,
+	}})
+	conversation := &models.CommerceConversation{ID: uuid.New(), State: models.CommerceConversationStateIntent, Context: json.RawMessage(`{}`)}
+
+	state, _, _, replies, err := service.processInbound(
+		context.Background(),
+		&models.CommerceChannelConfiguration{OrganizationID: organizationID, WelcomeMessage: "Welcome"},
+		&models.CommerceCustomer{ID: customerID, OrganizationID: organizationID},
+		conversation,
+		CommerceChannelInbound{Text: "tell me something"},
+	)
+	if err != nil {
+		t.Fatalf("uncertain AI fallback failed: %v", err)
+	}
+	if state != models.CommerceConversationStateIntent || len(replies) != 1 || !strings.Contains(replies[0].Body, "Welcome") {
+		t.Fatalf("uncertain AI did not fall back to intent menu: state=%s replies=%+v", state, replies)
 	}
 }
 

@@ -94,6 +94,7 @@ type CommerceChannelService struct {
 	orders         commerceChannelOrder
 	payments       commerceChannelPayment
 	fulfilments    commerceChannelFulfilment
+	ai             CommerceAIProvider
 	now            func() time.Time
 }
 
@@ -102,6 +103,10 @@ func NewCommerceChannelService(repo repository.CommerceChannelRepository, founda
 		repo: repo, foundationRepo: foundationRepo, catalogueRepo: catalogueRepo,
 		customers: customers, orders: orders, payments: payments, fulfilments: fulfilments, now: func() time.Time { return time.Now().UTC() },
 	}
+}
+
+func (s *CommerceChannelService) SetAIProvider(provider CommerceAIProvider) {
+	s.ai = provider
 }
 
 func (s *CommerceChannelService) HandleInbound(ctx context.Context, input CommerceChannelInbound) (*CommerceChannelHandleResult, error) {
@@ -417,6 +422,9 @@ func (s *CommerceChannelService) processInbound(ctx context.Context, configurati
 		case models.CommerceConversationIntentComplaint:
 			return models.CommerceConversationStateComplaintOrder, models.CommerceConversationIntentComplaint, commerceConversationContext{}, []repository.CommerceChannelReply{{Body: "Enter the related order number, or reply Skip if there is no order."}}, nil
 		default:
+			if state, intent, updatedContext, replies, handled, err := s.tryAIOrderStart(ctx, configuration, customer, command, text, conversationContext); handled || err != nil {
+				return state, intent, updatedContext, replies, err
+			}
 			return state, intent, conversationContext, []repository.CommerceChannelReply{s.intentReply(configuration)}, nil
 		}
 	case models.CommerceConversationStateLocation:
@@ -625,6 +633,93 @@ func (s *CommerceChannelService) categoryStep(ctx context.Context, organizationI
 	return models.CommerceConversationStateCategory, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{commerceCategoryListReply(categoryOrder, categoryNames, prefix)}, nil
 }
 
+func (s *CommerceChannelService) tryAIOrderStart(ctx context.Context, configuration *models.CommerceChannelConfiguration, customer *models.CommerceCustomer, command, text string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, bool, error) {
+	if s.ai == nil || strings.TrimSpace(text) == "" {
+		return "", "", conversationContext, nil, false, nil
+	}
+	if isCommerceMenuCommand(command) || parseCommerceIntent(command) != "" {
+		return "", "", conversationContext, nil, false, nil
+	}
+	stores, err := s.availableStores(ctx, configuration.OrganizationID, nil, nil)
+	if err != nil {
+		return "", "", conversationContext, nil, false, err
+	}
+	if len(stores) == 0 {
+		return "", "", conversationContext, nil, false, nil
+	}
+	type storeCatalogue struct {
+		store   models.CommerceStore
+		entries []repository.CommerceStoreCatalogueEntry
+	}
+	catalogues := make([]storeCatalogue, 0, len(stores))
+	combined := make([]repository.CommerceStoreCatalogueEntry, 0)
+	for _, store := range stores {
+		entries, entryErr := s.availableCatalogue(ctx, configuration.OrganizationID, store.ID)
+		if entryErr != nil {
+			return "", "", conversationContext, nil, false, entryErr
+		}
+		if len(entries) == 0 {
+			continue
+		}
+		catalogues = append(catalogues, storeCatalogue{store: store, entries: entries})
+		combined = append(combined, entries...)
+	}
+	if len(combined) == 0 {
+		return "", "", conversationContext, nil, false, nil
+	}
+	interpretation, err := s.ai.InterpretOrder(ctx, CommerceAIOrderInterpretationInput{Message: text, Catalogue: combined})
+	if err != nil {
+		return "", "", conversationContext, nil, false, nil
+	}
+	if interpretation == nil || interpretation.Intent != "place_order" || interpretation.Confidence < 0.65 || len(interpretation.Items) == 0 {
+		return "", "", conversationContext, nil, false, nil
+	}
+	item := interpretation.Items[0]
+	if item.Quantity < 1 || item.Quantity > commerceCartMaxQuantity {
+		return models.CommerceConversationStateQuantity, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{{Body: "How many would you like? Enter a quantity from 1 to 100."}}, true, nil
+	}
+	matchesByStore := make([]storeCatalogue, 0)
+	for _, catalogue := range catalogues {
+		matches := commerceAIMatchCatalogueEntries(catalogue.entries, item)
+		if len(matches) > 0 {
+			matchesByStore = append(matchesByStore, storeCatalogue{store: catalogue.store, entries: matches})
+		}
+	}
+	if len(matchesByStore) == 0 {
+		return "", "", conversationContext, nil, false, nil
+	}
+	if len(matchesByStore) > 1 {
+		conversationContext.OptionKind = "store"
+		stores := make([]models.CommerceStore, 0, len(matchesByStore))
+		for _, match := range matchesByStore {
+			stores = append(stores, match.store)
+		}
+		conversationContext.OptionIDs = commerceStoreIDs(stores)
+		conversationContext.VariantID = &matchesByStore[0].entries[0].VariantID
+		return models.CommerceConversationStateStore, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{commerceStoreListReply(stores)}, true, nil
+	}
+	selected := matchesByStore[0]
+	conversationContext.StoreID = &selected.store.ID
+	if len(selected.entries) > 1 {
+		conversationContext.OptionKind = "product"
+		conversationContext.OptionIDs = commerceVariantIDs(selected.entries)
+		return models.CommerceConversationStateProduct, models.CommerceConversationIntentOrder, conversationContext, commerceProductListReplies(selected.entries), true, nil
+	}
+	cart, _, err := s.customers.CreateCartForChannel(ctx, configuration.OrganizationID, customer.ID, selected.store.ID)
+	if err != nil {
+		return "", "", conversationContext, nil, true, err
+	}
+	cart, err = s.customers.SetCartItemForChannel(ctx, configuration.OrganizationID, customer.ID, cart.Cart.ID, selected.entries[0].VariantID, item.Quantity)
+	if err != nil {
+		if errors.Is(err, ErrCommerceCartItemUnavailable) {
+			return "", "", conversationContext, nil, false, nil
+		}
+		return "", "", conversationContext, nil, true, err
+	}
+	conversationContext.CartID = &cart.Cart.ID
+	return models.CommerceConversationStateCart, models.CommerceConversationIntentOrder, conversationContext, []repository.CommerceChannelReply{commerceCartReply(cart)}, true, nil
+}
+
 func (s *CommerceChannelService) checkoutAndPayment(ctx context.Context, configuration *models.CommerceChannelConfiguration, customer *models.CommerceCustomer, conversationID uuid.UUID, intent string, conversationContext commerceConversationContext) (string, string, commerceConversationContext, []repository.CommerceChannelReply, error) {
 	if conversationContext.CartID == nil {
 		return models.CommerceConversationStateLocation, intent, commerceConversationContext{}, []repository.CommerceChannelReply{{Body: "Your cart is no longer available. Start the order again."}}, nil
@@ -814,6 +909,76 @@ func commerceVariantIDs(entries []repository.CommerceStoreCatalogueEntry) []uuid
 		ids = append(ids, entry.VariantID)
 	}
 	return ids
+}
+
+func commerceAIMatchCatalogueEntries(entries []repository.CommerceStoreCatalogueEntry, item CommerceAIInterpretedItem) []repository.CommerceStoreCatalogueEntry {
+	query := commerceAINormalize(strings.TrimSpace(item.ProductQuery + " " + item.VariantQuery))
+	productQuery := commerceAINormalize(item.ProductQuery)
+	variantQuery := commerceAINormalize(item.VariantQuery)
+	if query == "" {
+		return nil
+	}
+	type scoredEntry struct {
+		entry repository.CommerceStoreCatalogueEntry
+		score int
+	}
+	scored := make([]scoredEntry, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.Enabled || entry.AvailableQuantity < item.Quantity {
+			continue
+		}
+		name := commerceAINormalize(entry.ProductName + " " + entry.VariantName + " " + entry.CategoryName + " " + entry.ProductDescription)
+		score := 0
+		for _, token := range strings.Fields(query) {
+			if len(token) < 2 {
+				continue
+			}
+			if strings.Contains(name, token) {
+				score += 2
+			}
+		}
+		if productQuery != "" && strings.Contains(name, productQuery) {
+			score += 6
+		}
+		if variantQuery != "" && strings.Contains(name, variantQuery) {
+			score += 3
+		}
+		if score > 0 {
+			scored = append(scored, scoredEntry{entry: entry, score: score})
+		}
+	}
+	if len(scored) == 0 {
+		return nil
+	}
+	sort.SliceStable(scored, func(i, j int) bool {
+		if scored[i].score == scored[j].score {
+			return scored[i].entry.ProductName < scored[j].entry.ProductName
+		}
+		return scored[i].score > scored[j].score
+	})
+	bestScore := scored[0].score
+	matches := make([]repository.CommerceStoreCatalogueEntry, 0)
+	for _, candidate := range scored {
+		if candidate.score < bestScore || len(matches) >= 5 {
+			break
+		}
+		matches = append(matches, candidate.entry)
+	}
+	return matches
+}
+
+func commerceAINormalize(value string) string {
+	value = strings.ToLower(value)
+	replacer := strings.NewReplacer("-", " ", "_", " ", "/", " ", ".", " ", ",", " ", "(", " ", ")", " ")
+	value = replacer.Replace(value)
+	aliases := map[string]string{
+		"big": "large", "bigger": "large", "milk shake": "milkshake", "shakes": "milkshake",
+		"boba": "pearls", "bobba": "pearls", "normal": "regular", "standard": "regular",
+	}
+	for from, to := range aliases {
+		value = strings.ReplaceAll(value, from, to)
+	}
+	return strings.Join(strings.Fields(value), " ")
 }
 
 func commerceStoreIncluded(stores []models.CommerceStore, storeID uuid.UUID) bool {

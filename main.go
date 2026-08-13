@@ -31,6 +31,7 @@ import (
 func main() {
 	_ = godotenv.Load()
 	localDemoMode := os.Getenv("ZIDI_LOCAL_DEMO_MODE") == "true"
+	disableBackgroundWorkers := os.Getenv("ZIDI_DISABLE_BACKGROUND_WORKERS") == "true"
 	jwtSecret, err := utils.LoadJWTSecret()
 	if err != nil {
 		log.Fatal(err)
@@ -125,6 +126,10 @@ func main() {
 		commerceChannelRepo, commerceFoundationRepo, commerceCatalogueRepo,
 		commerceCustomerCartService, commerceOrderService, commercePaymentService, commerceFulfilmentService,
 	)
+	commerceChannelService.SetAIProvider(services.NewConfiguredCommerceAIProvider(
+		os.Getenv("COMMERCE_AI_ENABLED"), os.Getenv("COMMERCE_AI_PROVIDER"), os.Getenv("GROQ_API_KEY"),
+		os.Getenv("GROQ_BASE_URL"), os.Getenv("COMMERCE_AI_MODEL"),
+	))
 	commerceWhatsAppSender := messaging.NewMetaWhatsAppClient(
 		os.Getenv("WHATSAPP_ACCESS_TOKEN"), os.Getenv("WHATSAPP_GRAPH_API_VERSION"), os.Getenv("WHATSAPP_GRAPH_API_BASE_URL"), nil,
 	)
@@ -173,7 +178,7 @@ func main() {
 	//zidiAuth := middleware.AuthMiddleware(string(jwtSecret), "zidi")
 	//zidiAndAdminAuth := middleware.AuthMiddleware(string(jwtSecret), "zidi","admin")
 	//adminAndUserAuth := middleware.AuthMiddleware(string(jwtSecret), )
-	if !localDemoMode {
+	if !localDemoMode && !disableBackgroundWorkers {
 		go telegrambot.StartBot(db)
 		go func() {
 			ticker := time.NewTicker(time.Minute)

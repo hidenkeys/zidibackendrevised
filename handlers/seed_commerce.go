@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/models"
@@ -121,6 +122,11 @@ func (s *Server) SeedCommerceData() {
 	botLink := "https://wa.me/2348085105382?text=Hello"
 
 	emailBody := fmt.Sprintf("Hello %s,<br><br>Your Commerce Organization <b>%s</b> is ready.<br>You can start selling on WhatsApp here: <a href='%s'>%s</a>", institution.ContactPersonName, institution.Name, botLink, botLink)
+
+	if os.Getenv("ZIDI_SKIP_COMMERCE_SEED_EMAIL") == "true" {
+		log.Println("Skipping commerce seed welcome email")
+		return
+	}
 
 	// Hardcoded for Pilot
 	contactEmail := "letimapro23@gmail.com"

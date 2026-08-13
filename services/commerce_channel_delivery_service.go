@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"log"
 	"strings"
 	"time"
 
@@ -23,12 +24,14 @@ type CommerceChannelDeliveryService struct {
 	fulfilment     commerceChannelFulfilment
 	emailSender    messaging.EmailSender
 	now            func() time.Time
+	sendTimeout    time.Duration
 }
 
 func NewCommerceChannelDeliveryService(repo repository.CommerceChannelRepository, sender messaging.WhatsAppSender, orderRepo repository.CommerceOrderRepository, fulfilmentRepo repository.CommerceFulfilmentRepository, fulfilment commerceChannelFulfilment, emailSenders ...messaging.EmailSender) *CommerceChannelDeliveryService {
 	service := &CommerceChannelDeliveryService{
 		repo: repo, sender: sender, orderRepo: orderRepo, fulfilmentRepo: fulfilmentRepo,
 		fulfilment: fulfilment, now: func() time.Time { return time.Now().UTC() },
+		sendTimeout: 4 * time.Second,
 	}
 	if len(emailSenders) > 0 {
 		service.emailSender = emailSenders[0]
@@ -81,17 +84,30 @@ func (s *CommerceChannelDeliveryService) DispatchOnce(ctx context.Context, limit
 			_ = s.repo.MarkOutboundMessageFailed(ctx, message.ID, parseErr.Error(), commerceChannelRetryAt(now, message.Attempts))
 			continue
 		}
-		providerID, sendErr := s.sender.Send(ctx, messaging.WhatsAppOutboundMessage{
+		sendCtx, cancel := context.WithTimeout(ctx, s.sendTimeout)
+		sendStarted := time.Now()
+		providerID, sendErr := s.sender.Send(sendCtx, messaging.WhatsAppOutboundMessage{
 			PhoneNumberID: configuration.ProviderAccountID, To: message.RecipientID, Body: message.Body, Buttons: buttons, ImageURL: imageURL,
 		})
+		cancel()
+		sendDuration := time.Since(sendStarted)
 		if sendErr != nil {
+			log.Printf("commerce WhatsApp outbound failed: message_id=%s type=%s attempts=%d duration=%s error=%v", message.ID, message.MessageType, message.Attempts, sendDuration, sendErr)
 			_ = s.repo.MarkOutboundMessageFailed(ctx, message.ID, sendErr.Error(), commerceChannelRetryAt(now, message.Attempts))
 			continue
+		}
+		if sendDuration > 2*time.Second {
+			log.Printf("commerce WhatsApp outbound slow: message_id=%s type=%s attempts=%d duration=%s", message.ID, message.MessageType, message.Attempts, sendDuration)
 		}
 		if err := s.repo.MarkOutboundMessageSent(ctx, message.ID, providerID, s.now().UTC()); err != nil {
 			return processed, err
 		}
 		processed++
+	}
+	if len(messages) == limit {
+		if delayed, countErr := s.repo.CountDelayedOutboundMessages(ctx, s.now().UTC()); countErr == nil && delayed > 0 {
+			log.Printf("commerce WhatsApp outbound backlog remains: due_messages=%d processed_this_pass=%d", delayed, len(messages))
+		}
 	}
 	if s.emailSender != nil {
 		emails, emailErr := s.repo.ClaimEmailMessages(ctx, limit, s.now().UTC())

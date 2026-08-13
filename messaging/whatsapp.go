@@ -45,7 +45,7 @@ func NewMetaWhatsAppClient(accessToken, graphVersion, baseURL string, httpClient
 		baseURL = "https://graph.facebook.com"
 	}
 	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 10 * time.Second}
+		httpClient = &http.Client{Timeout: 4 * time.Second}
 	}
 	return &MetaWhatsAppClient{
 		accessToken: strings.TrimSpace(accessToken), graphVersion: strings.Trim(strings.TrimSpace(graphVersion), "/"),

@@ -54,6 +54,9 @@ func (s *commerceChannelRepoStub) MarkOutboundMessageSent(context.Context, uuid.
 func (s *commerceChannelRepoStub) MarkOutboundMessageFailed(context.Context, uuid.UUID, string, time.Time) error {
 	return nil
 }
+func (s *commerceChannelRepoStub) CountDelayedOutboundMessages(context.Context, time.Time) (int64, error) {
+	return 0, nil
+}
 func (s *commerceChannelRepoStub) CreateComplaint(_ context.Context, complaint *models.CommerceComplaint) error {
 	s.complaints = append(s.complaints, *complaint)
 	return nil

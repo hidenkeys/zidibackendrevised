@@ -100,6 +100,7 @@ type CommerceChannelRepository interface {
 	ClaimEmailMessages(ctx context.Context, limit int, now time.Time) ([]models.CommerceEmailMessage, error)
 	MarkEmailMessageSent(ctx context.Context, messageID uuid.UUID, now time.Time) error
 	MarkEmailMessageFailed(ctx context.Context, messageID uuid.UUID, reason string, retryAt time.Time) error
+	CountDelayedOutboundMessages(ctx context.Context, now time.Time) (int64, error)
 }
 
 type CommerceChannelRepoPG struct{ db *gorm.DB }
@@ -303,7 +304,12 @@ func (r *CommerceChannelRepoPG) ClaimOutboundMessages(ctx context.Context, limit
 		}
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
 			Where("direction = ? AND status IN ? AND available_at <= ? AND attempts < 8", models.CommerceChannelDirectionOutbound, []string{models.CommerceChannelMessageStatusPending, models.CommerceChannelMessageStatusFailed}, now).
-			Order("created_at ASC").Limit(limit).Find(&items).Error; err != nil {
+			Order(`CASE
+				WHEN status = 'pending' AND message_type <> 'image' THEN 0
+				WHEN status = 'pending' THEN 1
+				WHEN message_type <> 'image' THEN 2
+				ELSE 3
+			END, available_at ASC, created_at ASC`).Limit(limit).Find(&items).Error; err != nil {
 			return err
 		}
 		for index := range items {
@@ -318,6 +324,14 @@ func (r *CommerceChannelRepoPG) ClaimOutboundMessages(ctx context.Context, limit
 		return nil
 	})
 	return items, err
+}
+
+func (r *CommerceChannelRepoPG) CountDelayedOutboundMessages(ctx context.Context, now time.Time) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&models.CommerceChannelMessage{}).
+		Where("direction = ? AND status IN ? AND available_at <= ? AND attempts < 8", models.CommerceChannelDirectionOutbound, []string{models.CommerceChannelMessageStatusPending, models.CommerceChannelMessageStatusFailed}, now).
+		Count(&count).Error
+	return count, err
 }
 
 func (r *CommerceChannelRepoPG) MarkOutboundMessageSent(ctx context.Context, messageID uuid.UUID, providerMessageID string, now time.Time) error {

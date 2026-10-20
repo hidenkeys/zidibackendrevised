@@ -1,0 +1,6 @@
+package: api
+generate:
+  fiber-server: true         # Generates an interface for API handlers
+  models: true          # Generates Go structs for request/response models
+  embedded-spec: true   # Embeds the OpenAPI spec in Go code
+output: ./api/api.gen.go  # Save the generated code in the api/ directory

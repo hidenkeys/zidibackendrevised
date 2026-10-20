@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Confirmation - Zidi</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background-color: #000000;
+      padding: 20px;
+      text-align: left;
+    }
+    .logo {
+      width: 100px;
+      height: auto;
+    }
+    .hero {
+      background-color: #EFBF00;
+      color: #000000;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .hero p {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    .content {
+      padding: 30px;
+      background-color: #ffffff;
+    }
+    .content h2 {
+      color: #EFBF00;
+      font-size: 22px;
+      margin-top: 0;
+    }
+    .payment-box {
+      background-color: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 25px;
+      margin: 25px 0;
+      text-align: center;
+    }
+    .payment-box h3 {
+      margin-top: 0;
+      color: #333333;
+      font-size: 18px;
+    }
+    .success-message {
+      font-size: 18px;
+      font-weight: bold;
+      color: #28a745;
+      margin: 10px 0;
+    }
+    /*.button {*/
+    /*  display: inline-block;*/
+    /*  padding: 12px 30px;*/
+    /*  background-color: #EFBF00;*/
+    /*  color: #000000;*/
+    /*  text-decoration: none;*/
+    /*  font-weight: bold;*/
+    /*  border-radius: 4px;*/
+    /*  margin-top: 10px;*/
+    /*  font-size: 16px;*/
+    /*  text-align: center;*/
+    /*}*/
+    .footer {
+      background-color: #f5f5f5;
+      padding: 20px 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666666;
+    }
+  </style>
+</head>
+<body>
+<div class="email-container">
+  <div class="header">
+    <img src="https://via.placeholder.com/100x40/000000/EFBF00?text=Zidi" alt="Zidi Logo" class="logo">
+  </div>
+  <div class="hero">
+    <h1>Payment Successful!</h1>
+    <p>Thank you for completing your payment. Your campaign is now active.</p>
+  </div>
+  <div class="content">
+    <h2>Hello {{.Name}},</h2>
+    <p>We are happy to inform you that we have received your payment for your campaign on Zidi.</p>
+    <div class="payment-box">
+      <h3>Campaign: {{.CampaignName}}</h3>
+      <h3>Amount Paid:</h3>
+      <p class="success-message">{{.Amount}}</p>
+    </div>
+    
+    {{if or .HasTelegram .HasWhatsApp}}
+    <p>Here {{if and .HasTelegram .HasWhatsApp}}are your Campaign links{{else}}is your Campaign link{{end}}:</p>
+    
+    {{if .HasTelegram}}
+    <div style="margin: 15px 0; padding: 15px; background-color: #e3f2fd; border-radius: 6px;">
+      <h4 style="margin: 0 0 10px 0; color: #1976d2;">📱 Telegram Bot</h4>
+      <p style="text-align: center; margin: 5px 0;">
+        <a href="{{.TelegramBotLink}}" style="color: #1976d2; text-decoration: none; font-weight: bold;">{{.TelegramBotLink}}</a>
+      </p>
+      <p style="margin: 5px 0; font-size: 14px; color: #666;">Share this link with your customers to participate via Telegram.</p>
+    </div>
+    {{end}}
+    
+    {{if .HasWhatsApp}}
+    <div style="margin: 15px 0; padding: 15px; background-color: #e8f5e9; border-radius: 6px;">
+      <h4 style="margin: 0 0 10px 0; color: #2e7d32;">💬 WhatsApp Bot</h4>
+      <p style="text-align: center; margin: 5px 0;">
+        <a href="{{.WhatsAppLink}}" style="color: #2e7d32; text-decoration: none; font-weight: bold;">{{.WhatsAppLink}}</a>
+      </p>
+      <p style="margin: 5px 0; font-size: 14px; color: #666;">Share this link with your customers to participate via WhatsApp.</p>
+    </div>
+    {{end}}
+    {{end}}
+    
+    <p>If you have any questions, feel free to contact our support team at <a href="mailto:info@zidi.com">support@zidi.com</a>.</p>
+    <p>Best regards,<br>The Zidi Team</p>
+  </div>
+  <div class="footer">
+    <p>© 2025 Zidi. All rights reserved.</p>
+    <div class="social-links">
+      <a href="#" class="social-icon">f</a>
+      <a href="#" class="social-icon">t</a>
+      <a href="#" class="social-icon">in</a>
+    </div>
+    <p>If you no longer wish to receive these emails, you can <a href="#">unsubscribe here</a>.</p>
+    <p>[Company Address, City, State, ZIP]</p>
+  </div>
+</div>
+</body>
+</html>
